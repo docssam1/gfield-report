@@ -117,9 +117,11 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
 </div>
 
 <script>
-// 🚨 코드에 직접 적지 않으므로 해킹과 차단을 100% 방지합니다! 🚨
-const scriptUrl = "https://script.google.com/macros/s/AKfycbxGowvqeLrmF6ZaTRGKafCS559ag-MAld5o9n0xqpsfqwZYAoReaG1Kn6V1sOuJAR4Y/exec";
-const kakaoKey  = "80a3cebdeeebcc2563e570a6fe62d8da"; // 카카오 JS키는 공개용이라 안전합니다.
+// ==========================================
+// 🚨 여기에 새로 배포한 구글 스크립트 URL을 넣어주세요! 🚨
+const scriptUrl = "https://script.google.com/macros/s/AKfycbz5ThsUsfoaogRDHnQA41HSA5mTjRS_03r2Kp0Oz1g9Z-MVaJKniXA5wOwQRRH8m0X9/exec";
+// ==========================================
+const kakaoKey  = "80a3cebdeeebcc2563e570a6fe62d8da"; 
 
 try { if (window.Kakao && !Kakao.isInitialized()) Kakao.init(kakaoKey); } catch(e){}
 
@@ -134,7 +136,7 @@ function setType(el){
   document.getElementById('hdTitle').textContent = `지필드 영재교육 (${classType})`;
 }
 
-// 🔐 브라우저 안전 금고(localStorage)에서 키를 꺼내오거나 물어보는 함수
+// 🔐 브라우저 금고(localStorage)
 function getSecretKey(keyName, promptMsg) {
   let key = localStorage.getItem(keyName);
   if (!key || key === 'null') {
@@ -154,7 +156,7 @@ function resetKeys() {
 
 // ✨ 제미나이 AI 실시간 문장 다듬기
 async function askGemini(areaId) {
-  const myGeminiKey = getSecretKey('gemini_key', "✨ [최초 1회 입력]\n구글 AI 스튜디오에서 발급받은 '제미나이 API 키'를 붙여넣으세요.\n이 브라우저에만 안전하게 보관됩니다.");
+  const myGeminiKey = getSecretKey('gemini_key', "✨ [최초 1회 입력]\n구글 AI 스튜디오에서 발급받은 '제미나이 API 키'를 붙여넣으세요.");
   if (!myGeminiKey) return;
 
   let targets = (areaId === 'noticeArea') ? [document.getElementById(areaId)] : document.querySelectorAll(`#${areaId} textarea.v-content`);
@@ -306,6 +308,7 @@ function buildSnapshot(){
 </div></body></html>`;
 }
 
+// 💡 1단계: 구글 드라이브 자동 저장 (에러 회피 방식 적용 완료)
 async function saveToDrive() {
   const name = document.getElementById('nameInput').value.trim();
   if(!name) { showToast('학생 이름을 입력해 주세요.'); return; }
@@ -313,12 +316,12 @@ async function saveToDrive() {
   btn.disabled = true; btn.textContent = "⏳ 저장 중...";
   const dateStr = document.getElementById('dateInput').value.replace(/-/g, '');
   const fileName = `지필드_${dateStr}_${name}_${classType}_리포트.html`;
+  
   try {
+    // 헤더를 완전히 제거하여 브라우저가 preflight(보안 검사)를 하지 않고 바로 넘어가도록 만들었습니다.
     const res = await fetch(scriptUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ studentName: name, fileName: fileName, htmlContent: buildSnapshot() }),
-      redirect: 'follow'
+      body: JSON.stringify({ studentName: name, fileName: fileName, htmlContent: buildSnapshot() })
     });
     const result = await res.json();
     if(result.result === "success") {
@@ -327,12 +330,14 @@ async function saveToDrive() {
       document.getElementById('resultUrl').textContent = result.url;
       document.getElementById('linkResult').style.display = 'block';
     } else { throw new Error(result.error); }
-  } catch (e) { alert("❌ 구글 드라이브 에러. 브라우저 보안 정책(CORS)에 의해 차단되었습니다."); }
+  } catch (e) { 
+    alert("❌ 구글 드라이브 에러!\n\n구글 앱스 스크립트에서 [새 배포]를 하실 때, 반드시 '모든 사용자(Anyone)' 권한으로 설정하셔야 합니다.\n'Google 계정이 있는 모든 사용자'를 선택하시면 이 에러가 발생합니다."); 
+  }
   finally { btn.disabled = false; btn.textContent = "💾 1단계: 구글 드라이브 백업"; }
 }
 
 async function deployToGitHubPages(){
-  const myGhToken = getSecretKey('gh_token', "🔗 [최초 1회 입력]\n깃허브에서 발급받은 토큰(ghp_...)을 붙여넣으세요.\n이 브라우저에만 안전하게 보관됩니다.");
+  const myGhToken = getSecretKey('gh_token', "🔗 [최초 1회 입력]\n깃허브에서 발급받은 토큰(ghp_...)을 붙여넣으세요.");
   if (!myGhToken) return;
 
   let ghUser = "docssam1";
@@ -364,7 +369,7 @@ async function deployToGitHubPages(){
     document.getElementById('linkResult').style.display = 'block';
     showToast('🎉 배포 완료!');
   } catch (e) { 
-    alert('❌ 깃허브 배포 오류!\n입력하신 깃허브 토큰이 틀렸거나 만료되었습니다.\n맨 아래 [보안키 초기화] 버튼을 누르고 새 토큰을 넣어주세요.'); 
+    alert('❌ 깃허브 배포 오류!\n입력하신 깃허브 토큰이 만료되었거나 권한(repo)이 없습니다.\n맨 아래 [보안키 초기화] 버튼을 누르고 새 토큰을 넣어주세요.'); 
   }
   finally { btn.disabled = false; btn.textContent = '🔗 2단계: 웹 링크 배포'; }
 }
@@ -375,7 +380,7 @@ function shareKakao(){
   const dateStr = `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일`;
   const url = document.getElementById('resultUrl').href;
   
-  if(url === '#' || url === '') { alert('🚨 먼저 저장 또는 배포하여 링크를 만들어주세요!'); return; }
+  if(url === '#' || url === '') { alert('🚨 먼저 1단계(저장) 또는 2단계(배포)를 눌러주세요!'); return; }
   
   try {
     Kakao.Share.sendDefault({
@@ -388,7 +393,7 @@ function shareKakao(){
       },
       buttons: [{ title: '리포트 확인하기', link: { mobileWebUrl: url, webUrl: url } }]
     });
-  } catch(e) { alert("❌ 카카오톡 전송 차단됨! 깃허브 웹 주소로 접속해서 실행해 주세요."); }
+  } catch(e) { alert("❌ 카카오톡 전송 차단됨! 선생님의 깃허브 주소(docssam1.github.io)로 접속해서 실행해 주세요."); }
 }
 
 function showToast(msg){
