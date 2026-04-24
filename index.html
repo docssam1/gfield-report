@@ -32,27 +32,45 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
 .hw-c1,.hw-c2,.hw-c3{padding:8px 10px;border-right:1.5px solid var(--border);}
 .hw-c1 input,.hw-c2 textarea,.hw-c3 textarea,.hw-c2 select{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px;font-size:13px;outline:none;background:#fafbff;}
 .hw-c2 textarea,.hw-c3 textarea{resize:vertical;min-height:50px;}
-
-/* 링크 결과 */
 .link-result{display:none;background:#eff6ff;padding:15px;border-radius:14px;margin-bottom:15px;border:1px solid #93c5fd;}
-
-/* 문자 복사 박스 */
 .msg-box{background:#fffbeb;border:1.5px solid #fde68a;border-radius:14px;padding:16px 18px;margin-bottom:14px;display:none;}
 .msg-box-label{font-size:11px;font-weight:800;color:#92400e;margin-bottom:10px;letter-spacing:.5px;}
 .msg-box textarea{width:100%;border:1px solid #fde68a;border-radius:10px;padding:12px;font-size:13px;font-family:inherit;background:#fff;color:#1a1d2e;resize:none;min-height:110px;line-height:1.7;outline:none;}
 .msg-copy-btn{margin-top:8px;background:#f59e42;color:#fff;border:none;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:800;cursor:pointer;width:100%;}
-
-/* 버튼 */
 .btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;}
 .kakao-btn{grid-column:1/-1;background:#FEE500;color:#191919;border:none;border-radius:14px;padding:15px;font-weight:800;cursor:pointer;font-size:15px;margin-bottom:10px;}
 .btn-dl{padding:15px;background:var(--accent-g);color:#fff;border:none;border-radius:14px;font-size:14px;font-weight:800;cursor:pointer;}
 .btn-gh{padding:15px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:14px;font-size:14px;font-weight:800;cursor:pointer;}
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1d2e;color:#fff;padding:12px 24px;border-radius:30px;font-size:13px;font-weight:700;opacity:0;transition:opacity .3s;z-index:9999;pointer-events:none;}
 .toast.show{opacity:1;}
+
+/* 키 설정 모달 */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal{background:#fff;border-radius:20px;padding:28px 24px;max-width:480px;width:90%;max-height:85vh;overflow-y:auto;}
+.modal h2{font-size:18px;font-weight:800;color:var(--text);margin-bottom:6px;}
+.modal p{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6;}
+.key-field{margin-bottom:14px;}
+.key-field label{display:block;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.8px;margin-bottom:6px;}
+.key-field input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;font-family:monospace;outline:none;color:var(--text);}
+.key-field input:focus{border-color:var(--accent);}
+.key-hint{font-size:11px;color:#94a3b8;margin-top:4px;line-height:1.5;}
+.key-hint a{color:var(--accent);text-decoration:none;}
+.modal-save{width:100%;padding:13px;background:var(--accent-g);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;margin-top:8px;}
+.modal-save:hover{opacity:.9;}
+.key-status-bar{background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;font-size:13px;}
+.key-status-bar span{color:#166534;font-weight:700;}
+.key-edit-btn{background:none;border:1px solid #86efac;border-radius:8px;padding:5px 12px;font-size:12px;color:#16a34a;font-weight:700;cursor:pointer;}
+.key-missing-bar{background:#fef2f2;border:1.5px solid #fca5a5;border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;font-size:13px;}
+.key-missing-bar span{color:#991b1b;font-weight:700;}
+.key-set-btn{background:#ef4444;color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;}
 </style>
 </head>
 <body>
 <div class="wrap">
+
+<!-- 키 상태 표시 바 -->
+<div id="keyStatusBar"></div>
 
 <div class="header">
   <div class="hd-sub">성공하는 공부습관을 만드는</div>
@@ -131,13 +149,11 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
   <button style="width:100%;padding:10px;border:1.5px dashed #ccc;border-radius:10px;cursor:pointer;background:transparent;" onclick="addTodayHwRow()">+ 과제 추가</button>
 </div>
 
-<!-- 링크 결과 -->
 <div class="link-result" id="linkResult">
   <div style="font-size:11px;font-weight:800;color:#1d4ed8;margin-bottom:5px;">🌐 리포트 링크 (학부모 공유용)</div>
   <a id="resultUrl" href="#" target="_blank" style="font-size:13px;color:#2563eb;word-break:break-all;"></a>
 </div>
 
-<!-- 문자 메시지 복사 박스 -->
 <div class="msg-box" id="msgBox">
   <div class="msg-box-label">📱 카카오톡 실패 시 — 문자/카톡 직접 복사 붙여넣기</div>
   <textarea id="msgText" readonly></textarea>
@@ -149,71 +165,153 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
   <button class="btn-dl" id="saveDriveBtn" onclick="saveToDrive()">💾 1단계: 구글 드라이브 저장</button>
   <button class="btn-gh" id="ghBtn" onclick="deployToGitHubPages()">🔗 2단계: 웹 링크 생성</button>
 </div>
-<button style="width:100%;margin-top:12px;padding:10px;background:#e2e8f0;border:none;border-radius:10px;cursor:pointer;font-weight:bold;color:#475569;" onclick="resetKeys()">🔄 보안키 초기화</button>
+<button style="width:100%;margin-top:12px;padding:10px;background:#e2e8f0;border:none;border-radius:10px;cursor:pointer;font-weight:bold;color:#475569;" onclick="openKeyModal()">⚙️ API 키 설정 / 변경</button>
+<button style="width:100%;margin-top:8px;padding:10px;background:#fee2e2;border:none;border-radius:10px;cursor:pointer;font-weight:bold;color:#991b1b;" onclick="resetKeys()">🗑️ 저장된 키 전체 삭제</button>
 
 <div class="toast" id="toast"></div>
 </div>
 
+<!-- 키 설정 모달 -->
+<div class="modal-overlay" id="keyModal">
+  <div class="modal">
+    <h2>⚙️ API 키 설정</h2>
+    <p>키는 이 기기의 브라우저에만 저장되며 GitHub에 업로드되지 않아요.<br>최초 1회만 입력하면 이후 자동으로 사용됩니다.</p>
+
+    <div class="key-field">
+      <label>🤖 GEMINI API KEY</label>
+      <input type="password" id="k_gemini" placeholder="AIzaSy...">
+      <div class="key-hint">발급: <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> → Create API Key</div>
+    </div>
+
+    <div class="key-field">
+      <label>🐱 GITHUB PERSONAL ACCESS TOKEN</label>
+      <input type="password" id="k_gh" placeholder="ghp_...">
+      <div class="key-hint">발급: <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a> → Fine-grained tokens → Contents: Read & Write</div>
+    </div>
+
+    <div class="key-field">
+      <label>📦 GOOGLE APPS SCRIPT URL</label>
+      <input type="text" id="k_script" placeholder="https://script.google.com/macros/s/...">
+      <div class="key-hint">Apps Script 배포 후 URL 복사 → 배포 유형: 웹 앱 / 액세스: 모든 사용자</div>
+    </div>
+
+    <div class="key-field">
+      <label>💬 KAKAO JAVASCRIPT KEY</label>
+      <input type="text" id="k_kakao" placeholder="80a3ce...">
+      <div class="key-hint">발급: <a href="https://developers.kakao.com" target="_blank">developers.kakao.com</a> → 내 앱 → 앱 키 → JavaScript 키</div>
+    </div>
+
+    <div class="key-field">
+      <label>🐱 GITHUB 사용자명</label>
+      <input type="text" id="k_ghuser" placeholder="docssam1">
+    </div>
+
+    <div class="key-field">
+      <label>🐱 GITHUB 저장소명</label>
+      <input type="text" id="k_ghrepo" placeholder="gfield-report">
+    </div>
+
+    <button class="modal-save" onclick="saveKeys()">💾 저장하고 닫기</button>
+    <button style="width:100%;padding:10px;background:transparent;border:1px solid var(--border);border-radius:10px;cursor:pointer;color:var(--muted);margin-top:8px;font-size:13px;" onclick="closeKeyModal()">취소</button>
+  </div>
+</div>
+
 <script>
-// ── 설정값 ──
-const scriptUrl = "https://script.google.com/macros/s/AKfycbzUEMjV2Yfgvylt720snlM9ueDCE6aNId8tWIm5uWvUMcZdNJFypUNvZBK2K5CoxP8/exec";
-const geminiKey = "AIzaSyCiunVDFwgelojwIo24HjoCzdocIwnTAEM";
-const ghToken   = "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";
-const ghUser    = "docssam1";
-const ghRepo    = "gfield-report";
-const kakaoKey  = "80a3cebdeeebcc2563e570a6fe62d8da";
+// ── 키 관리 (localStorage — GitHub에 노출 안 됨) ──
+const KEYS = {
+  gemini:  'gf_gemini_key',
+  gh:      'gf_gh_token',
+  script:  'gf_script_url',
+  kakao:   'gf_kakao_key',
+  ghUser:  'gf_gh_user',
+  ghRepo:  'gf_gh_repo',
+};
+const getKey = k => localStorage.getItem(KEYS[k]) || '';
+const setKey = (k,v) => localStorage.setItem(KEYS[k], v.trim());
 
-// 카카오 SDK 초기화 — DOMContentLoaded 이후 보장
-function initKakao(){
-  try {
-    if(window.Kakao){
-      if(!Kakao.isInitialized()) Kakao.init(kakaoKey);
-    }
-  } catch(e){ console.warn('Kakao init:', e); }
+function openKeyModal(){
+  document.getElementById('k_gemini').value = getKey('gemini');
+  document.getElementById('k_gh').value     = getKey('gh');
+  document.getElementById('k_script').value = getKey('script');
+  document.getElementById('k_kakao').value  = getKey('kakao');
+  document.getElementById('k_ghuser').value = getKey('ghUser') || 'docssam1';
+  document.getElementById('k_ghrepo').value = getKey('ghRepo') || 'gfield-report';
+  document.getElementById('keyModal').classList.add('show');
 }
-if(document.readyState === 'loading'){
-  document.addEventListener('DOMContentLoaded', initKakao);
-} else { initKakao(); }
+function closeKeyModal(){ document.getElementById('keyModal').classList.remove('show'); }
+function saveKeys(){
+  setKey('gemini', document.getElementById('k_gemini').value);
+  setKey('gh',     document.getElementById('k_gh').value);
+  setKey('script', document.getElementById('k_script').value);
+  setKey('kakao',  document.getElementById('k_kakao').value);
+  setKey('ghUser', document.getElementById('k_ghuser').value || 'docssam1');
+  setKey('ghRepo', document.getElementById('k_ghrepo').value || 'gfield-report');
+  closeKeyModal();
+  renderKeyStatus();
+  initKakao();
+  showToast('✅ 키가 저장되었습니다!');
+}
+function resetKeys(){
+  if(!confirm('저장된 모든 키를 삭제하시겠습니까?')) return;
+  Object.values(KEYS).forEach(k => localStorage.removeItem(k));
+  renderKeyStatus();
+  showToast('🗑️ 삭제 완료');
+}
 
-let classType = '정규수업';
-let hwPhotos = [], classPhotos = [];
+function renderKeyStatus(){
+  const bar = document.getElementById('keyStatusBar');
+  const allSet = getKey('gemini') && getKey('gh') && getKey('script') && getKey('kakao');
+  if(allSet){
+    bar.innerHTML=`<div class="key-status-bar"><span>✅ API 키 설정 완료</span><button class="key-edit-btn" onclick="openKeyModal()">키 변경</button></div>`;
+  } else {
+    bar.innerHTML=`<div class="key-missing-bar"><span>⚠️ API 키를 먼저 설정해 주세요</span><button class="key-set-btn" onclick="openKeyModal()">키 입력하기</button></div>`;
+  }
+}
 
-document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
+// 카카오 초기화
+function initKakao(){
+  const key = getKey('kakao');
+  if(!key || !window.Kakao) return;
+  try { if(!Kakao.isInitialized()) Kakao.init(key); } catch(e){}
+}
+window.addEventListener('DOMContentLoaded', ()=>{ renderKeyStatus(); initKakao(); });
+// SDK 로드 후 초기화 보장
+if(document.readyState !== 'loading') { renderKeyStatus(); initKakao(); }
+
+let classType='정규수업', hwPhotos=[], classPhotos=[];
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
+});
 
 function setType(el){
   document.querySelectorAll('.hd-tag').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active'); classType = el.dataset.type;
-  document.getElementById('hdTitle').textContent = `지필드 영재교육 (${classType})`;
+  el.classList.add('active'); classType=el.dataset.type;
+  document.getElementById('hdTitle').textContent=`지필드 영재교육 (${classType})`;
   updateMsgBox();
-}
-
-function resetKeys(){
-  if(confirm('저장된 키를 지우시겠습니까?')){
-    localStorage.removeItem('gemini_key'); localStorage.removeItem('gh_token');
-    alert('초기화 완료!');
-  }
 }
 
 // ── 제미나이 AI ──
 async function askGemini(areaId){
+  const gKey = getKey('gemini');
+  if(!gKey){ openKeyModal(); showToast('Gemini 키를 먼저 입력해 주세요.'); return; }
   let targets = areaId==='noticeArea' ? [document.getElementById(areaId)] : document.querySelectorAll(`#${areaId} textarea.v-content`);
-  let hasText=false, errCount=0, lastErr='';
+  let hasText=false, errCnt=0, lastErr='';
   for(let t of targets){
-    const orig = t.value.trim();
-    if(!orig || orig.startsWith('✨')) continue;
+    const orig=t.value.trim();
+    if(!orig||orig.startsWith('✨')) continue;
     hasText=true; t.value='✨ 다듬는 중...';
     try {
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,{
+      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${gKey}`,{
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({contents:[{parts:[{text:`다음은 학원 수업 리포트 내용입니다. 오타를 수정하고 전문적이며 친절한 어조로 다듬어주세요. 결과만 출력하세요:\n\n${orig}`}]}]})
+        body:JSON.stringify({contents:[{parts:[{text:`다음은 학원 수업 리포트 내용입니다. 오타를 수정하고 전문적이며 친절한 어조로 다듬어주세요. 결과만 출력하세요:\n\n${orig}`}]}]})
       });
-      const d = await r.json();
+      const d=await r.json();
       if(!r.ok) throw new Error(d.error?.message||'API 오류');
-      t.value = d.candidates[0].content.parts[0].text.trim();
-    } catch(e){ t.value=orig; errCount++; lastErr=e.message; }
+      t.value=d.candidates[0].content.parts[0].text.trim();
+    } catch(e){ t.value=orig; errCnt++; lastErr=e.message; }
   }
   if(!hasText) showToast('다듬을 내용을 입력해 주세요.');
-  else if(errCount>0) alert(`❌ AI 연결 실패\n원인: ${lastErr}`);
+  else if(errCnt>0) alert(`❌ AI 연결 실패\n원인: ${lastErr}\n\n키를 다시 확인해 주세요.`);
   else showToast('✨ 다듬기 완료!');
 }
 
@@ -223,9 +321,8 @@ function addHwRow(course='', content=''){
   const d=document.createElement('div'); d.className='hw-row'; d.id=id;
   d.innerHTML=`<div class="hw-c1"><input type="text" class="v-course" placeholder="과정명" value="${course}"></div>
     <div class="hw-c2" style="position:relative;"><textarea class="v-content" placeholder="코멘트">${content}</textarea>
-    <button style="border:none;background:none;color:red;cursor:pointer;position:absolute;right:8px;top:8px;" onclick="getElementById('${id}').remove()">✕</button></div>`;
-  // 버튼 클릭 수정
-  d.querySelector('button').onclick = ()=>d.remove();
+    <button style="border:none;background:none;color:red;cursor:pointer;position:absolute;right:8px;top:8px;">✕</button></div>`;
+  d.querySelector('button').onclick=()=>d.remove();
   document.getElementById('hwList').appendChild(d);
 }
 function addSubjRow(subj='', content=''){
@@ -270,7 +367,6 @@ function addVideo(){
   document.getElementById('videoList').appendChild(d);
   document.getElementById('videoUrlInput').value='';
 }
-
 addHwRow(); addSubjRow(); addTodayHwRow(); addResourceRow();
 
 // ── 사진 ──
@@ -300,7 +396,7 @@ function renderPhotos(cid, arr){
       <button style="position:absolute;top:-5px;left:-5px;background:red;color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:11px;">✕</button>`;
     const inputs=d.querySelectorAll('input');
     inputs[0].value=p.driveUrl; inputs[0].oninput=e=>p.driveUrl=e.target.value;
-    inputs[1].value=p.caption; inputs[1].oninput=e=>p.caption=e.target.value;
+    inputs[1].value=p.caption;  inputs[1].oninput=e=>p.caption=e.target.value;
     d.querySelector('button').onclick=()=>removePhoto(p.id,cid);
     g.appendChild(d);
   });
@@ -311,7 +407,6 @@ function removePhoto(pid,cid){
   renderPhotos(cid,(cid==='hwPhotos')?hwPhotos:classPhotos);
 }
 
-// ── 이전 과제 불러오기 ──
 function loadHomework(e){
   const file=e.target.files[0]; if(!file) return;
   const reader=new FileReader();
@@ -357,7 +452,6 @@ function buildSnapshot(){
       hideD+=`<div class="data-today-hw" data-course="${esc(c)}" data-content="${esc(ct)}" style="display:none;"></div>`;
     }
   });
-
   const photoRender=arr=>arr.map(p=>`<div style="margin-bottom:20px;">${p.driveUrl?`<a href="${esc(p.driveUrl)}" target="_blank">`:''}<img src="${p.src}" style="width:100%;border-radius:12px;border:1px solid #eee;">${p.driveUrl?'</a>':''}${p.caption?`<div style="text-align:center;margin-top:5px;font-size:13px;color:#666;">${esc(p.caption)}</div>`:''}</div>`).join('');
   const sec=(title,icon,content)=>content?`<div style="background:#fff;border-radius:20px;padding:24px 20px;margin-bottom:16px;box-shadow:0 4px 15px rgba(0,0,0,.03);"><div style="font-size:16px;font-weight:800;color:#16417C;margin-bottom:16px;border-bottom:2px solid #16417C;display:inline-block;padding-bottom:4px;">${icon} ${title}</div>${content}</div>`:'';
 
@@ -397,6 +491,8 @@ function buildSnapshot(){
 
 // ── 구글 드라이브 저장 ──
 async function saveToDrive(){
+  const sUrl=getKey('script');
+  if(!sUrl){ openKeyModal(); showToast('Google Apps Script URL을 먼저 설정해 주세요.'); return; }
   const name=document.getElementById('nameInput').value.trim();
   if(!name){showToast('학생 이름을 입력해 주세요.');return;}
   const btn=document.getElementById('saveDriveBtn');
@@ -404,21 +500,22 @@ async function saveToDrive(){
   const dateStr=document.getElementById('dateInput').value.replace(/-/g,'');
   const fileName=`지필드_${dateStr}_${name}_${classType}_리포트.html`;
   try {
-    const res=await fetch(scriptUrl,{
+    const res=await fetch(sUrl,{
       method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({studentName:name,fileName,htmlContent:buildSnapshot()}),
       redirect:'follow'
     });
     const result=await res.json();
-    if(result.result==='success'){
-      setLink(result.url); showToast(`✅ '${name}' 폴더에 저장 완료!`);
-    } else throw new Error(result.error);
+    if(result.result==='success'){ setLink(result.url); showToast(`✅ '${name}' 폴더에 저장 완료!`); }
+    else throw new Error(result.error);
   } catch(e){ alert('❌ 구글 드라이브 저장 실패!\n원인: '+e.message); }
   finally { btn.disabled=false; btn.textContent='💾 1단계: 구글 드라이브 저장'; }
 }
 
 // ── GitHub Pages 배포 ──
 async function deployToGitHubPages(){
+  const ghTok=getKey('gh'), ghU=getKey('ghUser')||'docssam1', ghR=getKey('ghRepo')||'gfield-report';
+  if(!ghTok){ openKeyModal(); showToast('GitHub 토큰을 먼저 설정해 주세요.'); return; }
   const btn=document.getElementById('ghBtn');
   btn.disabled=true; btn.textContent='⏳ 배포 중...';
   try {
@@ -427,16 +524,16 @@ async function deployToGitHubPages(){
     const fileName=`지필드_${dateStr}_${name}_${classType}_리포트.html`;
     const path=`${name}/${fileName}`;
     const content=btoa(unescape(encodeURIComponent(buildSnapshot())));
-    const apiUrl=`https://api.github.com/repos/${ghUser}/${ghRepo}/contents/${encodeURIComponent(path)}`;
-    const headers={'Authorization':'Bearer '+ghToken,'Content-Type':'application/json'};
+    const apiUrl=`https://api.github.com/repos/${ghU}/${ghR}/contents/${encodeURIComponent(path)}`;
+    const headers={'Authorization':'Bearer '+ghTok,'Content-Type':'application/json'};
     let sha=null;
     const chk=await fetch(apiUrl,{headers});
     if(chk.ok) sha=(await chk.json()).sha;
     const body={message:`[자동배포] ${name} 리포트`,content,branch:'main'};
     if(sha) body.sha=sha;
     const up=await fetch(apiUrl,{method:'PUT',headers,body:JSON.stringify(body)});
-    if(!up.ok) throw new Error('GitHub 업로드 실패');
-    const url=`https://${ghUser}.github.io/${ghRepo}/${name}/${fileName}`;
+    if(!up.ok) throw new Error('GitHub 업로드 실패 — 토큰 권한(Contents: Write)을 확인해 주세요.');
+    const url=`https://${ghU}.github.io/${ghR}/${path}`;
     setLink(url); showToast('🎉 배포 완료! (30초~1분 후 접속 가능)');
   } catch(e){ alert('❌ GitHub 오류: '+e.message); }
   finally { btn.disabled=false; btn.textContent='🔗 2단계: 웹 링크 생성'; }
@@ -449,87 +546,68 @@ function setLink(url){
   updateMsgBox(url);
 }
 
-// ── 시간대별 인사 문구 ──
 function getGreeting(){
-  const now=new Date();
-  const h=now.getHours();
-  const day=now.getDay(); // 0=일, 6=토
+  const h=new Date().getHours(), day=new Date().getDay();
   if(day===0||day===6) return '즐거운 주말 되세요 😊';
   if(h>=6&&h<12) return '좋은 아침 되세요 🌅';
   if(h>=12&&h<20) return '즐거운 오후 되세요 ☀️';
   return '평안한 밤 되세요 🌙';
 }
-
 function updateMsgBox(url){
-  const currentUrl = url || document.getElementById('resultUrl').href;
-  if(!currentUrl || currentUrl==='#') return;
+  const cur=url||document.getElementById('resultUrl').href;
+  if(!cur||cur==='#') return;
   const name=document.getElementById('nameInput').value.trim()||'학생';
-  const rawD=document.getElementById('dateInput').value;
-  const d=new Date(rawD+'T00:00:00');
-  const yy=d.getFullYear()%100, mm=d.getMonth()+1, dd=d.getDate();
-  const greeting=getGreeting();
-  const msg=`안녕하세요, 어머니 🙂\n지필드 영재교육 노관호입니다.\n\n${yy}년 ${mm}월 ${dd}일 ${name} 학생의 학습 리포트입니다.\n\n${currentUrl}\n\n${greeting}`;
+  const d=new Date(document.getElementById('dateInput').value+'T00:00:00');
+  const msg=`안녕하세요, 어머니 🙂\n지필드 영재교육 노관호입니다.\n\n${d.getFullYear()%100}년 ${d.getMonth()+1}월 ${d.getDate()}일 ${name} 학생의 학습 리포트입니다.\n\n${cur}\n\n${getGreeting()}`;
   document.getElementById('msgText').value=msg;
   document.getElementById('msgBox').style.display='block';
 }
-
 function copyMsg(){
   const t=document.getElementById('msgText');
   t.select(); t.setSelectionRange(0,99999);
-  navigator.clipboard.writeText(t.value).then(()=>showToast('📋 메시지가 복사되었습니다!'))
-    .catch(()=>{ document.execCommand('copy'); showToast('📋 복사 완료!'); });
+  navigator.clipboard.writeText(t.value).then(()=>showToast('📋 메시지가 복사되었습니다!')).catch(()=>{document.execCommand('copy');showToast('📋 복사 완료!');});
 }
 
 // ── 카카오톡 공유 ──
 function shareKakao(){
   const url=document.getElementById('resultUrl').href;
-  if(!url||url==='#'){
-    alert('🚨 먼저 [2단계: 웹 링크 생성] 버튼을 눌러주세요!');
-    return;
+  if(!url||url==='#'){ alert('🚨 먼저 [2단계: 웹 링크 생성] 버튼을 눌러주세요!'); return; }
+  const isOnGithubPages=window.location.hostname.includes('github.io');
+  if(!isOnGithubPages){
+    updateMsgBox(url);
+    showToast('📱 배포 페이지(github.io)에서 눌러주세요! 아래 메시지를 복사해 보내주세요.');
+    document.getElementById('msgBox').scrollIntoView({behavior:'smooth'}); return;
+  }
+  if(!window.Kakao){ alert('카카오 SDK 로딩 중입니다. 잠시 후 다시 시도해 주세요.'); return; }
+  if(!Kakao.isInitialized()){
+    const kKey=getKey('kakao');
+    if(!kKey){ openKeyModal(); return; }
+    try{ Kakao.init(kKey); }catch(e){ alert('카카오 초기화 실패: '+e.message); return; }
   }
   const name=document.getElementById('nameInput').value.trim()||'학생';
-  const rawD=document.getElementById('dateInput').value;
-  const d=new Date(rawD+'T00:00:00');
+  const d=new Date(document.getElementById('dateInput').value+'T00:00:00');
   const dateStr=`${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일`;
-
-  // ⚠️ 카카오 공유는 반드시 github.io 도메인에서 실행해야 작동!
-  const isOnGithubPages = window.location.hostname.includes('github.io');
-  if(!isOnGithubPages){
-    // 현재 아티팩트(claude.ai)나 로컬에서 실행 중 → 문자 복사로 안내
-    updateMsgBox(url);
-    showToast('📱 카카오 공유는 배포 페이지에서만 작동해요. 아래 메시지를 복사해 보내주세요!');
-    document.getElementById('msgBox').scrollIntoView({behavior:'smooth'});
-    return;
-  }
-
-  // SDK 확인
-  if(!window.Kakao){ alert('카카오 SDK 로딩 중입니다. 잠시 후 다시 시도해 주세요.'); return; }
-  if(!Kakao.isInitialized()){ try{ Kakao.init(kakaoKey); }catch(e){ alert('카카오 초기화 실패: '+e.message); return; } }
-
   try {
     Kakao.Share.sendDefault({
       objectType:'feed',
       content:{
         title:`📚 ${name} 학생 학습 리포트`,
-        description:`[지필드 영재교육] ${dateStr} (${classType})\n학습 리포트가 도착했습니다. 아래 버튼을 눌러 확인하세요.`,
-        // 카카오 OG 크롤러가 읽을 수 있는 공개 이미지 URL 사용
-        imageUrl:'https://docssam1.github.io/gfield-report/og-cover.png',
+        description:`[지필드 영재교육] ${dateStr} (${classType})\n학습 리포트가 도착했습니다.`,
+        imageUrl:`https://${getKey('ghUser')||'docssam1'}.github.io/${getKey('ghRepo')||'gfield-report'}/og-cover.png`,
         link:{mobileWebUrl:url,webUrl:url}
       },
       buttons:[{title:'📖 리포트 확인하기',link:{mobileWebUrl:url,webUrl:url}}]
     });
   } catch(e){
-    console.error('Kakao share error:', e);
     updateMsgBox(url);
     showToast('카카오 오류 → 아래 메시지를 복사해 보내주세요!');
     document.getElementById('msgBox').scrollIntoView({behavior:'smooth'});
   }
 }
 
-function showToast(msg){
-  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),3000);
-}
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
+// 모달 외부 클릭 닫기
+document.getElementById('keyModal').addEventListener('click',e=>{ if(e.target===e.currentTarget) closeKeyModal(); });
 </script>
 </body>
 </html>
