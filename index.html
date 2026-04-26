@@ -259,19 +259,33 @@ function initKakao(){const key=getKey('kakao');if(!key||!window.Kakao) return;tr
 
 // ── 모드 전환 ──
 function toggleMode(){
+
   const isConsult = document.querySelector('input[name="docType"]:checked').value === '상담';
+
   document.getElementById('consultationPanel').style.display = isConsult ? 'block' : 'none';
+
   document.getElementById('mainContentSection').style.display = isConsult ? 'none' : 'block';
+
   document.getElementById('noticeSection').style.display = isConsult ? 'none' : 'block';
+
   
-  // 버튼 디스플레이 조정
+
+  // 버튼 디스플레이 조정 (카톡 버튼은 항상 보이게 유지!)
+
   document.getElementById('btnAligo').style.display = isConsult ? 'block' : 'none';
+
   document.getElementById('saveDriveBtn').style.display = isConsult ? 'none' : 'block';
+
   document.getElementById('ghBtn').style.display = isConsult ? 'none' : 'block';
-  document.getElementById('kakaoBtn').style.display = isConsult ? 'none' : 'block';
+
+  document.getElementById('kakaoBtn').style.display = 'block'; // 👈 상담이어도 보이게 수정
+
   document.getElementById('notionBtn').style.gridColumn = isConsult ? '1 / -1' : 'auto'; 
+
   
+
   updateMsgBox();
+
 }
 
 // ── 상담 세부 타입 전환 (계좌 표시 여부 제어) ──
@@ -658,14 +672,87 @@ https://map.naver.com/local/siteview.nhn?code=1125444471`;
 
 function copyMsg(){const t=document.getElementById('msgText');t.select();t.setSelectionRange(0,99999);navigator.clipboard.writeText(t.value).then(()=>showToast('📋 복사되었습니다!')).catch(()=>{document.execCommand('copy');showToast('📋 복사 완료!');});}
 function shareKakao(){
-  const url=document.getElementById('resultUrl').href;if(!url||url==='#'){alert('🚨 먼저 링크를 생성해 주세요!');return;}
+
+  const url = document.getElementById('resultUrl').href;
+
+  if(!url || url === '#'){alert('🚨 먼저 2단계: 웹 링크 생성 버튼을 눌러주세요!'); return;}
+
   if(!window.location.hostname.includes('github.io')){updateMsgBox(url);showToast('📱 배포 페이지(github.io)에서 눌러주세요!');document.getElementById('msgBox').scrollIntoView({behavior:'smooth'});return;}
+
   if(!window.Kakao){alert('카카오 SDK 로딩 중입니다.');return;}
+
   if(!Kakao.isInitialized()){const k=getKey('kakao');if(!k){openKeyModal();return;}try{Kakao.init(k);}catch(e){return;}}
-  const name=document.getElementById('nameInput').value.trim()||'학생';
-  const d=new Date(document.getElementById('dateInput').value+'T00:00:00');const dateStr=`${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일`;const isAbsent=classType==='결석';
-  try{Kakao.Share.sendDefault({objectType:'feed',content:{title:isAbsent?`🚫 ${name} 학생 결석 공지`:`📚 ${name} 학생 학습 리포트`,description:`안녕하세요, 어머니 🙂 지필드 영재교육 노관호입니다.\n${dateStr} (${classType}) ${isAbsent?'결석 공지':'학습 리포트'}입니다.\n${getGreeting()}`,imageUrl:`https://${getKey('ghUser')||'docssam1'}.github.io/${getKey('ghRepo')||'gfield-report'}/og-cover.png`,link:{mobileWebUrl:url,webUrl:url}},buttons:[{title:isAbsent?'📋 결석 공지 확인':'📖 리포트 확인하기',link:{mobileWebUrl:url,webUrl:url}}]});}catch(e){updateMsgBox(url);showToast('카카오 오류 → 아래 메시지를 복사해 보내주세요!');document.getElementById('msgBox').scrollIntoView({behavior:'smooth'});}
+
+  
+
+  const docType = document.querySelector('input[name="docType"]:checked').value;
+
+  const name = document.getElementById('nameInput').value.trim() || '학생';
+
+  let kTitle = '', kDesc = '';
+
+
+
+  if (docType === '상담') {
+
+    // 📞 상담/테스트 모드일 때 카톡 내용
+
+    const cType = document.querySelector('input[name="c_type"]:checked').value;
+
+    kTitle = (cType === '테스트진행') ? `📝 ${name} 학생 테스트 안내` : `📞 ${name} 학생 상담 안내`;
+
+    // 카톡 설명란에는 자동 생성된 메시지 앞부분을 잘라서 보여줍니다
+
+    kDesc = document.getElementById('msgText').value.substring(0, 150) + "..."; 
+
+  } else {
+
+    // 📚 기존 리포트 모드일 때 카톡 내용
+
+    const d = new Date(document.getElementById('dateInput').value+'T00:00:00');
+
+    const dateStr = `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일`;
+
+    const isAbsent = classType === '결석';
+
+    kTitle = isAbsent ? `🚫 ${name} 학생 결석 공지` : `📚 ${name} 학생 학습 리포트`;
+
+    kDesc = `안녕하세요, 어머니 🙂 지필드 영재교육 노관호입니다.\n${dateStr} (${classType}) ${isAbsent?'결석 공지':'학습 리포트'}입니다.\n${getGreeting()}`;
+
+  }
+
+
+
+  try {
+
+    Kakao.Share.sendDefault({
+
+      objectType: 'feed',
+
+      content: {
+
+        title: kTitle,
+
+        description: kDesc,
+
+        imageUrl: `https://${getKey('ghUser')||'docssam1'}.github.io/${getKey('ghRepo')||'gfield-report'}/og-cover.png`,
+
+        link: { mobileWebUrl: url, webUrl: url }
+
+      },
+
+      buttons: [{ title: docType === '상담' ? '상담 정보 확인하기' : (classType === '결석' ? '📋 결석 공지 확인' : '📖 리포트 확인하기'), link: { mobileWebUrl: url, webUrl: url } }]
+
+    });
+
+  } catch(e) {
+
+    updateMsgBox(url); showToast('카카오 오류 → 직접 복사해서 보내주세요!'); document.getElementById('msgBox').scrollIntoView({behavior:'smooth'});
+
+  }
+
 }
+
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
 document.addEventListener('click',e=>{if(e.target===document.getElementById('keyModal')) closeKeyModal();if(e.target===document.getElementById('driveModal')) closeDriveModal();});
 </script>
