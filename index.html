@@ -82,15 +82,6 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
 .dashboard-bar{background:#e0e7ff;border:1.5px solid #a5b4fc;border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;font-size:13px;}
 .dashboard-bar span{color:#3730a3;font-weight:700;}
 .dashboard-bar a{background:#4f46e5;color:#fff;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;text-decoration:none;}
-
-
-/* ===== G-Field 추가 패치: 학부모 피드백/상담폼/전송방식 ===== */
-.gf-inline-panel{background:#f8fafc;border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin:12px 0;}
-.gf-inline-panel label{font-size:12px;font-weight:800;color:var(--muted);display:block;margin-bottom:6px;}
-.gf-inline-panel input,.gf-inline-panel textarea{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;font-family:inherit;outline:none;background:#fff;}
-.gf-send-box{background:#eef6ff;border:1.5px solid #bfdbfe;border-radius:14px;padding:14px 16px;margin-bottom:14px;font-size:13px;}
-.gf-send-box label{font-weight:800;margin-right:14px;cursor:pointer;color:#16417C;}
-
 </style>
 </head>
 <body>
@@ -133,7 +124,6 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
   <div style="margin-bottom:12px; font-weight:700;">
     <label style="cursor:pointer;"><input type="radio" name="c_type" value="단순상담" checked onclick="toggleConsultType()"> 단순 상담</label> &nbsp;&nbsp;
     <label style="cursor:pointer;"><input type="radio" name="c_type" value="테스트진행" onclick="toggleConsultType()"> 테스트 진행</label>
-    <label style="cursor:pointer; margin-left:14px;"><input type="radio" name="c_type" value="대면상담" onclick="toggleConsultType()"> 대면 상담 안내</label>
   </div>
   
   <div id="accountSelectDiv" style="display:none; background:#fff; padding:12px; border-radius:8px; border:1px solid #fcd34d; margin-bottom:12px;">
@@ -150,9 +140,6 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
   <div style="font-size:11px; font-weight:bold; color:#92400e; margin-bottom:4px;">일정 (상담 또는 테스트 일시):</div>
   <input type="datetime-local" id="c_date" style="width:100%; border:1.5px solid #fcd34d; border-radius:8px; padding:10px; margin-bottom:10px; outline:none; font-family:inherit;" onchange="updateMsgBox()">
   <textarea id="c_content" placeholder="상담 메모 및 특이사항을 남겨주세요..." style="width:100%; border:1.5px solid #fcd34d; border-radius:8px; padding:10px; min-height:80px; outline:none; resize:none; font-family:inherit;"></textarea>
-  <div style="font-size:11px; font-weight:bold; color:#92400e; margin:10px 0 4px;">참고영상 또는 자료 링크 (선택):</div>
-  <input type="url" id="c_extraLink" placeholder="예: https://..." style="width:100%; border:1.5px solid #fcd34d; border-radius:8px; padding:10px; margin-bottom:10px; outline:none; font-family:inherit;" oninput="updateMsgBox()">
-
 </div>
 
 <div class="absent-panel" id="absentPanel">
@@ -193,12 +180,6 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
 </div>
 
 <div class="link-result" id="linkResult"><div style="font-size:11px;font-weight:800;color:#1d4ed8;margin-bottom:5px;">🌐 리포트 링크 (학부모 공유용)</div><a id="resultUrl" href="#" target="_blank" style="font-size:13px;color:#2563eb;word-break:break-all;"></a></div>
-<div class="gf-send-box" id="sendTypeBox">
-  <div style="font-weight:900;margin-bottom:8px;color:#1d4ed8;">📤 전송 방식 선택</div>
-  <label><input type="radio" name="sendType" value="kakao" checked> 카카오톡 전송</label>
-  <label><input type="radio" name="sendType" value="sms"> 알리고 문자 전송</label>
-  <div style="font-size:11px;color:#64748b;margin-top:6px;">※ 단순 상담은 기록만 남기고 문자/카톡 전송을 권장하지 않습니다.</div>
-</div>
 <div class="msg-box" id="msgBox">
   <div style="font-size:11px;font-weight:800;color:#92400e;margin-bottom:10px;">📱 안내 메시지 (카톡/문자용)</div>
   <textarea id="msgText" readonly></textarea>
@@ -207,7 +188,7 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
 </div>
 
 <div class="btns">
-  <button class="kakao-btn" id="kakaoBtn" onclick="shareKakao()">💬 카카오톡으로 리포트 보내기</button>
+  <button class="kakao-btn" id="kakaoBtn" onclick="shareKakao()">💬 카카오톡으로 보내기 (리포트/안내문)</button>
   <button class="btn-dl" id="saveDriveBtn" onclick="saveToDrive()">💾 1단계: 구글 드라이브 저장</button>
   <button class="btn-gh" id="ghBtn" onclick="deployToGitHubPages()">🔗 2단계: 웹 링크 생성</button>
   <button class="notion-btn" id="notionBtn" onclick="saveToNotion()">📓 3단계: 노션 캘린더 자동 등록</button>
@@ -225,7 +206,7 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
     <div class="key-field"><label>🐱 GITHUB TOKEN</label><input type="password" id="k_gh" placeholder="github_pat_..."></div>
     <div class="key-field"><label>📦 GOOGLE APPS SCRIPT URL</label><input type="text" id="k_script" placeholder="https://script.google.com/macros/s/..."></div>
     <div class="key-field"><label>💬 KAKAO JAVASCRIPT KEY</label><input type="text" id="k_kakao" placeholder="80a3ce..."></div>
-    <div class="key-field"><label>📓 NOTION API KEY</label><input type="password" id="k_notion_key" placeholder="secret_..."><div class="key-hint">발급: <a href="https://www.notion.so/my-integrations" target="_blank">노션 내 통합문서</a></div></div>
+    <div class="key-field"><label>📓 NOTION API KEY</label><input type="password" id="k_notion_key" placeholder="secret_..."></div>
     <div class="key-field"><label>📓 NOTION DATABASE ID</label><input type="text" id="k_notion_db" placeholder="1234567890abcdef..."></div>
     <div class="key-field"><label>🐱 GITHUB 사용자명</label><input type="text" id="k_ghuser" placeholder="docssam1"></div>
     <div class="key-field"><label>🐱 GITHUB 저장소명</label><input type="text" id="k_ghrepo" placeholder="gfield-report"></div>
@@ -233,18 +214,15 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
     <button style="width:100%;padding:10px;background:transparent;border:1px solid var(--border);border-radius:10px;cursor:pointer;color:var(--muted);margin-top:8px;font-size:13px;" onclick="closeKeyModal()">취소</button>
   </div>
 </div>
-
 <div class="modal-overlay" id="driveModal">
   <div class="drive-modal">
     <h2 style="margin-bottom:6px;">📋 드라이브 학생 기록 불러오기</h2>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">이전 리포트 내용을 클릭하여 현재 폼에 복사합니다.</p>
     <div id="driveFileList"><div style="text-align:center;padding:20px;color:var(--muted);">⏳ 불러오는 중...</div></div>
     <button style="width:100%;padding:10px;background:transparent;border:1px solid var(--border);border-radius:10px;cursor:pointer;color:var(--muted);margin-top:12px;font-size:13px;" onclick="closeDriveModal()">닫기</button>
   </div>
 </div>
 
 <script>
-// ── 키 관리 (노션 추가됨) ──
 const KEYS={gemini:'gf_gemini_key',gh:'gf_gh_token',script:'gf_script_url',kakao:'gf_kakao_key',notionKey:'gf_notion_key',notionDb:'gf_notion_db',ghUser:'gf_gh_user',ghRepo:'gf_gh_repo'};
 const getKey=k=>localStorage.getItem(KEYS[k])||'';
 const setKey=(k,v)=>localStorage.setItem(KEYS[k],v.trim());
@@ -261,53 +239,28 @@ function saveKeys(){
   setKey('notionDb',document.getElementById('k_notion_db').value);
   setKey('ghUser',document.getElementById('k_ghuser').value||'docssam1');
   setKey('ghRepo',document.getElementById('k_ghrepo').value||'gfield-report');
-  closeKeyModal();renderKeyStatus();initKakao();showToast('✅ 설정이 저장되었습니다!');
+  closeKeyModal();renderKeyStatus();initKakao();showToast('✅ 설정 저장 완료!');
 }
-function resetKeys(){
-  if(!confirm('저장된 모든 설정을 삭제하시겠습니까?')) return;
-  Object.values(KEYS).forEach(k=>localStorage.removeItem(k));
-  renderKeyStatus();showToast('🗑️ 삭제 완료');
-}
+function resetKeys(){if(confirm('모두 삭제하시겠습니까?')){Object.values(KEYS).forEach(k=>localStorage.removeItem(k));renderKeyStatus();showToast('🗑️ 삭제 완료');}}
 function renderKeyStatus(){
   const bar=document.getElementById('keyStatusBar');
   const ok=getKey('gemini')&&getKey('gh')&&getKey('script')&&getKey('kakao');
-  bar.innerHTML=ok?`<div class="key-status-bar"><span>✅ API 키 설정 완료</span><button class="key-edit-btn" onclick="openKeyModal()">키 변경</button></div>`
-    :`<div class="key-missing-bar"><span>⚠️ API 키를 먼저 설정해 주세요</span><button class="key-set-btn" onclick="openKeyModal()">설정 열기</button></div>`;
+  bar.innerHTML=ok?`<div class="key-status-bar"><span>✅ API 키 설정 완료</span><button class="key-edit-btn" onclick="openKeyModal()">키 변경</button></div>`:`<div class="key-missing-bar"><span>⚠️ API 키를 먼저 설정해 주세요</span><button class="key-set-btn" onclick="openKeyModal()">설정 열기</button></div>`;
 }
-function initKakao(){const key=getKey('kakao');if(!key||!window.Kakao) return;try{if(!Kakao.isInitialized()) Kakao.init(key);}catch(e){}}
+function initKakao(){const key=getKey('kakao');if(!key||!window.Kakao)return;try{if(!Kakao.isInitialized()) Kakao.init(key);}catch(e){}}
 
-// ── 모드 전환 ──
 function toggleMode(){
-
   const isConsult = document.querySelector('input[name="docType"]:checked').value === '상담';
-
   document.getElementById('consultationPanel').style.display = isConsult ? 'block' : 'none';
-
   document.getElementById('mainContentSection').style.display = isConsult ? 'none' : 'block';
-
   document.getElementById('noticeSection').style.display = isConsult ? 'none' : 'block';
-
-  
-
-  // 버튼 디스플레이 조정 (카톡 버튼은 항상 보이게 유지!)
-
   document.getElementById('btnAligo').style.display = isConsult ? 'block' : 'none';
-
   document.getElementById('saveDriveBtn').style.display = isConsult ? 'none' : 'block';
-
   document.getElementById('ghBtn').style.display = isConsult ? 'none' : 'block';
-
-  document.getElementById('kakaoBtn').style.display = 'block'; // 👈 상담이어도 보이게 수정
-
+  document.getElementById('kakaoBtn').style.display = 'block'; // 상담이든 리포트든 항상 보이게 유지
   document.getElementById('notionBtn').style.gridColumn = isConsult ? '1 / -1' : 'auto'; 
-
-  
-
   updateMsgBox();
-
 }
-
-// ── 상담 세부 타입 전환 (계좌 표시 여부 제어) ──
 function toggleConsultType() {
   const isTest = document.querySelector('input[name="c_type"]:checked').value === '테스트진행';
   document.getElementById('accountSelectDiv').style.display = isTest ? 'block' : 'none';
@@ -322,7 +275,6 @@ function setType(el){
   el.classList.add('active');classType=el.dataset.type;
   document.getElementById('hdTitle').textContent=`지필드 영재교육 (${classType})`;
   const isAbsent=classType==='결석';
-  
   if(document.querySelector('input[name="docType"]:checked').value !== '상담') {
     document.getElementById('absentPanel').classList.toggle('show',isAbsent);
     document.getElementById('mainContentSection').style.display=isAbsent?'none':'block';
@@ -330,51 +282,25 @@ function setType(el){
   updateMsgBox();
 }
 function toggleMakeupDate(){document.getElementById('makeupDateField').style.display=document.getElementById('absentMakeupType').value==='decided'?'block':'none';}
+function getDayName(dateStr) {const days=['일','월','화','수','목','금','토']; return days[new Date(dateStr).getDay()];}
 
-// ── 요일 구하기 ──
-function getDayName(dateStr) {
-  const days = ['일', '월', '화', '수', '목', '금', '토'];
-  return days[new Date(dateStr).getDay()];
-}
-
-// ── AI 기능 (생략 없이 유지) ──
 const STYLE_PROMPT=`당신은 지필드 영재교육 선생님의 글쓰기 보조입니다. 다음 글의 맞춤법과 띄어쓰기를 교정하되, 아래 말투와 문체를 그대로 유지하세요:\n- 구어체 + 전문적 설명이 섞인 자연스러운 선생님 말투\n- 이모지나 "^^" 같은 표현 유지\n- 학부모에게 설명하듯 친근하지만 구체적인 어조\n- 과도하게 격식체로 바꾸지 않음\n- 문장 구조나 내용은 최대한 원본 유지, 맞춤법/띄어쓰기/오타만 교정\n결과만 출력하세요:`;
 const undoStore={};
 async function callGemini(text){
   const gKey=getKey('gemini');const models=['gemini-2.5-flash','gemini-1.5-flash','gemini-1.5-pro'];
-  for(let model of models){
-    try{
-      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${gKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:`${STYLE_PROMPT}\n\n${text}`}]}]})});
-      const d=await r.json();if(!r.ok) throw new Error(d.error?.message||'API 오류');return d.candidates[0].content.parts[0].text.trim();
-    }catch(e){if(e.message.includes('high demand')||e.message.includes('429')) continue; else throw e;}
-  } throw new Error('잠시 후 다시 시도해 주세요.');
+  for(let m of models){try{const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${gKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:`${STYLE_PROMPT}\n\n${text}`}]}]})});const d=await r.json();if(!r.ok) throw new Error(d.error?.message||'API 오류');return d.candidates[0].content.parts[0].text.trim();}catch(e){if(e.message.includes('high demand')||e.message.includes('429')) continue;else throw e;}} throw new Error('잠시 후 다시 시도해 주세요.');
 }
-async function askGemini(areaId){
-  if(!getKey('gemini')){openKeyModal();return;}
-  const ta=document.getElementById(areaId);const orig=ta.value.trim();if(!orig){showToast('내용을 입력해 주세요.');return;}
-  undoStore[areaId]=orig;ta.value='✨ 맞춤법 교정 중...';
-  try{ta.value=await callGemini(orig);document.getElementById('undo_'+areaId).style.display='inline-block';showToast('✨ 다듬기 완료!');}catch(e){ta.value=orig;alert('❌ AI 오류: '+e.message);}
-}
-function undoGemini(areaId){if(undoStore[areaId]){document.getElementById(areaId).value=undoStore[areaId];delete undoStore[areaId];document.getElementById('undo_'+areaId).style.display='none';showToast('↩ 되돌렸습니다.');}}
-async function askGeminiSec(secId){
-  if(!getKey('gemini')){openKeyModal();return;}
-  const targets=document.querySelectorAll(`#${secId} textarea.v-content`);if(!targets.length) return;
-  undoStore[secId]=Array.from(targets).map(t=>t.value);let errCnt=0,lastErr='';
-  for(let t of targets){const orig=t.value.trim();if(!orig) continue;t.value='✨ 다듬는 중...';try{t.value=await callGemini(orig);}catch(e){t.value=orig;errCnt++;lastErr=e.message;}}
-  document.getElementById('undo_'+secId).style.display='inline-block';errCnt>0?alert('❌ AI 오류: '+lastErr):showToast('✨ 다듬기 완료!');
-}
-function undoGeminiSec(secId){
-  const saved=undoStore[secId];if(!saved) return;const targets=document.querySelectorAll(`#${secId} textarea.v-content`);
-  targets.forEach((t,i)=>{if(saved[i]!==undefined) t.value=saved[i];});delete undoStore[secId];document.getElementById('undo_'+secId).style.display='none';showToast('↩ 되돌렸습니다.');
-}
+async function askGemini(id){if(!getKey('gemini')) return openKeyModal();const ta=document.getElementById(id);const orig=ta.value.trim();if(!orig) return;undoStore[id]=orig;ta.value='✨ 교정 중...';try{ta.value=await callGemini(orig);document.getElementById('undo_'+id).style.display='inline-block';showToast('✨ 완료!');}catch(e){ta.value=orig;alert('❌ 오류: '+e.message);}}
+function undoGemini(id){if(undoStore[id]){document.getElementById(id).value=undoStore[id];delete undoStore[id];document.getElementById('undo_'+id).style.display='none';showToast('↩ 되돌림');}}
+async function askGeminiSec(sid){if(!getKey('gemini')) return openKeyModal();const ts=document.querySelectorAll(`#${sid} textarea.v-content`);if(!ts.length)return;undoStore[sid]=Array.from(ts).map(t=>t.value);let err=0;for(let t of ts){const orig=t.value.trim();if(!orig)continue;t.value='✨ 교정 중...';try{t.value=await callGemini(orig);}catch(e){t.value=orig;err++;}}document.getElementById('undo_'+sid).style.display='inline-block';showToast(err>0?'⚠️ 일부 오류 발생':'✨ 완료!');}
+function undoGeminiSec(sid){const s=undoStore[sid];if(!s)return;document.querySelectorAll(`#${sid} textarea.v-content`).forEach((t,i)=>{if(s[i]!==undefined) t.value=s[i];});delete undoStore[sid];document.getElementById('undo_'+sid).style.display='none';}
 
-// ── 음성 입력 ──
 let recognition=null,activeTarget=null;
-function startVoice(targetId){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert('Chrome 브라우저에서만 지원됩니다.');return;}
-  const btn=document.querySelector(`[onclick="startVoice('${targetId}')"]`);if(recognition&&activeTarget===targetId){recognition.stop();return;}
-  recognition=new SR();recognition.lang='ko-KR';recognition.continuous=true;recognition.interimResults=true;activeTarget=targetId;
-  const ta=document.getElementById(targetId);let base=ta.value;btn.classList.add('recording');btn.textContent='⏹ 중지';
+function startVoice(tid){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR) return alert('Chrome 전용');
+  const btn=document.querySelector(`[onclick="startVoice('${tid}')"]`);if(recognition&&activeTarget===tid){recognition.stop();return;}
+  recognition=new SR();recognition.lang='ko-KR';recognition.continuous=true;recognition.interimResults=true;activeTarget=tid;
+  const ta=document.getElementById(tid);let base=ta.value;btn.classList.add('recording');btn.textContent='⏹ 중지';
   recognition.onresult=e=>{let interim='',final=base;for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal){final+=e.results[i][0].transcript;base=final;}else interim+=e.results[i][0].transcript;}ta.value=final+interim;};
   recognition.onend=()=>{btn.classList.remove('recording');btn.textContent='🎤 음성입력';recognition=null;activeTarget=null;};recognition.start();
 }
@@ -388,76 +314,60 @@ function startVoiceForTextarea(btn){
   rec.onend=()=>{btn.classList.remove('recording');btn.textContent='🎤';if(recogTA===rec) recogTA=null;};rec.start();
 }
 
-// ── 동적 행 추가 (수정 없음) ──
 function addHwRow(course='',perf='',comment=''){
-  const id='hw'+Date.now()+Math.random().toString(36).slice(2,5);const d=document.createElement('div');d.className='hw-row';d.id=id;
-  const opts=[{val:'',text:'선택'},{val:'done',text:'✅ 수행'},{val:'partial',text:'🔶 부분 수행'},{val:'miss',text:'❌ 미수행'}];
-  const optHtml=opts.map(o=>`<option value="${o.val}" ${perf===o.val?'selected':''}>${o.text}</option>`).join('');
-  d.innerHTML=`<div class="hw-c1"><input type="text" class="v-course" placeholder="과정명" value="${course}"></div><div class="hw-c2"><select class="v-perf">${optHtml}</select></div><div class="hw-c3" style="position:relative;"><textarea class="v-content" placeholder="코멘트를 입력하세요.">${comment}</textarea><button style="border:none;background:none;color:red;cursor:pointer;position:absolute;right:6px;top:6px;font-size:15px;">✕</button></div>`;
+  const d=document.createElement('div');d.className='hw-row';
+  d.innerHTML=`<div class="hw-c1"><input type="text" class="v-course" placeholder="과정명" value="${course}"></div><div class="hw-c2"><select class="v-perf"><option value="">선택</option><option value="done" ${perf==='done'?'selected':''}>✅ 수행</option><option value="partial" ${perf==='partial'?'selected':''}>🔶 부분</option><option value="miss" ${perf==='miss'?'selected':''}>❌ 미수행</option></select></div><div class="hw-c3" style="position:relative;"><textarea class="v-content" placeholder="코멘트">${comment}</textarea><button style="position:absolute;right:6px;top:6px;border:none;background:none;color:red;cursor:pointer;">✕</button></div>`;
   d.querySelector('button').onclick=()=>d.remove();document.getElementById('hwList').appendChild(d);
 }
 function addSubjRow(subj='',content=''){
-  const id='subj'+Date.now()+Math.random().toString(36).slice(2,5);const d=document.createElement('div');d.id=id;d.className='subj-row-wrap';
-  d.innerHTML=`<div style="padding:10px;background:#fafbff;display:flex;justify-content:space-between;border-bottom:1px solid var(--border);"><input type="text" class="v-subj" value="${subj}" placeholder="과목명" style="border:none;background:transparent;font-weight:bold;outline:none;width:85%;"><div style="display:flex;gap:4px;align-items:center;"><button class="mic-btn" style="margin-left:0;padding:3px 7px;font-size:11px;" onclick="startVoiceForTextarea(this)">🎤</button><button style="border:none;background:none;cursor:pointer;color:red;">✕</button></div></div><textarea class="v-content" style="width:100%;border:none;padding:10px;min-height:70px;outline:none;font-family:inherit;font-size:14px;line-height:1.7;" placeholder="학습 내용을 입력하세요.">${content}</textarea>`;
+  const d=document.createElement('div');d.className='subj-row-wrap';
+  d.innerHTML=`<div style="padding:10px;background:#fafbff;display:flex;justify-content:space-between;border-bottom:1px solid var(--border);"><input type="text" class="v-subj" value="${subj}" placeholder="과목명" style="border:none;background:transparent;font-weight:bold;outline:none;width:85%;"><div style="display:flex;gap:4px;"><button class="mic-btn" style="margin-left:0;padding:3px 7px;font-size:11px;" onclick="startVoiceForTextarea(this)">🎤</button><button style="border:none;background:none;color:red;cursor:pointer;">✕</button></div></div><textarea class="v-content" style="width:100%;border:none;padding:10px;min-height:70px;outline:none;font-family:inherit;font-size:14px;line-height:1.7;" placeholder="학습 내용">${content}</textarea>`;
   d.querySelector('button[style*="color:red"]').onclick=()=>d.remove();document.getElementById('subjectList').appendChild(d);
 }
 function addTodayHwRow(course='',type='필수',content=''){
-  const id='thw'+Date.now()+Math.random().toString(36).slice(2,5);const d=document.createElement('div');d.style='display:grid;grid-template-columns:30% 20% 1fr;border:1.5px solid var(--border);border-top:none;';d.id=id;
-  d.innerHTML=`<div style="padding:8px 10px;border-right:1.5px solid var(--border);"><input type="text" class="v-course" value="${course}" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:13px;outline:none;background:#fafbff;"></div><div style="padding:8px 10px;border-right:1.5px solid var(--border);"><select class="v-type" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:7px;font-size:13px;outline:none;background:#fafbff;"><option ${type==='필수'?'selected':''}>필수</option><option ${type==='선택'?'selected':''}>선택</option></select></div><div style="padding:8px 10px;position:relative;"><textarea class="v-content" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:13px;outline:none;background:#fafbff;resize:none;min-height:50px;font-family:inherit;">${content}</textarea><button style="border:none;background:none;color:red;cursor:pointer;position:absolute;right:6px;top:6px;">✕</button></div>`;
+  const d=document.createElement('div');d.style='display:grid;grid-template-columns:30% 20% 1fr;border:1.5px solid var(--border);border-top:none;';
+  d.innerHTML=`<div style="padding:8px 10px;border-right:1.5px solid var(--border);"><input type="text" class="v-course" value="${course}" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:13px;outline:none;background:#fafbff;"></div><div style="padding:8px 10px;border-right:1.5px solid var(--border);"><select class="v-type" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:7px;font-size:13px;outline:none;background:#fafbff;"><option ${type==='필수'?'selected':''}>필수</option><option ${type==='선택'?'selected':''}>선택</option></select></div><div style="padding:8px 10px;position:relative;"><textarea class="v-content" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:13px;outline:none;background:#fafbff;resize:none;min-height:50px;font-family:inherit;">${content}</textarea><button style="position:absolute;right:6px;top:6px;border:none;background:none;color:red;cursor:pointer;">✕</button></div>`;
   d.querySelector('button').onclick=()=>d.remove();document.getElementById('todayHwList').appendChild(d);
 }
 function addResourceRow(name='',link=''){
-  const id='res'+Date.now()+Math.random().toString(36).slice(2,5);const d=document.createElement('div');d.id=id;d.style='display:flex;gap:5px;margin-bottom:5px;align-items:center;';
+  const d=document.createElement('div');d.style='display:flex;gap:5px;margin-bottom:5px;align-items:center;';
   d.innerHTML=`<input type="text" class="v-name" value="${name}" placeholder="자료명" style="flex:1;border:1px solid var(--border);border-radius:8px;padding:8px;outline:none;"><input type="url" class="v-link" value="${link}" placeholder="링크" style="flex:2;border:1px solid var(--border);border-radius:8px;padding:8px;outline:none;"><button style="border:none;background:none;font-size:16px;cursor:pointer;color:red;">✕</button>`;
   d.querySelector('button').onclick=()=>d.remove();document.getElementById('resourceList').appendChild(d);
 }
 function addVideo(){
-  const url=document.getElementById('videoUrlInput').value;const m=url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);if(!m){showToast('유튜브 링크를 확인해 주세요.');return;}
-  const id='vid'+Date.now();const d=document.createElement('div');d.id=id;d.style='width:150px;position:relative;';
-  d.innerHTML=`<img src="https://img.youtube.com/vi/${m[1]}/hqdefault.jpg" style="width:100%;border-radius:8px;" data-url="${url}"><input type="text" class="v-cmt" placeholder="영상 코멘트" style="width:100%;border:1px solid var(--border);font-size:11px;margin-top:4px;border-radius:6px;padding:4px 6px;outline:none;"><button style="position:absolute;top:-5px;right:-5px;background:red;color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:12px;">✕</button>`;
+  const url=document.getElementById('videoUrlInput').value;const m=url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);if(!m)return showToast('유튜브 링크 확인 필요');
+  const d=document.createElement('div');d.style='width:150px;position:relative;';
+  d.innerHTML=`<img src="https://img.youtube.com/vi/${m[1]}/hqdefault.jpg" style="width:100%;border-radius:8px;" data-url="${url}"><input type="text" class="v-cmt" placeholder="코멘트" style="width:100%;border:1px solid var(--border);font-size:11px;margin-top:4px;border-radius:6px;padding:4px;outline:none;"><button style="position:absolute;top:-5px;right:-5px;background:red;color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;">✕</button>`;
   d.querySelector('button').onclick=()=>d.remove();document.getElementById('videoList').appendChild(d);document.getElementById('videoUrlInput').value='';
 }
 
-// ── 사진 업로드 ──
 function handlePhotoUpload(e,cid){
   const arr=cid==='hwPhotos'?hwPhotos:classPhotos;
-  Array.from(e.target.files).forEach(f=>{const r=new FileReader();r.onload=ev=>{const img=new Image();img.onload=()=>{const cvs=document.createElement('canvas');const MAX=600;const sc=Math.min(MAX/img.width,1);cvs.width=img.width*sc;cvs.height=img.height*sc;cvs.getContext('2d').drawImage(img,0,0,cvs.width,cvs.height);arr.push({id:'p'+Date.now()+Math.random(),src:cvs.toDataURL('image/jpeg',.7),driveUrl:'',caption:''});renderPhotos(cid,arr);};img.src=ev.target.result;};r.readAsDataURL(f);});e.target.value='';
+  Array.from(e.target.files).forEach(f=>{const r=new FileReader();r.onload=ev=>{const img=new Image();img.onload=()=>{const cvs=document.createElement('canvas');const sc=Math.min(600/img.width,1);cvs.width=img.width*sc;cvs.height=img.height*sc;cvs.getContext('2d').drawImage(img,0,0,cvs.width,cvs.height);arr.push({id:'p'+Date.now()+Math.random(),src:cvs.toDataURL('image/jpeg',.7),driveUrl:'',caption:''});renderPhotos(cid,arr);};img.src=ev.target.result;};r.readAsDataURL(f);});e.target.value='';
 }
 function renderPhotos(cid,arr){
   const g=document.getElementById(cid);g.innerHTML='';
   arr.forEach(p=>{
     const d=document.createElement('div');d.className='photo-card';
-    d.innerHTML=`<img src="${p.src}"><input type="url" class="photo-input" placeholder="고화질 드라이브 링크"><input type="text" class="photo-input" placeholder="사진 설명 (20자)"><button style="position:absolute;top:-5px;left:-5px;background:red;color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:11px;">✕</button>`;
+    d.innerHTML=`<img src="${p.src}"><input type="url" class="photo-input" placeholder="드라이브 링크"><input type="text" class="photo-input" placeholder="사진 설명"><button style="position:absolute;top:-5px;left:-5px;background:red;color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;">✕</button>`;
     const inp=d.querySelectorAll('input');inp[0].value=p.driveUrl;inp[0].oninput=e=>p.driveUrl=e.target.value;inp[1].value=p.caption;inp[1].oninput=e=>p.caption=e.target.value;
     d.querySelector('button').onclick=()=>removePhoto(p.id,cid);g.appendChild(d);
   });
 }
 function removePhoto(pid,cid){if(cid==='hwPhotos') hwPhotos=hwPhotos.filter(x=>x.id!==pid);else classPhotos=classPhotos.filter(x=>x.id!==pid);renderPhotos(cid,cid==='hwPhotos'?hwPhotos:classPhotos);}
-function loadHomework(e){const file=e.target.files[0];if(!file) return;const reader=new FileReader();reader.onload=ev=>{const doc=new DOMParser().parseFromString(ev.target.result,'text/html');const old=doc.querySelectorAll('.data-today-hw');if(old.length===0)return;document.getElementById('hwList').innerHTML='';old.forEach(el=>addHwRow(el.getAttribute('data-course'),el.getAttribute('data-perf')||'',el.getAttribute('data-content')));showToast('과제를 불러왔습니다.');};reader.readAsText(file);}
+function loadHomework(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{const doc=new DOMParser().parseFromString(ev.target.result,'text/html');const old=doc.querySelectorAll('.data-today-hw');if(!old.length)return;document.getElementById('hwList').innerHTML='';old.forEach(el=>addHwRow(el.getAttribute('data-course'),el.getAttribute('data-perf')||'',el.getAttribute('data-content')));showToast('과제 불러오기 완료');};r.readAsText(f);}
 
-// ── 데이터 불러오기 모달 ──
 async function openDriveModal(){
-  document.getElementById('driveModal').classList.add('show');document.getElementById('driveFileList').innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);">⏳ 기존 데이터를 불러오는 중...</div>';
-  const sUrl=getKey('script');if(!sUrl){document.getElementById('driveFileList').innerHTML='<div style="color:red;padding:12px;">Apps Script URL을 설정해 주세요.</div>';return;}
-  try{const res=await fetch(sUrl+'?action=list');const data=await res.json();const files=data.files||[];if(!files.length){document.getElementById('driveFileList').innerHTML='<div style="color:var(--muted);padding:12px;">저장된 리포트가 없습니다.</div>';return;}
-  document.getElementById('driveFileList').innerHTML=files.map(f=>`<div class="drive-item" onclick="loadDriveFile('${f.id}','${f.name}')"><div class="drive-item-name">📄 ${f.name}</div><div class="drive-item-date">${f.modifiedTime||''}</div></div>`).join('');}catch(e){document.getElementById('driveFileList').innerHTML=`<div style="color:red;padding:12px;">❌ ${e.message}</div>`;}
+  document.getElementById('driveModal').classList.add('show');document.getElementById('driveFileList').innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);">⏳ 불러오는 중...</div>';
+  const sUrl=getKey('script');if(!sUrl){document.getElementById('driveFileList').innerHTML='<div style="color:red;padding:12px;">Apps Script 설정 필요</div>';return;}
+  try{const res=await fetch(sUrl+'?action=list');const data=await res.json();const files=data.files||[];if(!files.length){document.getElementById('driveFileList').innerHTML='<div style="padding:12px;">저장된 리포트 없음</div>';return;}
+  document.getElementById('driveFileList').innerHTML=files.map(f=>`<div class="drive-item" onclick="loadDriveFile('${f.id}')"><div class="drive-item-name">📄 ${f.name}</div><div class="drive-item-date">${f.modifiedTime||''}</div></div>`).join('');}catch(e){document.getElementById('driveFileList').innerHTML=`<div style="color:red;padding:12px;">❌ ${e.message}</div>`;}
 }
-async function loadDriveFile(fileId,fileName){
+async function loadDriveFile(fileId){
   showToast('⏳ 내용 덮어쓰는 중...');const sUrl=getKey('script');
-  try{
-    const res=await fetch(`${sUrl}?action=get&fileId=${fileId}`);const data=await res.json();const doc=new DOMParser().parseFromString(data.content||'','text/html');let found=false;
-    // 이전 리포트의 학습 요약을 현재 폼에 불러오기
-    doc.querySelectorAll('.rpt-sec').forEach(sec=>{
-      if(sec.querySelector('.rpt-sec-title')?.textContent?.includes('학습 요약')){
-        sec.querySelectorAll('[style*="background:#f8fafc"]').forEach(item=>{
-          const subj=item.querySelector('[style*="font-weight:800"]')?.textContent?.replace('📘 ','').trim()||'';
-          const cont=item.querySelector('[style*="white-space:pre-wrap"]')?.textContent?.trim()||'';
-          if(subj||cont){addSubjRow(subj,cont);found=true;}
-        });
-      }
-    });
-    closeDriveModal();showToast(found?`✅ 이전 기록 불러오기 완료`:'기록된 내용이 없습니다.');
-  }catch(e){closeDriveModal();alert('❌ 실패: '+e.message);}
+  try{const res=await fetch(`${sUrl}?action=get&fileId=${fileId}`);const data=await res.json();const doc=new DOMParser().parseFromString(data.content||'','text/html');let found=false;
+    doc.querySelectorAll('.rpt-sec').forEach(sec=>{if(sec.querySelector('.rpt-sec-title')?.textContent?.includes('학습 요약')){sec.querySelectorAll('[style*="background:#f8fafc"]').forEach(item=>{const subj=item.querySelector('[style*="font-weight:800"]')?.textContent?.replace('📘 ','').trim()||'';const cont=item.querySelector('[style*="white-space:pre-wrap"]')?.textContent?.trim()||'';if(subj||cont){addSubjRow(subj,cont);found=true;}});}});
+    closeDriveModal();showToast(found?`✅ 복사 완료`:'내용 없음');}catch(e){closeDriveModal();alert('❌ 실패: '+e.message);}
 }
 function closeDriveModal(){document.getElementById('driveModal').classList.remove('show');}
 
@@ -468,15 +378,42 @@ function buildAbsentSnapshot(){
   return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"><title>결석 공지 — ${esc(name)}</title><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Apple SD Gothic Neo',sans-serif;background:#f1f5f9;color:#0f172a;}.wrap{max-width:480px;margin:0 auto;padding:30px 16px;}.card{background:#fff;border-radius:20px;padding:28px 24px;margin-bottom:16px;box-shadow:0 4px 15px rgba(0,0,0,.05);}.badge{display:inline-block;background:#fee2e2;color:#b91c1c;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:800;margin-bottom:16px;}h1{font-size:20px;font-weight:800;margin-bottom:6px;}.sub{font-size:13px;color:#64748b;margin-bottom:20px;}.info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9;font-size:14px;}.info-row:last-child{border-bottom:none;}.info-label{color:#64748b;font-weight:600;}.info-val{font-weight:700;color:#0f172a;}.notice-box{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:14px;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#451a03;margin-top:4px;}.footer{text-align:center;font-size:11px;color:#94a3b8;margin-top:30px;}</style></head><body><div class="wrap"><div class="card"><div class="badge">🚫 결석 공지</div><h1>${esc(name)} 학생 결석 확인</h1><div class="sub">지필드 영재교육 · ${dateStr}</div><div class="info-row"><span class="info-label">수업일</span><span class="info-val">${dateStr}</span></div>${reason?`<div class="info-row"><span class="info-label">결석 사유</span><span class="info-val">${esc(reason)}</span></div>`:''}<div class="info-row"><span class="info-label">보강 일정</span><span class="info-val">${makeupType==='decided'&&makeupDate?esc(makeupDate):'추후 결정'}</span></div></div>${extra||notice?`<div class="card"><div style="font-size:14px;font-weight:800;color:#16417C;margin-bottom:12px;">📢 전달 사항</div>${notice?`<div class="notice-box">${esc(notice)}</div>`:''}${extra?`<div style="margin-top:10px;font-size:14px;line-height:1.7;white-space:pre-wrap;">${esc(extra)}</div>`:''}</div>`:''}<div class="footer">© G-Field Gifted Education</div></div></body></html>`;
 }
 
+// ⭐ 핵심 복구 영역: HTML 렌더링 로직
 function buildSnapshot(){
   if(classType==='결석') return buildAbsentSnapshot();
-  const name=document.getElementById('nameInput').value||'학생';const dateStr=document.getElementById('dateInput').value.replace(/-/g,'.');const course=document.getElementById('courseInput').value||'';const notice=document.getElementById('noticeArea').value;
-  let hwR='',subH='',vidH='',resH='',tHwH='',hideD='';
+  const name=document.getElementById('nameInput').value||'학생';
+  const dateStr=document.getElementById('dateInput').value.replace(/-/g,'.');
+  const course=document.getElementById('courseInput').value||'';
+  const notice=document.getElementById('noticeArea').value;
+  let hwR='', subH='', vidH='', resH='', tHwH='', hideD='';
+  
   document.querySelectorAll('#hwList .hw-row').forEach(r=>{const c=r.querySelector('.v-course').value;const p=r.querySelector('.v-perf').value;const t=r.querySelector('.v-content').value;if(c||p||t){const pLabel=p==='done'?'✅ 수행':p==='partial'?'🔶 부분 수행':p==='miss'?'❌ 미수행':'';const pBg=p==='done'?'#dcfce7':p==='partial'?'#fef9c3':p==='miss'?'#fee2e2':'transparent';hwR+=`<div style="display:grid;grid-template-columns:30% 22% 1fr;border-bottom:1px solid #eee;padding:10px 0;gap:8px;align-items:start;"><div style="font-weight:700;color:#16417C;font-size:13px;">${esc(c)}</div><div>${pLabel?`<span style="background:${pBg};border-radius:6px;padding:3px 8px;font-size:12px;font-weight:700;">${pLabel}</span>`:''}</div><div style="font-size:13px;white-space:pre-wrap;line-height:1.6;">${esc(t)}</div></div>`;hideD+=`<div class="data-today-hw" data-course="${esc(c)}" data-perf="${esc(p)}" data-content="${esc(t)}" style="display:none;"></div>`;}});
+  
   document.querySelectorAll('#subjectList .subj-row-wrap').forEach(r=>{const n=r.querySelector('.v-subj')?.value,t=r.querySelector('textarea.v-content')?.value;if(n||t) subH+=`<div style="background:#f8fafc;border-radius:12px;padding:15px;margin-bottom:10px;"><div style="font-weight:800;color:#1e293b;margin-bottom:8px;">📘 ${esc(n)}</div><div style="white-space:pre-wrap;line-height:1.7;">${esc(t)}</div></div>`;});
+  
   document.querySelectorAll('#videoList div').forEach(r=>{const img=r.querySelector('img');if(!img)return;const u=img.getAttribute('data-url'),s=img.src,c=r.querySelector('.v-cmt').value;vidH+=`<div style="margin-bottom:15px;"><a href="${u}" target="_blank" style="display:block;position:relative;"><img src="${s}" style="width:100%;border-radius:12px;"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,0,0,.8);color:#fff;width:40px;height:40px;border-radius:50%;text-align:center;line-height:40px;font-size:16px;">▶</div></a>${c?`<div style="text-align:center;margin-top:5px;font-weight:600;">${esc(c)}</div>`:''}</div>`;});
+  
   document.querySelectorAll('#resourceList [id^="res"]').forEach(r=>{const n=r.querySelector('.v-name')?.value,l=r.querySelector('.v-link')?.value;if(n&&l) resH+=`<div style="display:flex;justify-content:space-between;align-items:center;background:#f1f5f9;padding:12px;border-radius:10px;margin-bottom:8px;"><span style="font-weight:700;">${esc(n)}</span><a href="${l}" target="_blank" style="background:#16417C;color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-size:12px;">연결</a></div>`;});
-  document.querySelectorAll('#todayHwList [id^="thw"]').forEach(r=>{const c=r.querySelector('.v-course').value,t=r.querySelector('.v-type').value,ct=r.querySelector('.v-content').value;if(c||ct) tHwH+=`<div style="display:flex;border-bottom:1px solid #e2e8f0;padding:12px 0;"><div style="width:30%;font-weight:700;color:#16417C;">${esc(c)}</div><div style="width:15%;"><span style="background:${t==='필수'?'#ef4444':'#3b82f6'};color:#fff;font-size:10px;padding:2px 5px;border-radius:4px;">${t}</span></div><div style="flex:1;white-space:pre-wrap;">${esc(ct)}</div></div>`;});
+  
+  // ⭐ 원장님 요청: 오늘의 과제 버튼 스마트화
+  document.querySelectorAll('#todayHwList [id^="thw"]').forEach(r=>{
+    const c=r.querySelector('.v-course').value, t=r.querySelector('.v-type').value, ct=r.querySelector('.v-content').value;
+    if(c||ct) {
+      tHwH+=`<div style="display:flex;flex-direction:column;border-bottom:1px solid #e2e8f0;padding:12px 0;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-weight:700;color:#16417C;font-size:13px;">${esc(c)}</span>
+            <span style="background:${t==='필수'?'#ef4444':'#3b82f6'};color:#fff;font-size:10px;padding:2px 5px;border-radius:4px;">${t}</span>
+          </div>
+          <a href="sms:01020837265?body=[과제완료]%20${encodeURIComponent(name)}%20학생%20'${encodeURIComponent(c)}'%20과제%20완료했습니다." style="background:#16417C;color:#fff;font-size:11px;padding:6px 10px;border-radius:6px;text-decoration:none;font-weight:800;box-shadow:0 2px 4px rgba(0,0,0,0.1);">✅ 과제 완료 전송</a>
+        </div>
+        <div style="font-size:13px;white-space:pre-wrap;line-height:1.6;color:#333;">${esc(ct)}</div>
+      </div>`;
+    }
+  });
+  if(tHwH) {
+    tHwH += `<div style="text-align:right;font-size:11px;color:#ef4444;margin-top:8px;font-weight:bold;">* 과제 완료 후 클릭하여 전송해주세요</div>`;
+  }
 
   const photoRender=arr=>arr.map(p=>`<div style="margin-bottom:20px;">${p.driveUrl?`<a href="${esc(p.driveUrl)}" target="_blank">`:''}<img src="${p.src}" style="width:100%;border-radius:12px;border:1px solid #eee;">${p.driveUrl?'</a>':''}${p.caption?`<div style="text-align:center;margin-top:5px;font-size:13px;color:#666;">${esc(p.caption)}</div>`:''}</div>`).join('');
   const hwPhotosHtml=hwPhotos.length?`<div style="margin-top:15px;border-top:1px dashed #eee;padding-top:15px;">${photoRender(hwPhotos)}</div>`:'';
@@ -493,7 +430,10 @@ function buildSnapshot(){
 @media print{.print-bar{display:none!important;}body{background:#fff!important;}.mobile-wrap,.web-wrap{display:block!important;}.web-wrap{max-width:100%;padding:0;}}</style>
 </head><body>
 <div class="print-bar"><button class="print-btn" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button></div>
-<div class="mobile-wrap"><div id="cover-m" style="background:#0d1117;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:30px;"><div style="border:1px solid #d4af37;border-radius:12px;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:20px;"><div style="color:#d4af37;font-size:11px;font-weight:700;letter-spacing:2px;margin-bottom:20px;">G-FIELD GIFTED EDUCATION</div><div style="color:#fff;font-size:17px;margin-bottom:6px;">성공하는 공부습관을 만드는</div><div style="color:#fff;font-size:24px;font-weight:800;margin-bottom:18px;">지필드 영재교육<br>(${classType})</div><div style="width:70%;height:1px;background:#333;margin:24px 0;"></div><div style="color:#fff;font-size:22px;font-weight:800;margin-bottom:6px;">${esc(name)} 학생</div><div style="color:#888;font-size:13px;margin-bottom:36px;">${dateStr} 학습 리포트</div><button onclick="document.getElementById('cover-m').style.display='none';document.getElementById('main-m').style.display='block';window.scrollTo(0,0);" style="background:#d4af37;color:#000;border:none;padding:13px 32px;border-radius:35px;font-weight:800;cursor:pointer;">리포트 확인하기 ▼</button></div></div>
+<div class="mobile-wrap"><div id="cover-m" style="background:#0d1117;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:30px;"><div style="border:1px solid #d4af37;border-radius:12px;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:20px;">
+  <img src="https://${getKey('ghUser')||'docssam1'}.github.io/${getKey('ghRepo')||'gfield-report'}/logo.png" style="max-width:120px; margin-bottom:15px;" onerror="this.style.display='none'">
+  <div style="color:#d4af37;font-size:11px;font-weight:700;letter-spacing:2px;margin-bottom:20px;">G-FIELD GIFTED EDUCATION</div>
+  <div style="color:#fff;font-size:17px;margin-bottom:6px;">성공하는 공부습관을 만드는</div><div style="color:#fff;font-size:24px;font-weight:800;margin-bottom:18px;">지필드 영재교육<br>(${classType})</div><div style="width:70%;height:1px;background:#333;margin:24px 0;"></div><div style="color:#fff;font-size:22px;font-weight:800;margin-bottom:6px;">${esc(name)} 학생</div><div style="color:#888;font-size:13px;margin-bottom:36px;">${dateStr} 학습 리포트</div><button onclick="document.getElementById('cover-m').style.display='none';document.getElementById('main-m').style.display='block';window.scrollTo(0,0);" style="background:#d4af37;color:#000;border:none;padding:13px 32px;border-radius:35px;font-weight:800;cursor:pointer;">리포트 확인하기 ▼</button></div></div>
 <div id="main-m" style="display:none;padding:16px 14px;"><div style="background:#fff;border-radius:16px;padding:18px;margin-bottom:14px;display:flex;justify-content:space-between;text-align:center;"><div><div style="font-size:11px;color:#64748b;margin-bottom:4px;">학생</div><div style="font-weight:800;color:#16417C;">${esc(name)}</div></div><div><div style="font-size:11px;color:#64748b;margin-bottom:4px;">날짜</div><div style="font-weight:800;color:#16417C;">${dateStr}</div></div><div><div style="font-size:11px;color:#64748b;margin-bottom:4px;">유형</div><div style="font-weight:800;color:#16417C;">${classType}</div></div></div>${notice?`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:16px;padding:16px;margin-bottom:14px;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#451a03;">📢 ${esc(notice)}</div>`:''}${sec('과제 확인','✅',hwR+hwPhotosHtml)}${sec('학습 요약','📖',subH)}${sec('수업 사진','📸',photoRender(classPhotos))}${sec('동영상 강의','🎬',vidH)}${sec('추가 자료','🔗',resH)}${sec('오늘의 과제','✏️',tHwH)}<div style="text-align:center;margin:36px 0;font-size:11px;color:#94a3b8;">© G-Field Gifted Education</div>${hideD}</div></div>
 <div class="web-wrap"><div class="web-header"><div class="web-header-left"><h1>지필드 영재교육 학습 리포트</h1><p>G-Field Gifted Education</p><div class="web-badge">${classType}</div></div><div class="web-header-right"><div class="student-name">${esc(name)} 학생</div><div class="date">${dateStr}${course?' · '+esc(course):''}</div></div></div>${notice?`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:16px;padding:16px;margin-bottom:16px;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#451a03;">📢 ${esc(notice)}</div>`:''}<div class="web-grid">${hwR?`<div class="rpt-sec web-full"><div class="rpt-sec-title">✅ 과제 확인</div>${hwR}${hwPhotosHtml}</div>`:''}${subH?`<div class="rpt-sec web-full"><div class="rpt-sec-title">📖 학습 요약</div>${subH}</div>`:''}${classPhotos.length?`<div class="rpt-sec"><div class="rpt-sec-title">📸 수업 사진</div>${photoRender(classPhotos)}</div>`:''}${vidH?`<div class="rpt-sec"><div class="rpt-sec-title">🎬 동영상 강의</div>${vidH}</div>`:''}${resH?`<div class="rpt-sec"><div class="rpt-sec-title">🔗 추가 자료</div>${resH}</div>`:''}${tHwH?`<div class="rpt-sec web-full"><div class="rpt-sec-title">✏️ 오늘의 과제</div>${tHwH}</div>`:''}</div><div style="text-align:center;margin:36px 0;font-size:11px;color:#94a3b8;">© G-Field Gifted Education</div>${hideD}</div></body></html>`;
 }
@@ -534,7 +474,7 @@ async function deployToGitHubPages(){
   }catch(e){alert('❌ GitHub 오류: '+e.message);}finally{btn.disabled=false;btn.textContent='🔗 2단계: 웹 링크 생성';}
 }
 
-// ── 🚀 노션 캘린더 자동 연동 (상담/리포트 분기 처리) ──
+// ⭐ 핵심 복구 영역: 순정 노션 등록 로직
 async function saveToNotion(){
   const sUrl = getKey('script');
   const nKey = getKey('notionKey');
@@ -565,7 +505,7 @@ async function saveToNotion(){
     payload.school = document.getElementById('c_school').value;
     payload.grade = document.getElementById('c_grade').value;
     payload.phone = document.getElementById('c_phone').value;
-    payload.course = course; // 희망과정
+    payload.course = course;
     payload.content = document.getElementById('c_content').value;
   } else {
     payload.date = dateStr;
@@ -591,7 +531,6 @@ async function saveToNotion(){
   }
 }
 
-// ── 📨 알리고 문자 전송 ──
 function sendAligoSms() {
   const phone = document.getElementById('c_phone').value;
   const msg = document.getElementById('msgText').value;
@@ -599,22 +538,17 @@ function sendAligoSms() {
   const sUrl = getKey('script');
   
   if(!sUrl) { openKeyModal(); return; }
-  if(!phone || !msg) { alert("연락처와 자동 생성된 메시지를 확인해주세요."); return; }
+  if(!phone || !msg) { alert("연락처와 메시지를 확인해주세요."); return; }
   
   const btn = document.getElementById('btnAligo');
-  btn.innerText = "⏳ 문자 전송 중...";
+  btn.innerText = "⏳ 전송 중...";
   
   fetch(sUrl, {
     method: "POST",
-    body: JSON.stringify({
-      action: 'aligo_sms',
-      receiver: phone,
-      msg: msg,
-      targetDate: targetDate
-    })
+    body: JSON.stringify({ action: 'aligo_sms', receiver: phone, msg: msg, targetDate: targetDate })
   }).then(r => r.json()).then(res => {
     btn.innerText = "📨 알리고 문자 자동 전송 (예약 포함)";
-    if(res.result === "success") alert("✅ 카카오톡/문자가 성공적으로 발송되었으며, 전날 리마인드 예약도 설정되었습니다!");
+    if(res.result === "success") alert("✅ 문자가 발송되었습니다!");
     else alert("❌ 전송 실패: " + res.error);
   }).catch(err => {
     alert("오류 발생: " + err);
@@ -625,7 +559,6 @@ function sendAligoSms() {
 function setLink(url){document.getElementById('resultUrl').href=url;document.getElementById('resultUrl').textContent=url;document.getElementById('linkResult').style.display='block';updateMsgBox(url);}
 function getGreeting(){const h=new Date().getHours(),day=new Date().getDay();if(day===0||day===6) return '즐거운 주말 되세요 😊';if(h>=6&&h<12) return '좋은 아침 되세요 🌅';if(h>=12&&h<20) return '즐거운 오후 되세요 ☀️';return '평안한 밤 되세요 🌙';}
 
-// ── 💬 안내 메시지 (카톡/문자) 자동 생성 (계좌 선택 반영) ──
 function updateMsgBox(url){
   const docType = document.querySelector('input[name="docType"]:checked').value;
   const name = document.getElementById('nameInput').value.trim() || '학생';
@@ -640,7 +573,7 @@ function updateMsgBox(url){
     if(cType === '테스트진행' && dateVal) {
       const d = new Date(dateVal);
       const formattedDate = `${d.getMonth()+1}/${d.getDate()} ${getDayName(dateVal)}요일 ${d.getHours()}시 ${d.getMinutes()===0?'':d.getMinutes()+'분'}`;
-      const accountInfo = document.querySelector('input[name="c_account"]:checked').value;
+      const accountInfo = document.querySelector('input[name="c_account"]:checked')?.value || "우리은행 1002-629-797436, 이주연 지필드영재교육";
       
       msg = `지필드 영재교육입니다. 테스트 등록 안내입니다.
 -일시: ${formattedDate}
@@ -670,7 +603,6 @@ https://map.naver.com/local/siteview.nhn?code=1125444471`;
       msg = `[일정을 선택하시면 안내 문자가 자동 완성됩니다]`;
     }
   } else {
-    // 기존 리포트 메시지
     const cur = url || document.getElementById('resultUrl')?.href;
     if(!cur || cur === '#') return;
     const d = new Date((document.getElementById('dateInput').value || new Date().toISOString().split('T')[0]) + 'T00:00:00');
@@ -691,350 +623,43 @@ https://map.naver.com/local/siteview.nhn?code=1125444471`;
 
 function copyMsg(){const t=document.getElementById('msgText');t.select();t.setSelectionRange(0,99999);navigator.clipboard.writeText(t.value).then(()=>showToast('📋 복사되었습니다!')).catch(()=>{document.execCommand('copy');showToast('📋 복사 완료!');});}
 function shareKakao(){
-
   const url = document.getElementById('resultUrl').href;
-
   if(!url || url === '#'){alert('🚨 먼저 2단계: 웹 링크 생성 버튼을 눌러주세요!'); return;}
-
   if(!window.location.hostname.includes('github.io')){updateMsgBox(url);showToast('📱 배포 페이지(github.io)에서 눌러주세요!');document.getElementById('msgBox').scrollIntoView({behavior:'smooth'});return;}
-
   if(!window.Kakao){alert('카카오 SDK 로딩 중입니다.');return;}
-
   if(!Kakao.isInitialized()){const k=getKey('kakao');if(!k){openKeyModal();return;}try{Kakao.init(k);}catch(e){return;}}
-
   
-
   const docType = document.querySelector('input[name="docType"]:checked').value;
-
   const name = document.getElementById('nameInput').value.trim() || '학생';
-
   let kTitle = '', kDesc = '';
 
-
-
   if (docType === '상담') {
-
-    // 📞 상담/테스트 모드일 때 카톡 내용
-
     const cType = document.querySelector('input[name="c_type"]:checked').value;
-
     kTitle = (cType === '테스트진행') ? `📝 ${name} 학생 테스트 안내` : `📞 ${name} 학생 상담 안내`;
-
-    // 카톡 설명란에는 자동 생성된 메시지 앞부분을 잘라서 보여줍니다
-
     kDesc = document.getElementById('msgText').value.substring(0, 150) + "..."; 
-
   } else {
-
-    // 📚 기존 리포트 모드일 때 카톡 내용
-
     const d = new Date(document.getElementById('dateInput').value+'T00:00:00');
-
     const dateStr = `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일`;
-
     const isAbsent = classType === '결석';
-
     kTitle = isAbsent ? `🚫 ${name} 학생 결석 공지` : `📚 ${name} 학생 학습 리포트`;
-
     kDesc = `안녕하세요, 어머니 🙂 지필드 영재교육 노관호입니다.\n${dateStr} (${classType}) ${isAbsent?'결석 공지':'학습 리포트'}입니다.\n${getGreeting()}`;
-
   }
-
-
 
   try {
-
     Kakao.Share.sendDefault({
-
       objectType: 'feed',
-
       content: {
-
         title: kTitle,
-
         description: kDesc,
-
         imageUrl: `https://${getKey('ghUser')||'docssam1'}.github.io/${getKey('ghRepo')||'gfield-report'}/og-cover.png`,
-
         link: { mobileWebUrl: url, webUrl: url }
-
       },
-
       buttons: [{ title: docType === '상담' ? '상담 정보 확인하기' : (classType === '결석' ? '📋 결석 공지 확인' : '📖 리포트 확인하기'), link: { mobileWebUrl: url, webUrl: url } }]
-
     });
-
   } catch(e) {
-
     updateMsgBox(url); showToast('카카오 오류 → 직접 복사해서 보내주세요!'); document.getElementById('msgBox').scrollIntoView({behavior:'smooth'});
-
   }
-
 }
-
-
-
-/* =======================================================
-   G-FIELD PATCH v2 — 기존 기능 보존 + 상담/테스트/학부모 피드백 강화
-   ======================================================= */
-const GF_BRAND_TEXT = '안녕하세요. 성공하는 공부습관을 만드는 지필드 영재교육입니다.';
-const GF_NAVER_URL = 'https://naver.me/G6RiJkMn';
-const GF_PHONE = '02-3453-7772';
-const GF_ADDRESS = '강남구 역삼로 460-2, 뉴원빌딩 4층';
-
-function gfValidShareUrl(url){
-  return !!url && url !== '#' && /^https?:\/\//.test(url) && !url.endsWith('/#') && !url.includes('undefined');
-}
-function gfDateText(value){
-  if(!value) return '일정 미정';
-  const d=new Date(value);
-  if(isNaN(d.getTime())) return value;
-  const min=d.getMinutes();
-  return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일(${getDayName(value)}) ${d.getHours()}시${min?` ${min}분`:''}`;
-}
-function gfCurrentDocType(){return document.querySelector('input[name="docType"]:checked')?.value || '리포트';}
-function gfCurrentConsultType(){return document.querySelector('input[name="c_type"]:checked')?.value || '단순상담';}
-function gfExtraLink(){return document.getElementById('c_extraLink')?.value.trim() || '';}
-function gfScriptEndpointForPublic(){
-  // 공개 리포트 안에서 학부모 피드백을 받기 위해 endpoint를 포함합니다.
-  // 보안 강화를 위해 서버(Code.gs)에서는 parent_feedback action만 별도 공개용으로 분리하는 것을 권장합니다.
-  return getKey('script') || '';
-}
-function gfFeedbackBlock(kind, name){
-  const endpoint = gfScriptEndpointForPublic();
-  const encoded = btoa(unescape(encodeURIComponent(endpoint)));
-  const isConsult = kind === 'consult' || kind === 'test';
-  const title = isConsult ? '상담·테스트 전 문의사항' : '과제 수행 확인 및 추가 문의';
-  const guide = isConsult
-    ? '상담/테스트 전 궁금한 내용을 남겨주시면 미리 확인하겠습니다.'
-    : '과제 완료 시 과제 수행 버튼을 눌러주세요. 추가 문의나 전달사항도 함께 보낼 수 있습니다.';
-  const doneBtn = isConsult ? '' : `<button onclick="gfSendParentFeedback('과제완료','과제를 완료했습니다.')" style="width:100%;background:#16417C;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:900;margin:10px 0;">✅ 과제 수행 완료</button>`;
-  return `<div class="rpt-sec" style="border:2px solid #bfdbfe;background:#f8fbff;">
-    <div class="rpt-sec-title">📩 ${title}</div>
-    <div style="font-size:14px;line-height:1.7;color:#334155;margin-bottom:10px;">${guide}</div>
-    ${doneBtn}
-    <textarea id="gf_parent_msg" placeholder="추가 문의 및 전달사항을 입력해주세요." style="width:100%;min-height:90px;border:1.5px solid #cbd5e1;border-radius:12px;padding:12px;font-family:inherit;font-size:14px;resize:vertical;background:#fff;"></textarea>
-    <button onclick="gfSendParentFeedback('${isConsult ? (kind==='test'?'테스트전문의':'상담전문의') : '문의'}', document.getElementById('gf_parent_msg').value)" style="width:100%;background:#22c55e;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:900;margin-top:10px;">📨 학원에 전송하기</button>
-  </div>
-  <script>
-  const GF_ENDPOINT_B64='${encoded}';
-  function gfEndpoint(){try{return decodeURIComponent(escape(atob(GF_ENDPOINT_B64)));}catch(e){return ''}}
-  function gfSendParentFeedback(type,msg){
-    const endpoint=gfEndpoint();
-    if(!endpoint){alert('전송 설정이 없습니다. 학원으로 직접 연락 부탁드립니다.');return;}
-    if(type!=='과제완료' && (!msg || !msg.trim())){alert('내용을 입력해주세요.');return;}
-    fetch(endpoint,{method:'POST',body:JSON.stringify({action:'parent_feedback',name:'${esc(name)}',type:type,message:msg||'',phone:''})})
-      .then(r=>r.json()).then(d=>{if(d.result==='success') alert('전송되었습니다. 확인 후 연락드리겠습니다.'); else alert('전송 실패: '+(d.error||''));})
-      .catch(()=>alert('전송 중 오류가 발생했습니다. 학원으로 직접 연락 부탁드립니다.'));
-  }
-  <\/script>`;
-}
-function gfBrandBanner(){
-  return `<div style="max-width:900px;margin:0 auto 16px;padding:16px 20px;border-radius:18px;background:#fff;border:1.5px solid #dbeafe;box-shadow:0 4px 15px rgba(0,0,0,.03);text-align:center;">
-    <a href="${GF_NAVER_URL}" target="_blank" style="display:inline-block;text-decoration:none;color:#16417C;font-weight:900;font-size:16px;line-height:1.6;">🏫 ${GF_BRAND_TEXT}<br><span style="font-size:13px;color:#2563eb;">지필드 영재교육 위치/로고 확인하기</span></a>
-  </div>`;
-}
-function gfInjectBeforeBody(html, block){
-  return html.replace('</body>', block + '</body>');
-}
-function gfInjectAfterBody(html, block){
-  return html.replace('<body>', '<body>' + block);
-}
-
-// 기존 buildSnapshot 보존 후 부모 피드백/브랜드 배너 삽입
-const __gf_oldBuildSnapshot = buildSnapshot;
-buildSnapshot = function(){
-  let html = __gf_oldBuildSnapshot();
-  const name=document.getElementById('nameInput').value||'학생';
-  html = gfInjectAfterBody(html, gfBrandBanner());
-  html = gfInjectBeforeBody(html, gfFeedbackBlock('report', name));
-  return html;
-};
-const __gf_oldBuildAbsentSnapshot = buildAbsentSnapshot;
-buildAbsentSnapshot = function(){
-  let html = __gf_oldBuildAbsentSnapshot();
-  const name=document.getElementById('nameInput').value||'학생';
-  html = gfInjectAfterBody(html, gfBrandBanner());
-  html = gfInjectBeforeBody(html, gfFeedbackBlock('report', name));
-  return html;
-};
-
-function buildConsultSnapshot(){
-  const name=document.getElementById('nameInput').value.trim()||'학생';
-  const cType=gfCurrentConsultType();
-  const school=document.getElementById('c_school')?.value||'';
-  const grade=document.getElementById('c_grade')?.value||'';
-  const course=document.getElementById('courseInput')?.value||'';
-  const dateVal=document.getElementById('c_date')?.value||'';
-  const content=document.getElementById('c_content')?.value||'';
-  const extra=gfExtraLink();
-  const isTest=cType==='테스트진행';
-  const isFace=cType==='대면상담';
-  const title=isTest?'입학 진단 안내':(isFace?'대면 상담 안내':'상담 기록');
-  const icon=isTest?'📝':(isFace?'📞':'📌');
-  const kind=isTest?'test':'consult';
-  const account=document.querySelector('input[name="c_account"]:checked')?.value||'';
-  const fee=isTest?`<div class="row"><span>테스트 비용</span><b>5만원</b></div><div class="row"><span>입금 계좌</span><b>${esc(account)}</b></div>`:'';
-  const extraHtml=extra?`<div class="card"><h2>📎 참고 자료</h2><a href="${esc(extra)}" target="_blank" class="linkBtn">자료 확인하기</a></div>`:'';
-  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${esc(title)} - ${esc(name)}</title><style>
-  *{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:#f1f5f9;color:#0f172a;}.wrap{max-width:560px;margin:0 auto;padding:24px 16px 50px;}.hero{background:linear-gradient(135deg,#16417C,#2a5b9e);color:#fff;border-radius:24px;padding:30px 24px;text-align:center;margin-bottom:16px;}.hero .sub{opacity:.9;font-size:14px;font-weight:700;margin-bottom:8px;}.hero h1{font-size:26px;margin-bottom:12px;}.brand{display:block;background:#fff;border:1.5px solid #dbeafe;border-radius:18px;padding:14px;text-align:center;text-decoration:none;color:#16417C;font-weight:900;margin-bottom:16px;line-height:1.6;}.card{background:#fff;border-radius:20px;padding:22px 20px;margin-bottom:14px;box-shadow:0 4px 14px rgba(0,0,0,.04);}h2{font-size:16px;color:#16417C;margin-bottom:14px;}.row{display:flex;justify-content:space-between;gap:14px;padding:10px 0;border-bottom:1px solid #edf2f7;font-size:14px;}.row span{color:#64748b;font-weight:700;}.row b{text-align:right;}.notice{white-space:pre-wrap;line-height:1.7;font-size:14px;background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:14px;}.linkBtn{display:block;background:#16417C;color:#fff;text-align:center;border-radius:12px;padding:13px;text-decoration:none;font-weight:900;}.footer{text-align:center;color:#94a3b8;font-size:11px;margin-top:28px;}.rpt-sec{background:#fff;border-radius:20px;padding:22px 20px;margin-bottom:14px;box-shadow:0 4px 14px rgba(0,0,0,.04);}.rpt-sec-title{font-size:16px;font-weight:800;color:#16417C;margin-bottom:14px;border-bottom:2px solid #16417C;display:inline-block;padding-bottom:4px;}
-  </style></head><body><div class="wrap"><a class="brand" href="${GF_NAVER_URL}" target="_blank">🏫 ${GF_BRAND_TEXT}<br><span style="font-size:13px;color:#2563eb;">지필드 영재교육 위치/로고 확인하기</span></a><div class="hero"><div class="sub">G-FIELD GIFTED EDUCATION</div><h1>${icon} ${title}</h1><div>${esc(name)} 학생</div></div><div class="card"><h2>안내 정보</h2><div class="row"><span>학생</span><b>${esc(name)}</b></div><div class="row"><span>학교/학년</span><b>${esc(school)} ${esc(grade)}</b></div><div class="row"><span>희망 과정</span><b>${esc(course||'미정')}</b></div><div class="row"><span>일정</span><b>${esc(gfDateText(dateVal))}</b></div>${fee}<div class="row"><span>문의</span><b>${GF_PHONE}</b></div><div class="row"><span>위치</span><b>${GF_ADDRESS}</b></div></div>${content?`<div class="card"><h2>전달 사항</h2><div class="notice">${esc(content)}</div></div>`:''}${extraHtml}${gfFeedbackBlock(kind,name)}<div class="footer">© G-Field Gifted Education</div></div></body></html>`;
-}
-function gfCurrentSnapshotHtml(){return gfCurrentDocType()==='상담' ? buildConsultSnapshot() : buildSnapshot();}
-function gfCurrentFileName(){
-  const docType=gfCurrentDocType();
-  const name=document.getElementById('nameInput').value.trim()||'학생';
-  const dateStr=(docType==='상담'?(document.getElementById('c_date').value||document.getElementById('dateInput').value):(document.getElementById('dateInput').value||'')).replace(/[-:T]/g,'').slice(0,12);
-  const course=document.getElementById('courseInput').value.trim();
-  const label=docType==='상담'?(gfCurrentConsultType()==='테스트진행'?'입학진단':(gfCurrentConsultType()==='대면상담'?'대면상담':'단순상담')):classType;
-  return `지필드_${dateStr||Date.now()}_${name}${course?`_${course}`:''}_${label}.html`;
-}
-
-// 모드 전환 재정의: 상담에서도 링크 생성/카톡 가능, 단순 상담은 문자 숨김
-const __gf_oldToggleMode = toggleMode;
-toggleMode = function(){
-  const isConsult = gfCurrentDocType() === '상담';
-  document.getElementById('consultationPanel').style.display = isConsult ? 'block' : 'none';
-  document.getElementById('mainContentSection').style.display = isConsult ? 'none' : 'block';
-  document.getElementById('noticeSection').style.display = isConsult ? 'none' : 'block';
-  const cType=gfCurrentConsultType();
-  document.getElementById('btnAligo').style.display = (isConsult && cType !== '단순상담') ? 'block' : 'none';
-  document.getElementById('saveDriveBtn').style.display = isConsult ? 'none' : 'block';
-  document.getElementById('ghBtn').style.display = 'block';
-  document.getElementById('ghBtn').textContent = isConsult ? '🔗 1단계: 안내 링크 생성' : '🔗 2단계: 웹 링크 생성';
-  document.getElementById('kakaoBtn').style.display = (isConsult && cType==='단순상담') ? 'none' : 'block';
-  document.getElementById('notionBtn').style.gridColumn = isConsult ? '1 / -1' : 'auto';
-  document.getElementById('sendTypeBox').style.display = (isConsult && cType==='단순상담') ? 'none' : 'block';
-  updateMsgBox();
-};
-toggleConsultType = function(){
-  const cType=gfCurrentConsultType();
-  document.getElementById('accountSelectDiv').style.display = cType==='테스트진행' ? 'block' : 'none';
-  toggleMode();
-};
-
-// 메시지 미리보기 재정의
-updateMsgBox = function(url){
-  const docType=gfCurrentDocType();
-  const name=document.getElementById('nameInput').value.trim()||'학생';
-  const cur=url || document.getElementById('resultUrl')?.href || '';
-  const linkText=gfValidShareUrl(cur)?`\n\n${cur}`:'';
-  let msg='';
-  if(docType==='상담'){
-    const cType=gfCurrentConsultType();
-    const dateVal=document.getElementById('c_date').value;
-    const school=document.getElementById('c_school').value||'';
-    const grade=document.getElementById('c_grade').value||'';
-    const course=document.getElementById('courseInput').value||'미정';
-    const extra=gfExtraLink();
-    const extraText=extra?`\n\n📎 참고자료: ${extra}`:'';
-    if(cType==='단순상담'){
-      msg=`[단순 상담 기록]\n${name}(${school} ${grade}) 학생 상담 내용은 노션에 기록만 남기는 용도입니다.\n문자/카카오 전송은 필요하지 않습니다.`;
-    }else if(cType==='테스트진행'){
-      const accountInfo=document.querySelector('input[name="c_account"]:checked')?.value||'';
-      msg=`${GF_BRAND_TEXT}\n\n📝 ${name} 학생 입학 진단 안내입니다.\n- 학생: ${name} ${school||grade?`(${school} ${grade})`:''}\n- 희망 과정: ${course}\n- 일정: ${gfDateText(dateVal)}\n- 테스트 소요시간: 약 90분\n- 테스트 비용: 5만원\n- 입금 계좌: ${accountInfo}\n\n상담 일정은 테스트 후 협의하여 진행합니다.\n주차장이 협소하여 잠시 주차만 가능합니다.\n학원건물 1층 출입문 비밀번호는 종 모양 버튼 후 0852입니다.\n문의: ${GF_PHONE}\n위치: ${GF_ADDRESS}\n${GF_NAVER_URL}${extraText}${linkText}`;
-    }else{
-      msg=`${GF_BRAND_TEXT}\n\n📞 ${name} 학생 대면 상담 안내입니다.\n- 학생: ${name} ${school||grade?`(${school} ${grade})`:''}\n- 희망 과정: ${course}\n- 상담 일정: ${gfDateText(dateVal)}\n\n상담 전 문의사항은 안내 페이지에서 남겨주시면 미리 확인하겠습니다.\n문의: ${GF_PHONE}\n위치: ${GF_ADDRESS}\n${GF_NAVER_URL}${extraText}${linkText}`;
-    }
-  }else{
-    const d=new Date((document.getElementById('dateInput').value||new Date().toISOString().split('T')[0])+'T00:00:00');
-    const dateLine=`${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일`;
-    if(classType==='결석'){
-      const makeupType=document.getElementById('absentMakeupType').value;
-      const makeupDate=document.getElementById('absentMakeupDate').value;
-      const makeupText=(makeupType==='decided'&&makeupDate)?`보강 일정은 ${makeupDate}로 확정되었습니다.`:'보강 일정은 추후 안내드리겠습니다.';
-      msg=`${GF_BRAND_TEXT}\n\n🚫 ${dateLine} ${name} 학생 결석 안내입니다.\n${makeupText}${linkText}\n\n${getGreeting()}`;
-    }else if(classType==='보강'){
-      msg=`${GF_BRAND_TEXT}\n\n🔁 ${dateLine} ${name} 학생 보강 수업 안내입니다.${linkText}\n\n${getGreeting()}`;
-    }else{
-      msg=`${GF_BRAND_TEXT}\n\n📚 ${dateLine} ${name} 학생 학습 리포트입니다.\n과제 완료 시 리포트 하단의 과제 수행 버튼을 눌러주세요.${linkText}\n\n${getGreeting()}`;
-    }
-  }
-  document.getElementById('msgText').value=msg;
-  document.getElementById('msgBox').style.display='block';
-};
-
-// GitHub 배포 재정의: 상담/테스트 안내 폼도 생성
-async function deployToGitHubPages(){
-  const ghTok=getKey('gh'),ghU=getKey('ghUser')||'docssam1',ghR=getKey('ghRepo')||'gfield-report';
-  if(!ghTok){openKeyModal();return;}
-  const btn=document.getElementById('ghBtn');btn.disabled=true;btn.textContent='⏳ 배포 중...';
-  try{
-    const name=document.getElementById('nameInput').value.trim()||'학생';
-    const fileName=gfCurrentFileName();
-    const path=`${name}/${fileName}`;
-    const apiUrl=`https://api.github.com/repos/${ghU}/${ghR}/contents/${encodeURIComponent(path)}`;
-    const headers={'Authorization':'Bearer '+ghTok,'Content-Type':'application/json'};
-    let sha=null;const chk=await fetch(apiUrl,{headers});if(chk.ok) sha=(await chk.json()).sha;
-    const html=gfCurrentSnapshotHtml();
-    const body={message:`[자동배포] ${name} ${gfCurrentDocType()} 안내`,content:btoa(unescape(encodeURIComponent(html))),branch:'main'};if(sha) body.sha=sha;
-    const up=await fetch(apiUrl,{method:'PUT',headers,body:JSON.stringify(body)});
-    if(!up.ok) throw new Error('업로드 실패');
-    const publicUrl=`https://${ghU}.github.io/${ghR}/${path}`;
-    setLink(publicUrl);updateMsgBox(publicUrl);showToast('🎉 안내 링크 생성 완료!');
-  }catch(e){alert('❌ GitHub 오류: '+e.message);}finally{btn.disabled=false;btn.textContent=gfCurrentDocType()==='상담'?'🔗 1단계: 안내 링크 생성':'🔗 2단계: 웹 링크 생성';}
-}
-
-// 드라이브 저장도 최신 스냅샷 사용
-async function saveToDrive(){
-  const sUrl=getKey('script');if(!sUrl){openKeyModal();return;}
-  const name=document.getElementById('nameInput').value.trim();if(!name){showToast('학생 이름을 입력하세요.');return;}
-  const btn=document.getElementById('saveDriveBtn');btn.disabled=true;btn.textContent='⏳ 저장 중...';
-  try{
-    const course=document.getElementById('courseInput').value.trim();
-    const fileName=gfCurrentFileName();
-    const res=await fetch(sUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'save_drive',studentName:name,fileName,htmlContent:gfCurrentSnapshotHtml(),attendance:{date:document.getElementById('dateInput').value,type:classType,course,sheetId:SHEET_ID}}),redirect:'follow'});
-    const result=await res.json();
-    if(result.result==='success'){setLink(result.url);updateMsgBox(result.url);showToast(`✅ 저장 및 출결 기록 완료!`);}else throw new Error(result.error);
-  }catch(e){alert('❌ 저장 실패: '+e.message);}finally{btn.disabled=false;btn.textContent='💾 1단계: 구글 드라이브 저장';}
-}
-
-// 알리고 문자: 단순 상담 차단 + 현재 메시지/링크 포함
-function sendAligoSms(){
-  if(gfCurrentDocType()==='상담' && gfCurrentConsultType()==='단순상담'){alert('단순 상담은 문자 발송 없이 기록만 남기는 것을 권장합니다.');return;}
-  const phone = gfCurrentDocType()==='상담' ? document.getElementById('c_phone').value : '';
-  const msg = document.getElementById('msgText').value;
-  const targetDate = gfCurrentDocType()==='상담' ? document.getElementById('c_date').value : document.getElementById('dateInput').value;
-  const sUrl = getKey('script');
-  if(!sUrl){openKeyModal();return;}
-  if(!phone || !msg){alert('연락처와 자동 생성된 메시지를 확인해주세요.');return;}
-  const btn=document.getElementById('btnAligo');btn.innerText='⏳ 문자 전송 중...';
-  fetch(sUrl,{method:'POST',body:JSON.stringify({action:'aligo_sms',receiver:phone,msg:msg,targetDate:targetDate})})
-  .then(r=>r.json()).then(res=>{btn.innerText='📨 알리고 문자 자동 전송 (예약 포함)'; if(res.result==='success') alert('✅ 문자가 발송되었고 전날 리마인드 예약도 설정되었습니다!'); else alert('❌ 전송 실패: '+res.error);})
-  .catch(err=>{btn.innerText='📨 알리고 문자 자동 전송 (예약 포함)';alert('❌ 오류: '+err.message);});
-}
-
-// 카카오 커스텀 메시지 재정의
-function shareKakao(){
-  const url=document.getElementById('resultUrl').href;
-  if(!gfValidShareUrl(url)){alert('🚨 먼저 안내 링크를 생성해주세요!');return;}
-  if(!window.Kakao){alert('카카오 SDK 로딩 중입니다.');return;}
-  if(!Kakao.isInitialized()){const k=getKey('kakao');if(!k){openKeyModal();return;}try{Kakao.init(k);}catch(e){alert('카카오 키를 확인해주세요.');return;}}
-  const docType=gfCurrentDocType();
-  const name=document.getElementById('nameInput').value.trim()||'학생';
-  let title='',desc='',btn='내용 확인하기',img='og-cover.png';
-  if(docType==='상담'){
-    const cType=gfCurrentConsultType();
-    if(cType==='단순상담'){alert('단순 상담은 카카오 전송 없이 기록만 남기는 것을 권장합니다.');return;}
-    if(cType==='테스트진행'){title=`📝 ${name} 학생 입학 진단 안내`;btn='입학 진단 안내 확인';img='og-test.png';}
-    else{title=`📞 ${name} 학생 대면 상담 안내`;btn='대면 상담 안내 확인';img='og-consult.png';}
-    desc=document.getElementById('msgText').value.replace(/\n/g,' ').slice(0,180);
-  }else{
-    const d=new Date(document.getElementById('dateInput').value+'T00:00:00');
-    const dateStr=`${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일`;
-    if(classType==='결석'){title=`🚫 ${name} 학생 결석 안내`;btn='결석·보강 안내 확인';img='og-absent.png';}
-    else if(classType==='보강'){title=`🔁 ${name} 학생 보강 수업 안내`;btn='보강 안내 확인';img='og-makeup.png';}
-    else{title=`📚 ${name} 학생 학습 리포트`;btn='학습 리포트 확인';img='og-cover.png';}
-    desc=`${GF_BRAND_TEXT} ${dateStr} ${classType} 안내입니다.`;
-  }
-  try{
-    Kakao.Share.sendDefault({objectType:'feed',content:{title:title,description:desc,imageUrl:`https://${getKey('ghUser')||'docssam1'}.github.io/${getKey('ghRepo')||'gfield-report'}/${img}`,link:{mobileWebUrl:url,webUrl:url}},buttons:[{title:btn,link:{mobileWebUrl:url,webUrl:url}}]});
-  }catch(e){updateMsgBox(url);showToast('카카오 오류 → 직접 복사해서 보내주세요!');document.getElementById('msgBox').scrollIntoView({behavior:'smooth'});}
-}
-
-// 기존 초기화 이후 화면 상태 재정렬
-setTimeout(()=>{try{toggleMode();}catch(e){}},300);
-
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
 document.addEventListener('click',e=>{if(e.target===document.getElementById('keyModal')) closeKeyModal();if(e.target===document.getElementById('driveModal')) closeDriveModal();});
 </script>
