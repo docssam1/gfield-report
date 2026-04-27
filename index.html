@@ -74,11 +74,6 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
 .key-missing-bar{background:#fef2f2;border:1.5px solid #fca5a5;border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;font-size:13px;}
 .key-missing-bar span{color:#991b1b;font-weight:700;}
 .key-set-btn{background:#ef4444;color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;}
-.drive-modal{background:#fff;border-radius:20px;padding:24px;max-width:500px;width:92%;max-height:80vh;overflow-y:auto;}
-.drive-item{border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:background .15s;}
-.drive-item:hover{background:#f0f2ff;}
-.drive-item-name{font-size:13px;font-weight:700;color:var(--text);}
-.drive-item-date{font-size:11px;color:var(--muted);margin-top:2px;}
 .dashboard-bar{background:#e0e7ff;border:1.5px solid #a5b4fc;border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;font-size:13px;}
 .dashboard-bar span{color:#3730a3;font-weight:700;}
 .dashboard-bar a{background:#4f46e5;color:#fff;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;text-decoration:none;}
@@ -93,9 +88,10 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
   <a href="https://docs.google.com/spreadsheets/d/1Ta1o_v504jtDsyHPY0bER6WpI3xYTbVVffEl0iy58f8/edit" target="_blank">대시보드 열기 →</a>
 </div>
 
-<button onclick="openDriveModal()" style="width:100%; background:#2563eb; color:#fff; padding:14px; border-radius:12px; font-weight:800; border:none; margin-bottom:16px; cursor:pointer; font-size:15px; box-shadow:0 4px 6px rgba(37,99,235,0.2);">
-  📥 같은 반 학생 리포트 복사하기 (과거 기록 전체 불러오기)
-</button>
+<label style="display:block; width:100%; background:#2563eb; color:#fff; padding:14px; border-radius:12px; font-weight:800; text-align:center; margin-bottom:16px; cursor:pointer; font-size:15px; box-shadow:0 4px 6px rgba(37,99,235,0.2);">
+  📥 같은 반 학생 리포트 복사하기 (HTML 파일 선택)
+  <input type="file" accept=".html" style="display:none;" onchange="loadTemplateFromFile(event)">
+</label>
 
 <div style="background:#f0f4ff; border:1px solid #c7d2fe; border-radius:12px; padding:12px 16px; margin-bottom:14px; display:flex; gap:16px; font-weight:700; align-items:center;">
   <span style="color:#16417C;">📝 작업 모드:</span>
@@ -130,7 +126,7 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
   <div id="accountSelectDiv" style="display:none; background:#fff; padding:12px; border-radius:8px; border:1px solid #fcd34d; margin-bottom:12px;">
     <b style="font-size:12px; color:#b45309;">💳 입금 계좌 선택:</b><br>
     <label style="cursor:pointer; display:inline-block; margin-top:6px; font-weight:bold;"><input type="radio" name="c_account" value="우리은행 1002-629-797436, 이주연 지필드영재교육" checked onclick="updateMsgBox()"> 우리은행 (이주연)</label><br>
-    <label style="cursor:pointer; display:inline-block; margin-top:6px; font-weight:bold;"><input type="radio" name="c_account" value="기업 01020837265, 노관호" onclick="updateMsgBox()"> 기업은행 (노관호)</label>
+    <label style="cursor:pointer; display:inline-block; margin-top:6px; font-weight:bold;"><input type="radio" name="c_account" value="하나은행 853-910-18114807 노관호 지필드 영재교육" onclick="updateMsgBox()"> 하나은행 (노관호)</label>
   </div>
 
   <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
@@ -212,15 +208,6 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
     <div class="key-field"><label>🐱 GITHUB 저장소명</label><input type="text" id="k_ghrepo" placeholder="gfield-report"></div>
     <button class="modal-save" onclick="saveKeys()">💾 저장하고 닫기</button>
     <button style="width:100%;padding:10px;background:transparent;border:1px solid var(--border);border-radius:10px;cursor:pointer;color:var(--muted);margin-top:8px;font-size:13px;" onclick="closeKeyModal()">취소</button>
-  </div>
-</div>
-
-<div class="modal-overlay" id="driveModal">
-  <div class="drive-modal">
-    <h2 style="margin-bottom:6px;">📋 드라이브 학생 기록 불러오기</h2>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">클릭 시 기존 리포트의 모든 내용을 현재 폼에 덮어씁니다.</p>
-    <div id="driveFileList"><div style="text-align:center;padding:20px;color:var(--muted);">⏳ 불러오는 중...</div></div>
-    <button style="width:100%;padding:10px;background:transparent;border:1px solid var(--border);border-radius:10px;cursor:pointer;color:var(--muted);margin-top:12px;font-size:13px;" onclick="closeDriveModal()">닫기</button>
   </div>
 </div>
 
@@ -337,11 +324,9 @@ function addResourceRow(name='',link=''){
   d.querySelector('button').onclick=()=>d.remove();document.getElementById('resourceList').appendChild(d);
 }
 
-// ⭐ 2번 요청: 동영상 추가 버튼 수정
 function addVideo(){
   const url=document.getElementById('videoUrlInput').value.trim();
   if(!url) {
-    // 빈칸일 때 유튜브 스튜디오 바로 열기
     window.open('https://studio.youtube.com/channel/UCD9KIX7Sgqkfo3pIRvJcufg/videos/upload?filter=%5B%5D&sort=%7B%22columnType%22%3A%22date%22%2C%22sortOrder%22%3A%22DESCENDING%22%7D', '_blank');
     return;
   }
@@ -366,94 +351,83 @@ function renderPhotos(cid,arr){
   });
 }
 function removePhoto(pid,cid){if(cid==='hwPhotos') hwPhotos=hwPhotos.filter(x=>x.id!==pid);else classPhotos=classPhotos.filter(x=>x.id!==pid);renderPhotos(cid,cid==='hwPhotos'?hwPhotos:classPhotos);}
-function loadHomework(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{const doc=new DOMParser().parseFromString(ev.target.result,'text/html');const old=doc.querySelectorAll('.data-today-hw');if(!old.length)return;document.getElementById('hwList').innerHTML='';old.forEach(el=>addHwRow(el.getAttribute('data-course'),el.getAttribute('data-perf')||'',el.getAttribute('data-content')));showToast('과제 불러오기 완료');};r.readAsText(f);}
 
-// ⭐ 3번 요청: 전체 항목 드라이브에서 파싱하여 복원
-async function openDriveModal(){
-  document.getElementById('driveModal').classList.add('show');document.getElementById('driveFileList').innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);">⏳ 불러오는 중...</div>';
-  const sUrl=getKey('script');if(!sUrl){document.getElementById('driveFileList').innerHTML='<div style="color:red;padding:12px;">Apps Script 설정 필요</div>';return;}
-  try{const res=await fetch(sUrl+'?action=list');const data=await res.json();const files=data.files||[];if(!files.length){document.getElementById('driveFileList').innerHTML='<div style="padding:12px;">저장된 리포트 없음</div>';return;}
-  document.getElementById('driveFileList').innerHTML=files.map(f=>`<div class="drive-item" onclick="loadDriveFile('${f.id}')"><div class="drive-item-name">📄 ${f.name}</div><div class="drive-item-date">${f.modifiedTime||''}</div></div>`).join('');}catch(e){document.getElementById('driveFileList').innerHTML=`<div style="color:red;padding:12px;">❌ ${e.message}</div>`;}
-}
+// ⭐ 로컬 파일 선택하여 리포트 템플릿 복사 (가장 빠르고 정확한 방식)
+function loadTemplateFromFile(e){
+  const f=e.target.files[0];
+  if(!f) return;
+  showToast('⏳ 선택하신 리포트를 분석 중입니다...');
+  const r=new FileReader();
+  r.onload=ev=>{
+    try {
+      const doc=new DOMParser().parseFromString(ev.target.result,'text/html');
 
-async function loadDriveFile(fileId){
-  showToast('⏳ 전체 내용 덮어쓰는 중...');
-  const sUrl=getKey('script');
-  try{
-    const res=await fetch(`${sUrl}?action=get&fileId=${fileId}`);
-    const data=await res.json();
-    const doc=new DOMParser().parseFromString(data.content||'','text/html');
-
-    // 1. 날짜 및 과정 파싱
-    const dateEl = doc.querySelector('.date');
-    if(dateEl) {
-      const txt = dateEl.textContent.split('·');
-      if(txt[0]) document.getElementById('dateInput').value = txt[0].trim().replace(/\./g, '-');
-      if(txt[1]) document.getElementById('courseInput').value = txt[1].trim();
-    }
-    
-    // 2. 전달 사항 파싱
-    const noticeEl = doc.querySelector('div[style*="background:#fffbeb"]');
-    if(noticeEl) document.getElementById('noticeArea').value = noticeEl.textContent.replace('📢 ', '').trim();
-    else document.getElementById('noticeArea').value = '';
-
-    // 3. 과제 확인 (hwList)
-    document.getElementById('hwList').innerHTML = '';
-    doc.querySelectorAll('.data-today-hw').forEach(el=>addHwRow(el.getAttribute('data-course'), el.getAttribute('data-perf')||'', el.getAttribute('data-content')));
-
-    // 4. 나머지 섹션들 초기화 후 파싱
-    document.getElementById('subjectList').innerHTML = '';
-    document.getElementById('todayHwList').innerHTML = '';
-    document.getElementById('resourceList').innerHTML = '';
-
-    doc.querySelectorAll('.rpt-sec').forEach(sec => {
-      const title = sec.querySelector('.rpt-sec-title')?.textContent || '';
+      const dateEl = doc.querySelector('.date');
+      if(dateEl) {
+        const txt = dateEl.textContent.split('·');
+        if(txt[0]) document.getElementById('dateInput').value = txt[0].trim().replace(/\./g, '-');
+        if(txt[1]) document.getElementById('courseInput').value = txt[1].trim();
+      }
       
-      // 학습 요약
-      if(title.includes('학습 요약')) {
-        sec.querySelectorAll('[style*="background:#f8fafc"]').forEach(item => {
-          const s = item.querySelector('[style*="font-weight:800"]')?.textContent.replace('📘 ','').trim()||'';
-          const c = item.querySelector('[style*="white-space:pre-wrap"]')?.textContent.trim()||'';
-          if(s||c) addSubjRow(s,c);
-        });
-      }
-      // 오늘의 과제
-      if(title.includes('오늘의 과제')) {
-        sec.querySelectorAll('div[style*="border-bottom:1px solid #e2e8f0"]').forEach(item => {
-          const spans = item.querySelectorAll('span');
-          let c='', t='필수', ct='';
-          if(spans.length >= 2) {
-             c = spans[0].textContent.trim();
-             t = spans[1].textContent.trim();
-             ct = item.querySelector('div[style*="white-space:pre-wrap"]')?.textContent.trim() || '';
-          } else {
-             const divs = item.children;
-             if(divs.length >= 3) {
-                c = divs[0].textContent.trim();
-                t = divs[1].textContent.trim();
-                ct = divs[2].textContent.trim();
-             }
-          }
-          if(c||ct) addTodayHwRow(c,t,ct);
-        });
-      }
-      // 추가 자료
-      if(title.includes('추가 자료')) {
-        sec.querySelectorAll('div[style*="background:#f1f5f9"]').forEach(item => {
-           const n = item.querySelector('span')?.textContent.trim()||'';
-           const l = item.querySelector('a')?.href||'';
-           if(n&&l) addResourceRow(n,l);
-        });
-      }
-    });
+      const noticeEl = doc.querySelector('div[style*="background:#fffbeb"]');
+      if(noticeEl) document.getElementById('noticeArea').value = noticeEl.textContent.replace('📢 ', '').trim();
+      else document.getElementById('noticeArea').value = '';
 
-    closeDriveModal();
-    showToast('✅ 전체 내용 불러오기 완료! 이름만 변경하세요.');
-  } catch(e) {
-    closeDriveModal(); alert('❌ 실패: '+e.message);
-  }
+      document.getElementById('hwList').innerHTML = '';
+      doc.querySelectorAll('.data-today-hw').forEach(el=>addHwRow(el.getAttribute('data-course'), el.getAttribute('data-perf')||'', el.getAttribute('data-content')));
+
+      document.getElementById('subjectList').innerHTML = '';
+      document.getElementById('todayHwList').innerHTML = '';
+      document.getElementById('resourceList').innerHTML = '';
+
+      doc.querySelectorAll('.rpt-sec').forEach(sec => {
+        const title = sec.querySelector('.rpt-sec-title')?.textContent || '';
+        
+        if(title.includes('학습 요약')) {
+          sec.querySelectorAll('[style*="background:#f8fafc"]').forEach(item => {
+            const s = item.querySelector('[style*="font-weight:800"]')?.textContent.replace('📘 ','').trim()||'';
+            const c = item.querySelector('[style*="white-space:pre-wrap"]')?.textContent.trim()||'';
+            if(s||c) addSubjRow(s,c);
+          });
+        }
+        
+        if(title.includes('오늘의 과제')) {
+          sec.querySelectorAll('div[style*="border-bottom:1px solid #e2e8f0"]').forEach(item => {
+            const spans = item.querySelectorAll('span');
+            let c='', t='필수', ct='';
+            if(spans.length >= 2) {
+               c = spans[0].textContent.trim();
+               t = spans[1].textContent.trim();
+               ct = item.querySelector('div[style*="white-space:pre-wrap"]')?.textContent.trim() || '';
+            } else {
+               const divs = item.children;
+               if(divs.length >= 3) {
+                  c = divs[0].textContent.trim();
+                  t = divs[1].textContent.trim();
+                  ct = divs[2].textContent.trim();
+               }
+            }
+            if(c||ct) addTodayHwRow(c,t,ct);
+          });
+        }
+        
+        if(title.includes('추가 자료')) {
+          sec.querySelectorAll('div[style*="background:#f1f5f9"]').forEach(item => {
+             const n = item.querySelector('span')?.textContent.trim()||'';
+             const l = item.querySelector('a')?.href||'';
+             if(n&&l) addResourceRow(n,l);
+          });
+        }
+      });
+      
+      showToast('✅ 전체 내용 불러오기 완료! 학생 이름만 변경하세요.');
+    } catch(err) {
+      alert('❌ 파일 분석 실패: '+err.message);
+    }
+  };
+  r.readAsText(f);
+  e.target.value=''; // 다음 선택을 위해 초기화
 }
-function closeDriveModal(){document.getElementById('driveModal').classList.remove('show');}
 
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
