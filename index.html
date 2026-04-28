@@ -88,10 +88,16 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
   <a href="https://docs.google.com/spreadsheets/d/1Ta1o_v504jtDsyHPY0bER6WpI3xYTbVVffEl0iy58f8/edit" target="_blank">대시보드 열기 →</a>
 </div>
 
-<label style="display:block; width:100%; background:#2563eb; color:#fff; padding:14px; border-radius:12px; font-weight:800; text-align:center; margin-bottom:16px; cursor:pointer; font-size:15px; box-shadow:0 4px 6px rgba(37,99,235,0.2);">
-  📥 같은 반 학생 리포트 복사하기 (HTML 파일 선택)
-  <input type="file" accept=".html" style="display:none;" onchange="loadTemplateFromFile(event)">
-</label>
+<div style="display:flex; gap:10px; margin-bottom:16px;">
+  <label style="flex:1; background:#f59e0b; color:#fff; padding:14px; border-radius:12px; font-weight:800; text-align:center; cursor:pointer; font-size:15px; box-shadow:0 4px 6px rgba(245,158,11,0.2); transition:0.3s;">
+    ⚡ 이전 과제 불러오기
+    <input type="file" accept=".html" style="display:none;" onchange="loadFromFile(event, 'homework')">
+  </label>
+  <label style="flex:1; background:#2563eb; color:#fff; padding:14px; border-radius:12px; font-weight:800; text-align:center; cursor:pointer; font-size:15px; box-shadow:0 4px 6px rgba(37,99,235,0.2); transition:0.3s;">
+    📑 전체 리포트 덮어쓰기
+    <input type="file" accept=".html" style="display:none;" onchange="loadFromFile(event, 'all')">
+  </label>
+</div>
 
 <div style="background:#f0f4ff; border:1px solid #c7d2fe; border-radius:12px; padding:12px 16px; margin-bottom:14px; display:flex; gap:16px; font-weight:700; align-items:center;">
   <span style="color:#16417C;">📝 작업 모드:</span>
@@ -352,81 +358,118 @@ function renderPhotos(cid,arr){
 }
 function removePhoto(pid,cid){if(cid==='hwPhotos') hwPhotos=hwPhotos.filter(x=>x.id!==pid);else classPhotos=classPhotos.filter(x=>x.id!==pid);renderPhotos(cid,cid==='hwPhotos'?hwPhotos:classPhotos);}
 
-// ⭐ 로컬 파일 선택하여 리포트 템플릿 복사 (가장 빠르고 정확한 방식)
-function loadTemplateFromFile(e){
-  const f=e.target.files[0];
+// ⭐ 로컬 파일(PC) 선택하여 리포트 불러오기 (과제만 or 전체)
+function loadFromFile(e, mode) {
+  const f = e.target.files[0];
   if(!f) return;
   showToast('⏳ 선택하신 리포트를 분석 중입니다...');
-  const r=new FileReader();
-  r.onload=ev=>{
+  const r = new FileReader();
+  r.onload = ev => {
     try {
-      const doc=new DOMParser().parseFromString(ev.target.result,'text/html');
+      const doc = new DOMParser().parseFromString(ev.target.result, 'text/html');
 
-      const dateEl = doc.querySelector('.date');
-      if(dateEl) {
-        const txt = dateEl.textContent.split('·');
-        if(txt[0]) document.getElementById('dateInput').value = txt[0].trim().replace(/\./g, '-');
-        if(txt[1]) document.getElementById('courseInput').value = txt[1].trim();
+      if (mode === 'all') {
+        // [전체 내용 복사하기]
+        const dateEl = doc.querySelector('.date');
+        if(dateEl) {
+          const txt = dateEl.textContent.split('·');
+          if(txt[0]) document.getElementById('dateInput').value = txt[0].trim().replace(/\./g, '-');
+          if(txt[1]) document.getElementById('courseInput').value = txt[1].trim();
+        }
+        
+        const noticeEl = doc.querySelector('div[style*="background:#fffbeb"]');
+        if(noticeEl) document.getElementById('noticeArea').value = noticeEl.textContent.replace('📢 ', '').trim();
+        else document.getElementById('noticeArea').value = '';
+
+        document.getElementById('hwList').innerHTML = '';
+        doc.querySelectorAll('.data-today-hw').forEach(el=>addHwRow(el.getAttribute('data-course'), el.getAttribute('data-perf')||'', el.getAttribute('data-content')));
+
+        document.getElementById('subjectList').innerHTML = '';
+        document.getElementById('todayHwList').innerHTML = '';
+        document.getElementById('resourceList').innerHTML = '';
+
+        doc.querySelectorAll('.rpt-sec').forEach(sec => {
+          const title = sec.querySelector('.rpt-sec-title')?.textContent || '';
+          
+          if(title.includes('학습 요약')) {
+            sec.querySelectorAll('[style*="background:#f8fafc"]').forEach(item => {
+              const s = item.querySelector('[style*="font-weight:800"]')?.textContent.replace('📘 ','').trim()||'';
+              const c = item.querySelector('[style*="white-space:pre-wrap"]')?.textContent.trim()||'';
+              if(s||c) addSubjRow(s,c);
+            });
+          }
+          
+          if(title.includes('오늘의 과제')) {
+            sec.querySelectorAll('div[style*="border-bottom:1px solid #e2e8f0"]').forEach(item => {
+              const spans = item.querySelectorAll('span');
+              let c='', t='필수', ct='';
+              if(spans.length >= 2) {
+                 c = spans[0].textContent.trim();
+                 t = spans[1].textContent.trim();
+                 ct = item.querySelector('div[style*="white-space:pre-wrap"]')?.textContent.trim() || '';
+              } else {
+                 const divs = item.children;
+                 if(divs.length >= 3) {
+                    c = divs[0].textContent.trim();
+                    t = divs[1].textContent.trim();
+                    ct = divs[2].textContent.trim();
+                 }
+              }
+              if(c||ct) addTodayHwRow(c,t,ct);
+            });
+          }
+          
+          if(title.includes('추가 자료')) {
+            sec.querySelectorAll('div[style*="background:#f1f5f9"]').forEach(item => {
+               const n = item.querySelector('span')?.textContent.trim()||'';
+               const l = item.querySelector('a')?.href||'';
+               if(n&&l) addResourceRow(n,l);
+            });
+          }
+        });
+        showToast('✅ 전체 내용 복사 완료! (학생 이름을 확인해주세요)');
+      
+      } else if (mode === 'homework') {
+        // [과제만 불러오기] - '오늘의 과제' 섹션만 쏙 빼옵니다
+        document.getElementById('todayHwList').innerHTML = '';
+        let found = false;
+
+        doc.querySelectorAll('.rpt-sec').forEach(sec => {
+          const title = sec.querySelector('.rpt-sec-title')?.textContent || '';
+          
+          if(title.includes('오늘의 과제')) {
+            sec.querySelectorAll('div[style*="border-bottom:1px solid #e2e8f0"]').forEach(item => {
+              const spans = item.querySelectorAll('span');
+              let c='', t='필수', ct='';
+              if(spans.length >= 2) {
+                 c = spans[0].textContent.trim();
+                 t = spans[1].textContent.trim();
+                 ct = item.querySelector('div[style*="white-space:pre-wrap"]')?.textContent.trim() || '';
+              } else {
+                 const divs = item.children;
+                 if(divs.length >= 3) {
+                    c = divs[0].textContent.trim();
+                    t = divs[1].textContent.trim();
+                    ct = divs[2].textContent.trim();
+                 }
+              }
+              if(c||ct) {
+                addTodayHwRow(c,t,ct);
+                found = true;
+              }
+            });
+          }
+        });
+        if(found) showToast('⚡ 과제 내용만 쏙! 불러왔습니다.');
+        else showToast('⚠️ 이 파일에는 과제 내용이 없습니다.');
       }
-      
-      const noticeEl = doc.querySelector('div[style*="background:#fffbeb"]');
-      if(noticeEl) document.getElementById('noticeArea').value = noticeEl.textContent.replace('📢 ', '').trim();
-      else document.getElementById('noticeArea').value = '';
 
-      document.getElementById('hwList').innerHTML = '';
-      doc.querySelectorAll('.data-today-hw').forEach(el=>addHwRow(el.getAttribute('data-course'), el.getAttribute('data-perf')||'', el.getAttribute('data-content')));
-
-      document.getElementById('subjectList').innerHTML = '';
-      document.getElementById('todayHwList').innerHTML = '';
-      document.getElementById('resourceList').innerHTML = '';
-
-      doc.querySelectorAll('.rpt-sec').forEach(sec => {
-        const title = sec.querySelector('.rpt-sec-title')?.textContent || '';
-        
-        if(title.includes('학습 요약')) {
-          sec.querySelectorAll('[style*="background:#f8fafc"]').forEach(item => {
-            const s = item.querySelector('[style*="font-weight:800"]')?.textContent.replace('📘 ','').trim()||'';
-            const c = item.querySelector('[style*="white-space:pre-wrap"]')?.textContent.trim()||'';
-            if(s||c) addSubjRow(s,c);
-          });
-        }
-        
-        if(title.includes('오늘의 과제')) {
-          sec.querySelectorAll('div[style*="border-bottom:1px solid #e2e8f0"]').forEach(item => {
-            const spans = item.querySelectorAll('span');
-            let c='', t='필수', ct='';
-            if(spans.length >= 2) {
-               c = spans[0].textContent.trim();
-               t = spans[1].textContent.trim();
-               ct = item.querySelector('div[style*="white-space:pre-wrap"]')?.textContent.trim() || '';
-            } else {
-               const divs = item.children;
-               if(divs.length >= 3) {
-                  c = divs[0].textContent.trim();
-                  t = divs[1].textContent.trim();
-                  ct = divs[2].textContent.trim();
-               }
-            }
-            if(c||ct) addTodayHwRow(c,t,ct);
-          });
-        }
-        
-        if(title.includes('추가 자료')) {
-          sec.querySelectorAll('div[style*="background:#f1f5f9"]').forEach(item => {
-             const n = item.querySelector('span')?.textContent.trim()||'';
-             const l = item.querySelector('a')?.href||'';
-             if(n&&l) addResourceRow(n,l);
-          });
-        }
-      });
-      
-      showToast('✅ 전체 내용 불러오기 완료! 학생 이름만 변경하세요.');
     } catch(err) {
       alert('❌ 파일 분석 실패: '+err.message);
     }
   };
   r.readAsText(f);
-  e.target.value=''; // 다음 선택을 위해 초기화
+  e.target.value = ''; // 다음 선택을 위해 초기화
 }
 
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
