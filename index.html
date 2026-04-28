@@ -321,7 +321,7 @@ function addSubjRow(subj='',content=''){
 }
 function addTodayHwRow(course='',type='필수',content=''){
   const d=document.createElement('div');d.style='display:grid;grid-template-columns:30% 20% 1fr;border:1.5px solid var(--border);border-top:none;';
-  d.innerHTML=`<div style="padding:8px 10px;border-right:1.5px solid var(--border);"><input type="text" class="v-course" value="${course}" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:13px;outline:none;background:#fafbff;"></div><div style="padding:8px 10px;border-right:1.5px solid var(--border);"><select class="v-type" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:7px;font-size:13px;outline:none;background:#fafbff;"><option ${type==='필수'?'selected':''}>필수</option><option ${type==='선택'?'selected':''}>선택</option></select></div><div style="padding:8px 10px;position:relative;"><textarea class="v-content" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:13px;outline:none;background:#fafbff;resize:none;min-height:50px;font-family:inherit;">${content}</textarea><button style="position:absolute;right:6px;top:6px;border:none;background:none;color:red;cursor:pointer;">✕</button></div>`;
+  d.innerHTML=`<div style="padding:8px 10px;border-right:1.5px solid var(--border);"><input type="text" class="v-course" value="${course}" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:13px;outline:none;background:#fafbff;"></div><div style="padding:8px 10px;border-right:1.5px solid var(--border);"><select class="v-type" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:7px;font-size:13px;outline:none;background:#fafbff;"><option ${type==='필수'?'selected':''}>필수</option><option ${type==='선택'?'selected':''}>선택</option></select></div><div style="padding:8px 10px;position:relative;"><textarea class="v-content" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:13px;outline:none;background:#fafbff;resize:vertical;min-height:50px;font-family:inherit;">${content}</textarea><button style="position:absolute;right:6px;top:6px;border:none;background:none;color:red;cursor:pointer;">✕</button></div>`;
   d.querySelector('button').onclick=()=>d.remove();document.getElementById('todayHwList').appendChild(d);
 }
 function addResourceRow(name='',link=''){
@@ -358,7 +358,6 @@ function renderPhotos(cid,arr){
 }
 function removePhoto(pid,cid){if(cid==='hwPhotos') hwPhotos=hwPhotos.filter(x=>x.id!==pid);else classPhotos=classPhotos.filter(x=>x.id!==pid);renderPhotos(cid,cid==='hwPhotos'?hwPhotos:classPhotos);}
 
-// ⭐ 로컬 파일(PC) 선택하여 리포트 불러오기 (과제만 or 전체)
 function loadFromFile(e, mode) {
   const f = e.target.files[0];
   if(!f) return;
@@ -369,7 +368,6 @@ function loadFromFile(e, mode) {
       const doc = new DOMParser().parseFromString(ev.target.result, 'text/html');
 
       if (mode === 'all') {
-        // [전체 내용 복사하기]
         const dateEl = doc.querySelector('.date');
         if(dateEl) {
           const txt = dateEl.textContent.split('·');
@@ -400,23 +398,37 @@ function loadFromFile(e, mode) {
           }
           
           if(title.includes('오늘의 과제')) {
-            sec.querySelectorAll('div[style*="border-bottom:1px solid #e2e8f0"]').forEach(item => {
-              const spans = item.querySelectorAll('span');
-              let c='', t='필수', ct='';
-              if(spans.length >= 2) {
-                 c = spans[0].textContent.trim();
-                 t = spans[1].textContent.trim();
-                 ct = item.querySelector('div[style*="white-space:pre-wrap"]')?.textContent.trim() || '';
-              } else {
-                 const divs = item.children;
-                 if(divs.length >= 3) {
-                    c = divs[0].textContent.trim();
-                    t = divs[1].textContent.trim();
-                    ct = divs[2].textContent.trim();
-                 }
-              }
-              if(c||ct) addTodayHwRow(c,t,ct);
-            });
+            const newItems = sec.querySelectorAll('.today-hw-item');
+            if (newItems.length > 0) {
+              newItems.forEach(item => {
+                const c = item.querySelector('.hw-course-title')?.textContent.trim() || '';
+                let t = '필수';
+                item.querySelectorAll('span').forEach(sp => {
+                  if(sp.textContent.includes('필수')) t = '필수';
+                  if(sp.textContent.includes('선택')) t = '선택';
+                });
+                const ct = item.querySelector('.hw-content-text')?.textContent.trim() || '';
+                if(c||ct) addTodayHwRow(c,t,ct);
+              });
+            } else {
+              sec.querySelectorAll('div[style*="border-bottom:1px solid #e2e8f0"]').forEach(item => {
+                const spans = item.querySelectorAll('span');
+                let c='', t='필수', ct='';
+                if(spans.length >= 2) {
+                   c = spans[0].textContent.trim();
+                   t = spans[1].textContent.trim();
+                   ct = item.querySelector('div[style*="white-space:pre-wrap"]')?.textContent.trim() || '';
+                } else {
+                   const divs = item.children;
+                   if(divs.length >= 3) {
+                      c = divs[0].textContent.trim();
+                      t = divs[1].textContent.trim();
+                      ct = divs[2].textContent.trim();
+                   }
+                }
+                if(c||ct) addTodayHwRow(c,t,ct);
+              });
+            }
           }
           
           if(title.includes('추가 자료')) {
@@ -430,7 +442,6 @@ function loadFromFile(e, mode) {
         showToast('✅ 전체 내용 복사 완료! (학생 이름을 확인해주세요)');
       
       } else if (mode === 'homework') {
-        // [과제만 불러오기] - '오늘의 과제' 섹션만 쏙 빼옵니다
         document.getElementById('todayHwList').innerHTML = '';
         let found = false;
 
@@ -438,26 +449,37 @@ function loadFromFile(e, mode) {
           const title = sec.querySelector('.rpt-sec-title')?.textContent || '';
           
           if(title.includes('오늘의 과제')) {
-            sec.querySelectorAll('div[style*="border-bottom:1px solid #e2e8f0"]').forEach(item => {
-              const spans = item.querySelectorAll('span');
-              let c='', t='필수', ct='';
-              if(spans.length >= 2) {
-                 c = spans[0].textContent.trim();
-                 t = spans[1].textContent.trim();
-                 ct = item.querySelector('div[style*="white-space:pre-wrap"]')?.textContent.trim() || '';
-              } else {
-                 const divs = item.children;
-                 if(divs.length >= 3) {
-                    c = divs[0].textContent.trim();
-                    t = divs[1].textContent.trim();
-                    ct = divs[2].textContent.trim();
-                 }
-              }
-              if(c||ct) {
-                addTodayHwRow(c,t,ct);
-                found = true;
-              }
-            });
+            const newItems = sec.querySelectorAll('.today-hw-item');
+            if (newItems.length > 0) {
+              newItems.forEach(item => {
+                const c = item.querySelector('.hw-course-title')?.textContent.trim() || '';
+                let t = '필수';
+                item.querySelectorAll('span').forEach(sp => {
+                  if(sp.textContent.includes('필수')) t = '필수';
+                  if(sp.textContent.includes('선택')) t = '선택';
+                });
+                const ct = item.querySelector('.hw-content-text')?.textContent.trim() || '';
+                if(c||ct) { addTodayHwRow(c,t,ct); found = true; }
+              });
+            } else {
+              sec.querySelectorAll('div[style*="border-bottom:1px solid #e2e8f0"]').forEach(item => {
+                const spans = item.querySelectorAll('span');
+                let c='', t='필수', ct='';
+                if(spans.length >= 2) {
+                   c = spans[0].textContent.trim();
+                   t = spans[1].textContent.trim();
+                   ct = item.querySelector('div[style*="white-space:pre-wrap"]')?.textContent.trim() || '';
+                } else {
+                   const divs = item.children;
+                   if(divs.length >= 3) {
+                      c = divs[0].textContent.trim();
+                      t = divs[1].textContent.trim();
+                      ct = divs[2].textContent.trim();
+                   }
+                }
+                if(c||ct) { addTodayHwRow(c,t,ct); found = true; }
+              });
+            }
           }
         });
         if(found) showToast('⚡ 과제 내용만 쏙! 불러왔습니다.');
@@ -469,7 +491,7 @@ function loadFromFile(e, mode) {
     }
   };
   r.readAsText(f);
-  e.target.value = ''; // 다음 선택을 위해 초기화
+  e.target.value = '';
 }
 
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -498,20 +520,57 @@ function buildSnapshot(){
   document.querySelectorAll('#todayHwList > div').forEach(r=>{
     const c=r.querySelector('.v-course').value, t=r.querySelector('.v-type').value, ct=r.querySelector('.v-content').value;
     if(c||ct) {
-      tHwH+=`<div style="display:flex;flex-direction:column;border-bottom:1px solid #e2e8f0;padding:12px 0;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-          <div style="display:flex;align-items:center;gap:6px;">
-            <span style="font-weight:700;color:#16417C;font-size:13px;">${esc(c)}</span>
-            <span style="background:${t==='필수'?'#ef4444':'#3b82f6'};color:#fff;font-size:10px;padding:2px 5px;border-radius:4px;">${t}</span>
-          </div>
-          <a href="sms:01020837265?body=[과제완료]%20${encodeURIComponent(name)}%20학생%20'${encodeURIComponent(c)}'%20과제%20완료했습니다." style="background:#16417C;color:#fff;font-size:11px;padding:6px 10px;border-radius:6px;text-decoration:none;font-weight:800;box-shadow:0 2px 4px rgba(0,0,0,0.1);">✅ 과제 완료 전송</a>
-        </div>
-        <div style="font-size:13px;white-space:pre-wrap;line-height:1.6;color:#333;">${esc(ct)}</div>
+      tHwH+=`
+      <div class="today-hw-item" style="border-bottom:1px solid #e2e8f0; padding:14px 0;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <input type="checkbox" class="hw-chk" value="${esc(c)}" style="width:18px; height:18px; accent-color:#16417C; cursor:pointer;">
+          <span class="hw-course-title" style="font-weight:700; color:#16417C; font-size:14px;">${esc(c)}</span>
+          <span style="background:${t==='필수'?'#ef4444':'#3b82f6'};color:#fff;font-size:10px;padding:3px 6px;border-radius:4px;font-weight:bold;">${t}</span>
+        </label>
+        ${ct ? `<div class="hw-content-text" style="font-size:13px; white-space:pre-wrap; line-height:1.6; color:#333; margin-left:26px; margin-top:8px;">${esc(ct)}</div>` : ''}
       </div>`;
     }
   });
+
   if(tHwH) {
-    tHwH += `<div style="text-align:right;font-size:11px;color:#ef4444;margin-top:8px;font-weight:bold;">* 과제 완료 후 클릭하여 전송해주세요</div>`;
+    tHwH = `
+    <div id="hw-container">
+      ${tHwH}
+      <div style="margin-top:20px; text-align:center;">
+        <button onclick="sendBulkKakao()" style="background:#FEE500; color:#191919; border:none; padding:14px 20px; border-radius:12px; font-weight:800; font-size:14px; cursor:pointer; width:100%; box-shadow:0 4px 6px rgba(0,0,0,0.05);">💬 원장님 카톡으로 과제 완료 알리기</button>
+        <div style="font-size:11.5px; color:#64748b; margin-top:10px; line-height: 1.5;">* 완료된 과제에 체크하신 후 버튼을 눌러주세요. 여러 개를 한 번에 보내주시거나, 하나씩 마칠 때마다 편하게 전송해 주셔도 좋습니다.</div>
+      </div>
+    </div>
+    <script>
+      function sendBulkKakao() {
+        var checked = Array.from(document.querySelectorAll('.hw-chk:checked')).map(function(cb){return cb.value;});
+        if(checked.length === 0) { alert('완료한 과제를 먼저 체크해주세요!'); return; }
+        
+        var msg = "[과제완료] ${esc(name)} 학생\\n\\n✅ 완료 내역:\\n" + checked.map(function(c){return "- " + c;}).join('\\n');
+        
+        var ta = document.createElement("textarea");
+        ta.value = msg;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        
+        var success = false;
+        try { success = document.execCommand('copy'); } catch(e) {}
+        document.body.removeChild(ta);
+        
+        if(success || (navigator.clipboard && navigator.clipboard.writeText)) {
+          if(navigator.clipboard && navigator.clipboard.writeText) {
+             navigator.clipboard.writeText(msg).catch(function(){});
+          }
+          alert('📋 과제 완료 메시지가 복사되었습니다!\\n\\n[확인]을 누르시면 원장님 오픈채팅방으로 바로 연결됩니다.\\n채팅창에 꾹 눌러서 붙여넣기만 해주세요!');
+          window.location.href = 'https://open.kakao.com/me/gfield';
+        } else {
+          alert('복사에 실패했습니다. 수동으로 복사해주세요.');
+        }
+      }
+    <\/script>
+    `;
   }
 
   const photoRender=arr=>arr.map(p=>`<div style="margin-bottom:20px;">${p.driveUrl?`<a href="${esc(p.driveUrl)}" target="_blank">`:''}<img src="${p.src}" style="width:100%;border-radius:12px;border:1px solid #eee;">${p.driveUrl?'</a>':''}${p.caption?`<div style="text-align:center;margin-top:5px;font-size:13px;color:#666;">${esc(p.caption)}</div>`:''}</div>`).join('');
