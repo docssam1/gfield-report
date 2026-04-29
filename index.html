@@ -358,6 +358,7 @@ function renderPhotos(cid,arr){
 }
 function removePhoto(pid,cid){if(cid==='hwPhotos') hwPhotos=hwPhotos.filter(x=>x.id!==pid);else classPhotos=classPhotos.filter(x=>x.id!==pid);renderPhotos(cid,cid==='hwPhotos'?hwPhotos:classPhotos);}
 
+// ⭐ 로컬 파일(PC) 선택하여 파싱 기능 고도화
 function loadFromFile(e, mode) {
   const f = e.target.files[0];
   if(!f) return;
@@ -442,7 +443,8 @@ function loadFromFile(e, mode) {
         showToast('✅ 전체 내용 복사 완료! (학생 이름을 확인해주세요)');
       
       } else if (mode === 'homework') {
-        document.getElementById('todayHwList').innerHTML = '';
+        // ⭐ 이전 리포트의 '오늘의 과제'를 현재 '과제 확인'란으로 불러오기!
+        document.getElementById('hwList').innerHTML = ''; // 과제 확인란 초기화
         let found = false;
 
         doc.querySelectorAll('.rpt-sec').forEach(sec => {
@@ -453,37 +455,30 @@ function loadFromFile(e, mode) {
             if (newItems.length > 0) {
               newItems.forEach(item => {
                 const c = item.querySelector('.hw-course-title')?.textContent.trim() || '';
-                let t = '필수';
-                item.querySelectorAll('span').forEach(sp => {
-                  if(sp.textContent.includes('필수')) t = '필수';
-                  if(sp.textContent.includes('선택')) t = '선택';
-                });
                 const ct = item.querySelector('.hw-content-text')?.textContent.trim() || '';
-                if(c||ct) { addTodayHwRow(c,t,ct); found = true; }
+                if(c||ct) { addHwRow(c, '', ct); found = true; } // ✅ 과제 확인란(hwList)으로 추가!
               });
             } else {
               sec.querySelectorAll('div[style*="border-bottom:1px solid #e2e8f0"]').forEach(item => {
                 const spans = item.querySelectorAll('span');
-                let c='', t='필수', ct='';
+                let c='', ct='';
                 if(spans.length >= 2) {
                    c = spans[0].textContent.trim();
-                   t = spans[1].textContent.trim();
                    ct = item.querySelector('div[style*="white-space:pre-wrap"]')?.textContent.trim() || '';
                 } else {
                    const divs = item.children;
                    if(divs.length >= 3) {
                       c = divs[0].textContent.trim();
-                      t = divs[1].textContent.trim();
                       ct = divs[2].textContent.trim();
                    }
                 }
-                if(c||ct) { addTodayHwRow(c,t,ct); found = true; }
+                if(c||ct) { addHwRow(c, '', ct); found = true; } // ✅ 과제 확인란(hwList)으로 추가!
               });
             }
           }
         });
-        if(found) showToast('⚡ 과제 내용만 쏙! 불러왔습니다.');
-        else showToast('⚠️ 이 파일에는 과제 내용이 없습니다.');
+        if(found) showToast('⚡ 이전 과제를 [과제 확인] 란으로 쏙! 불러왔습니다.');
+        else showToast('⚠️ 이 파일에는 이전 과제 내용이 없습니다.');
       }
 
     } catch(err) {
