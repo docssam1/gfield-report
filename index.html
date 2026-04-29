@@ -47,7 +47,7 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
 .photo-input{width:100%;border:1px solid var(--border);border-radius:6px;padding:6px;font-size:11px;outline:none;}
 .link-result{display:none;background:#eff6ff;padding:15px;border-radius:14px;margin-bottom:15px;border:1px solid #93c5fd;}
 .msg-box{background:#fffbeb;border:1.5px solid #fde68a;border-radius:14px;padding:16px 18px;margin-bottom:14px;display:none;}
-.msg-box textarea{width:100%;border:1px solid #fde68a;border-radius:10px;padding:12px;font-size:13px;font-family:inherit;background:#fff;color:#1a1d2e;resize:none;min-height:110px;line-height:1.7;outline:none;}
+.msg-box textarea{width:100%;border:1px solid #fde68a;border-radius:10px;padding:12px;font-size:13px;font-family:inherit;background:#fff;color:#1a1d2e;resize:none;min-height:140px;line-height:1.7;outline:none;}
 .msg-copy-btn{margin-top:8px;background:#f59e42;color:#fff;border:none;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:800;cursor:pointer;width:100%;}
 .btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;}
 .kakao-btn{grid-column:1/-1;background:#FEE500;color:#191919;border:none;border-radius:14px;padding:15px;font-weight:800;cursor:pointer;font-size:15px;}
@@ -147,10 +147,27 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
 
 <div class="absent-panel" id="absentPanel">
   <h3>🚫 결석 공지 설정</h3>
-  <div class="absent-field"><label>보강 일정</label><select id="absentMakeupType" onchange="toggleMakeupDate()"><option value="undecided">추후 결정</option><option value="decided">보강일 확정</option></select></div>
-  <div class="absent-field" id="makeupDateField" style="display:none;"><label>보강 예정일 (시간 포함 가능)</label><input type="text" id="absentMakeupDate" placeholder="예: 5/1 14:00"></div>
-  <div class="absent-field"><label>결석 사유 (선택)</label><textarea id="absentReason" placeholder="예: 개인 사정으로 인한 결석"></textarea></div>
-  <div class="absent-field"><label>추가 전달 사항 (선택)</label><textarea id="absentExtra" placeholder="예: 과제는 다음 수업 때 확인하겠습니다."></textarea></div>
+  <div class="absent-field">
+    <label>보강 일정</label>
+    <select id="absentMakeupType" onchange="toggleMakeupDate()">
+      <option value="undecided">추후 결정</option>
+      <option value="decided">보강일 확정</option>
+      <option value="changed">보강일 변경</option>
+      <option value="canceled">보강 취소</option>
+    </select>
+  </div>
+  <div class="absent-field" id="makeupDateField" style="display:none;">
+    <label id="makeupDateLabel">보강 예정일 (시간 포함 가능)</label>
+    <input type="text" id="absentMakeupDate" placeholder="예: 5/1 14:00" oninput="updateMsgBox()">
+  </div>
+  <div class="absent-field">
+    <label id="absentReasonLabel">결석 사유 (선택)</label>
+    <textarea id="absentReason" placeholder="예: 개인 사정으로 인한 결석" oninput="updateMsgBox()"></textarea>
+  </div>
+  <div class="absent-field">
+    <label>추가 전달 사항 (선택)</label>
+    <textarea id="absentExtra" placeholder="예: 과제는 다음 수업 때 확인하겠습니다." oninput="updateMsgBox()"></textarea>
+  </div>
 </div>
 
 <div class="sec" style="background:#fffbf0;border-color:#fde68a;" id="noticeSection">
@@ -183,10 +200,9 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
 
 <div class="link-result" id="linkResult"><div style="font-size:11px;font-weight:800;color:#1d4ed8;margin-bottom:5px;">🌐 리포트 링크 (학부모 공유용)</div><a id="resultUrl" href="#" target="_blank" style="font-size:13px;color:#2563eb;word-break:break-all;"></a></div>
 <div class="msg-box" id="msgBox">
-  <div style="font-size:11px;font-weight:800;color:#92400e;margin-bottom:10px;">📱 안내 메시지 (카톡/문자용)</div>
+  <div style="font-size:11px;font-weight:800;color:#92400e;margin-bottom:10px;">📱 안내 메시지 (카톡 복사용)</div>
   <textarea id="msgText" readonly></textarea>
-  <button id="btnAligo" onclick="sendAligoSms()" style="display:none; width:100%; background:#4CAF50; color:#fff; border:none; border-radius:9px; padding:12px; font-size:14px; font-weight:800; cursor:pointer; margin-top:8px;">📨 알리고 문자 자동 전송 (예약 포함)</button>
-  <button class="msg-copy-btn" id="btnCopy" onclick="copyMsg()">📋 메시지 수동 복사하기</button>
+  <button class="msg-copy-btn" id="btnCopy" onclick="copyMsg()">📋 메시지 복사하기</button>
 </div>
 
 <div class="btns">
@@ -249,7 +265,6 @@ function toggleMode(){
   document.getElementById('consultationPanel').style.display = isConsult ? 'block' : 'none';
   document.getElementById('mainContentSection').style.display = isConsult ? 'none' : 'block';
   document.getElementById('noticeSection').style.display = isConsult ? 'none' : 'block';
-  document.getElementById('btnAligo').style.display = isConsult ? 'block' : 'none';
   document.getElementById('saveDriveBtn').style.display = isConsult ? 'none' : 'block';
   document.getElementById('ghBtn').style.display = isConsult ? 'none' : 'block';
   document.getElementById('kakaoBtn').style.display = 'block'; 
@@ -259,6 +274,28 @@ function toggleMode(){
 function toggleConsultType() {
   const isTest = document.querySelector('input[name="c_type"]:checked').value === '테스트진행';
   document.getElementById('accountSelectDiv').style.display = isTest ? 'block' : 'none';
+  updateMsgBox();
+}
+
+// ⭐ 보강 일정 UI 변경 함수 (라벨 텍스트 변경 적용)
+function toggleMakeupDate() {
+  const type = document.getElementById('absentMakeupType').value;
+  const dateField = document.getElementById('makeupDateField');
+  const dateLabel = document.getElementById('makeupDateLabel');
+  const reasonLabel = document.getElementById('absentReasonLabel');
+
+  if(type === 'decided' || type === 'changed') {
+    dateField.style.display = 'block';
+    dateLabel.innerText = type === 'changed' ? '보강 변경일 (시간 포함 가능)' : '보강 예정일 (시간 포함 가능)';
+    reasonLabel.innerText = '결석 사유 (선택)';
+  } else if(type === 'canceled') {
+    dateField.style.display = 'none';
+    reasonLabel.innerText = '취소 사유 (선택)';
+  } else {
+    // undecided
+    dateField.style.display = 'none';
+    reasonLabel.innerText = '결석 사유 (선택)';
+  }
   updateMsgBox();
 }
 
@@ -276,7 +313,7 @@ function setType(el){
   }
   updateMsgBox();
 }
-function toggleMakeupDate(){document.getElementById('makeupDateField').style.display=document.getElementById('absentMakeupType').value==='decided'?'block':'none';}
+
 function getDayName(dateStr) {const days=['일','월','화','수','목','금','토']; return days[new Date(dateStr).getDay()];}
 
 const STYLE_PROMPT=`당신은 지필드 영재교육 선생님의 글쓰기 보조입니다. 다음 글의 맞춤법과 띄어쓰기를 교정하되, 아래 말투와 문체를 그대로 유지하세요:\n- 구어체 + 전문적 설명이 섞인 자연스러운 선생님 말투\n- 이모지나 "^^" 같은 표현 유지\n- 학부모에게 설명하듯 친근하지만 구체적인 어조\n- 과도하게 격식체로 바꾸지 않음\n- 문장 구조나 내용은 최대한 원본 유지, 맞춤법/띄어쓰기/오타만 교정\n결과만 출력하세요:`;
@@ -353,7 +390,6 @@ function renderPhotos(cid,arr){
 }
 function removePhoto(pid,cid){if(cid==='hwPhotos') hwPhotos=hwPhotos.filter(x=>x.id!==pid);else classPhotos=classPhotos.filter(x=>x.id!==pid);renderPhotos(cid,cid==='hwPhotos'?hwPhotos:classPhotos);}
 
-// ⭐ 로컬 파일(PC) 선택하여 파싱 기능 고도화 (중복 방지용 parseRoot 추가!)
 function loadFromFile(e, mode) {
   const f = e.target.files[0];
   if(!f) return;
@@ -362,7 +398,7 @@ function loadFromFile(e, mode) {
   r.onload = ev => {
     try {
       const doc = new DOMParser().parseFromString(ev.target.result, 'text/html');
-      const parseRoot = doc.querySelector('.web-wrap') || doc; // 중복 복사 방지!
+      const parseRoot = doc.querySelector('.web-wrap') || doc; 
 
       if (mode === 'all') {
         const dateEl = parseRoot.querySelector('.date') || doc.querySelector('.date');
@@ -478,8 +514,25 @@ function loadFromFile(e, mode) {
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 function buildAbsentSnapshot(){
-  const name=document.getElementById('nameInput').value||'학생';const dateStr=document.getElementById('dateInput').value.replace(/-/g,'.');const makeupType=document.getElementById('absentMakeupType').value;const makeupDate=document.getElementById('absentMakeupDate').value;const reason=document.getElementById('absentReason').value;const extra=document.getElementById('absentExtra').value;const notice=document.getElementById('noticeArea').value;
-  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"><title>결석 공지 — ${esc(name)}</title><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Apple SD Gothic Neo',sans-serif;background:#f1f5f9;color:#0f172a;}.wrap{max-width:480px;margin:0 auto;padding:30px 16px;}.card{background:#fff;border-radius:20px;padding:28px 24px;margin-bottom:16px;box-shadow:0 4px 15px rgba(0,0,0,.05);}.badge{display:inline-block;background:#fee2e2;color:#b91c1c;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:800;margin-bottom:16px;}h1{font-size:20px;font-weight:800;margin-bottom:6px;}.sub{font-size:13px;color:#64748b;margin-bottom:20px;}.info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9;font-size:14px;}.info-row:last-child{border-bottom:none;}.info-label{color:#64748b;font-weight:600;}.info-val{font-weight:700;color:#0f172a;}.notice-box{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:14px;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#451a03;margin-top:4px;}.footer{text-align:center;font-size:11px;color:#94a3b8;margin-top:30px;}</style></head><body><div class="wrap"><div class="card"><div class="badge">🚫 결석 공지</div><h1>${esc(name)} 학생 결석 확인</h1><div class="sub">지필드 영재교육 · ${dateStr}</div><div class="info-row"><span class="info-label">수업일</span><span class="info-val">${dateStr}</span></div>${reason?`<div class="info-row"><span class="info-label">결석 사유</span><span class="info-val">${esc(reason)}</span></div>`:''}<div class="info-row"><span class="info-label">보강 일정</span><span class="info-val">${makeupType==='decided'&&makeupDate?esc(makeupDate):'추후 결정'}</span></div></div>${extra||notice?`<div class="card"><div style="font-size:14px;font-weight:800;color:#16417C;margin-bottom:12px;">📢 전달 사항</div>${notice?`<div class="notice-box">${esc(notice)}</div>`:''}${extra?`<div style="margin-top:10px;font-size:14px;line-height:1.7;white-space:pre-wrap;">${esc(extra)}</div>`:''}</div>`:''}<div class="footer">© G-Field Gifted Education</div></div></body></html>`;
+  const name=document.getElementById('nameInput').value||'학생';
+  const dateStr=document.getElementById('dateInput').value.replace(/-/g,'.');
+  const makeupType=document.getElementById('absentMakeupType').value;
+  const makeupDate=document.getElementById('absentMakeupDate').value;
+  const reason=document.getElementById('absentReason').value;
+  const extra=document.getElementById('absentExtra').value;
+  const notice=document.getElementById('noticeArea').value;
+  
+  // HTML 리포트 내 결석/보강 상태 표기 (취소 추가)
+  let makeupStatusStr = "추후 결정";
+  let reasonLabelStr = "결석 사유";
+  if (makeupType === 'decided' && makeupDate) makeupStatusStr = esc(makeupDate);
+  else if (makeupType === 'changed' && makeupDate) makeupStatusStr = esc(makeupDate) + " (변경됨)";
+  else if (makeupType === 'canceled') {
+    makeupStatusStr = "취소됨";
+    reasonLabelStr = "취소 사유";
+  }
+
+  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"><title>결석/보강 공지 — ${esc(name)}</title><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Apple SD Gothic Neo',sans-serif;background:#f1f5f9;color:#0f172a;}.wrap{max-width:480px;margin:0 auto;padding:30px 16px;}.card{background:#fff;border-radius:20px;padding:28px 24px;margin-bottom:16px;box-shadow:0 4px 15px rgba(0,0,0,.05);}.badge{display:inline-block;background:#fee2e2;color:#b91c1c;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:800;margin-bottom:16px;}h1{font-size:20px;font-weight:800;margin-bottom:6px;}.sub{font-size:13px;color:#64748b;margin-bottom:20px;}.info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9;font-size:14px;}.info-row:last-child{border-bottom:none;}.info-label{color:#64748b;font-weight:600;}.info-val{font-weight:700;color:#0f172a;}.notice-box{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:14px;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#451a03;margin-top:4px;}.footer{text-align:center;font-size:11px;color:#94a3b8;margin-top:30px;}</style></head><body><div class="wrap"><div class="card"><div class="badge">🚫 결석/보강 공지</div><h1>${esc(name)} 학생 결석 확인</h1><div class="sub">지필드 영재교육 · ${dateStr}</div><div class="info-row"><span class="info-label">수업일</span><span class="info-val">${dateStr}</span></div>${reason?`<div class="info-row"><span class="info-label">${reasonLabelStr}</span><span class="info-val">${esc(reason)}</span></div>`:''}<div class="info-row"><span class="info-label">보강 일정</span><span class="info-val">${makeupStatusStr}</span></div></div>${extra||notice?`<div class="card"><div style="font-size:14px;font-weight:800;color:#16417C;margin-bottom:12px;">📢 전달 사항</div>${notice?`<div class="notice-box">${esc(notice)}</div>`:''}${extra?`<div style="margin-top:10px;font-size:14px;line-height:1.7;white-space:pre-wrap;">${esc(extra)}</div>`:''}</div>`:''}<div class="footer">© G-Field Gifted Education</div></div></body></html>`;
 }
 
 function buildSnapshot(){
@@ -585,7 +638,6 @@ async function saveToDrive(){
   const course=document.getElementById('courseInput').value.trim();
   const fileName=`지필드_${dateStr}_${name}${course?`_${course}`:''}_${classType}_리포트.html`;
   
-  // ⭐ 과목명 추출 로직 (구글 시트로 보내기 위해)
   const subjectInputs = Array.from(document.querySelectorAll('#subjectList .v-subj')).map(el => el.value.trim()).filter(v => v);
 
   try{
@@ -651,7 +703,9 @@ async function saveToNotion(){
     payload.date = dateStr;
     payload.course = course;
     payload.type = classType;
-    payload.makeupDate = document.getElementById('absentMakeupDate').value || document.getElementById('absentMakeupType').options[document.getElementById('absentMakeupType').selectedIndex].text;
+    // ⭐ GAS(백엔드)에서 처리할 수 있도록 보강유형과 날짜를 함께 전송
+    payload.makeupType = document.getElementById('absentMakeupType').value;
+    payload.makeupDate = document.getElementById('absentMakeupDate').value;
   }
 
   try {
@@ -671,34 +725,7 @@ async function saveToNotion(){
   }
 }
 
-function sendAligoSms() {
-  const phone = document.getElementById('c_phone').value;
-  const msg = document.getElementById('msgText').value;
-  const targetDate = document.getElementById('c_date').value;
-  const sUrl = getKey('script');
-  
-  if(!sUrl) { openKeyModal(); return; }
-  if(!phone || !msg) { alert("연락처와 메시지를 확인해주세요."); return; }
-  
-  const btn = document.getElementById('btnAligo');
-  btn.innerText = "⏳ 전송 중...";
-  
-  fetch(sUrl, {
-    method: "POST",
-    body: JSON.stringify({ action: 'aligo_sms', receiver: phone, msg: msg, targetDate: targetDate })
-  }).then(r => r.json()).then(res => {
-    btn.innerText = "📨 알리고 문자 자동 전송 (예약 포함)";
-    if(res.result === "success") alert("✅ 문자가 발송되었습니다!");
-    else alert("❌ 전송 실패: " + res.error);
-  }).catch(err => {
-    alert("오류 발생: " + err);
-    btn.innerText = "📨 알리고 문자 자동 전송 (예약 포함)";
-  });
-}
-
-function setLink(url){document.getElementById('resultUrl').href=url;document.getElementById('resultUrl').textContent=url;document.getElementById('linkResult').style.display='block';updateMsgBox(url);}
-function getGreeting(){const h=new Date().getHours(),day=new Date().getDay();if(day===0||day===6) return '즐거운 주말 되세요 😊';if(h>=6&&h<12) return '좋은 아침 되세요 🌅';if(h>=12&&h<20) return '즐거운 오후 되세요 ☀️';return '평안한 밤 되세요 🌙';}
-
+// ⭐ 안내 메시지 생성 (결석/보강 맞춤형 문구 적용)
 function updateMsgBox(url){
   const docType = document.querySelector('input[name="docType"]:checked').value;
   const name = document.getElementById('nameInput').value.trim() || '학생';
@@ -743,23 +770,33 @@ https://map.naver.com/local/siteview.nhn?code=1125444471`;
       msg = `[일정을 선택하시면 안내 문자가 자동 완성됩니다]`;
     }
   } else {
-    const cur = url || document.getElementById('resultUrl')?.href;
-    if(!cur || cur === '#') return;
-    const d = new Date((document.getElementById('dateInput').value || new Date().toISOString().split('T')[0]) + 'T00:00:00');
+    const cur = url || document.getElementById('resultUrl')?.href || "https://docssam1.github.io/gfield-report/#";
+    const dateInputStr = document.getElementById('dateInput').value;
+    const d = new Date((dateInputStr || new Date().toISOString().split('T')[0]) + 'T00:00:00');
+    // 'YY년 M월 D일' 포맷
+    const dateFmt = `${String(d.getFullYear()).slice(2)}년 ${d.getMonth()+1}월 ${d.getDate()}일`;
     
     if(classType === '결석'){
       const makeupType = document.getElementById('absentMakeupType').value;
       const makeupDate = document.getElementById('absentMakeupDate').value;
-      const makeupText = (makeupType === 'decided' && makeupDate) ? `보강은 ${makeupDate}로 확정되었습니다.` : '보강 일정은 추후 안내해 드리겠습니다.';
-      msg = `안녕하세요, 어머니 🙂\n지필드 영재교육 노관호입니다.\n\n${d.getFullYear()%100}년 ${d.getMonth()+1}월 ${d.getDate()}일 ${name} 학생 결석 공지입니다.\n${makeupText}\n\n${cur}\n\n${getGreeting()}`;
+      
+      if(makeupType === 'decided' || makeupType === 'changed') {
+        msg = `안녕하세요. 지필드 영재교육 노관호입니다.\n\n${dateFmt} ${name} 학생 보강 공지입니다.\n보강은 ${makeupDate}로 확정되었습니다.\n보강 시간 변경 및 취소 시 반드시 24시간 전에는\n전달부탁드립니다.\n${cur}\n평안한 밤 되세요 🌙`;
+      } else if(makeupType === 'canceled') {
+        msg = `안녕하세요. 지필드 영재교육 노관호입니다.\n\n${dateFmt} 예정되어 있던 ${name} 학생 보강은 취소되었습니다.\n\n${cur}\n평안한 밤 되세요 🌙`;
+      } else {
+        // undecided
+        msg = `안녕하세요, 지필드 영재교육 노관호입니다.\n${dateFmt} ${name} 학생 결석 확인 안내입니다.\n보강 일정은 추후 안내해 드리겠습니다.\n${cur}\n평안한 밤 되세요 🌙`;
+      }
     } else {
       msg = `안녕하세요, 어머니 🙂\n지필드 영재교육 노관호입니다.\n\n${d.getFullYear()%100}년 ${d.getMonth()+1}월 ${d.getDate()}일 ${name} 학생의 학습 리포트입니다.\n\n${cur}\n\n${getGreeting()}`;
     }
   }
   
   document.getElementById('msgText').value = msg;
-  document.getElementById('msgBox').style.display = 'block';
 }
+
+function getGreeting(){const h=new Date().getHours(),day=new Date().getDay();if(day===0||day===6) return '즐거운 주말 되세요 😊';if(h>=6&&h<12) return '좋은 아침 되세요 🌅';if(h>=12&&h<20) return '즐거운 오후 되세요 ☀️';return '평안한 밤 되세요 🌙';}
 
 function copyMsg(){const t=document.getElementById('msgText');t.select();t.setSelectionRange(0,99999);navigator.clipboard.writeText(t.value).then(()=>showToast('📋 복사되었습니다!')).catch(()=>{document.execCommand('copy');showToast('📋 복사 완료!');});}
 function shareKakao(){
@@ -781,8 +818,8 @@ function shareKakao(){
     const d = new Date(document.getElementById('dateInput').value+'T00:00:00');
     const dateStr = `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일`;
     const isAbsent = classType === '결석';
-    kTitle = isAbsent ? `🚫 ${name} 학생 결석 공지` : `📚 ${name} 학생 학습 리포트`;
-    kDesc = `안녕하세요, 어머니 🙂 지필드 영재교육 노관호입니다.\n${dateStr} (${classType}) ${isAbsent?'결석 공지':'학습 리포트'}입니다.\n${getGreeting()}`;
+    kTitle = isAbsent ? `🚫 ${name} 학생 결석/보강 공지` : `📚 ${name} 학생 학습 리포트`;
+    kDesc = document.getElementById('msgText').value.substring(0, 150) + "..."; 
   }
 
   try {
@@ -794,7 +831,7 @@ function shareKakao(){
         imageUrl: `https://${getKey('ghUser')||'docssam1'}.github.io/${getKey('ghRepo')||'gfield-report'}/og-cover.png`,
         link: { mobileWebUrl: url, webUrl: url }
       },
-      buttons: [{ title: docType === '상담' ? '상담 정보 확인하기' : (classType === '결석' ? '📋 결석 공지 확인' : '📖 리포트 확인하기'), link: { mobileWebUrl: url, webUrl: url } }]
+      buttons: [{ title: docType === '상담' ? '상담 정보 확인하기' : (classType === '결석' ? '📋 결석/보강 공지 확인' : '📖 리포트 확인하기'), link: { mobileWebUrl: url, webUrl: url } }]
     });
   } catch(e) {
     updateMsgBox(url); showToast('카카오 오류 → 직접 복사해서 보내주세요!'); document.getElementById('msgBox').scrollIntoView({behavior:'smooth'});
