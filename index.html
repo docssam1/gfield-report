@@ -17,6 +17,7 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
 .mode-tabs input { display: none; }
 .mode-tabs input:checked + span { background: #fff; color: var(--accent); display: block; padding: 10px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
 
+/* 헤더 및 태그 */
 .header{border-radius:24px;padding:32px 36px;color:#fff;margin-bottom:24px;background:var(--accent-g);text-align:center; transition: 0.3s;}
 .header.cs-mode { background: linear-gradient(135deg, #eab308, #d97706); }
 .hd-sub{font-size:14px;opacity:.9;font-weight:600;margin-bottom:4px;}
@@ -26,58 +27,80 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
 .hd-tag.active{background:#fff;color:var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.1);}
 .header.cs-mode .hd-tag.active { color: #d97706; }
 
+/* 공통 폼 요소 */
 .icard{background:var(--surface);border-radius:16px;padding:14px 18px;border:1.5px solid var(--border); position: relative;}
 .ilabel{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.8px;margin-bottom:7px;text-transform:uppercase;}
 .icard input{border:none;outline:none;font-size:14px;font-weight:700;color:var(--text);width:100%;background:transparent;}
 
-/* 학생 검색/정보 패널 */
+/* CS 패널 및 검색 */
 .search-btn { position: absolute; right: 8px; top: 18px; background: #e0e7ff; color: #16417C; border: none; padding: 6px 12px; border-radius: 8px; font-weight: 800; font-size: 11px; cursor: pointer; }
 .history-view { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; border-top: 1px dashed #eee; margin-top: 10px; }
-.history-card { min-width: 180px; background: #f8fafc; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; font-size: 12px; white-space:pre-wrap; }
+.history-card { min-width: 180px; background: #f8fafc; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; font-size: 12px; white-space:pre-wrap; line-height: 1.5; }
 
-/* 수업 안내 장바구니 */
+/* 수업 장바구니 */
 .class-item { background: #fbfbfb; border: 1px dashed #ccc; border-radius: 12px; padding: 15px; margin-bottom: 10px; position: relative; }
 .class-item input { width: 100%; border: 1px solid #ddd; border-radius: 6px; padding: 8px; margin-bottom: 6px; font-size: 13px; }
 
-/* To-Do 사이드바 */
+/* To-Do 플로팅 */
 .todo-fab { position: fixed; right: 20px; bottom: 100px; width: 50px; height: 50px; background: #16417C; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 999; }
 .todo-panel { position: fixed; right: 80px; bottom: 100px; width: 280px; background: #fff; border-radius: 16px; border: 1.5px solid #fcd34d; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: none; z-index: 999; }
 .todo-head { background: #fef3c7; padding: 12px; font-weight: 800; color: #b45309; border-radius: 14px 14px 0 0; cursor:pointer; display:flex; justify-content:space-between; }
 
+/* 섹션 공통 */
 .sec{background:var(--surface);border-radius:20px;padding:22px 24px;margin-bottom:14px;border:1.5px solid var(--border);}
 .sec-hd{display:flex;align-items:center;gap:8px;margin-bottom:16px;justify-content:space-between;flex-wrap:wrap;}
 .sec-title{font-size:15px;font-weight:800;color:var(--text);}
 
+/* 결석/일정 공지 영역 */
 .absent-panel{display:none;background:#fff5f5;border:1.5px solid #fca5a5;border-radius:16px;padding:20px 22px;margin-bottom:14px;}
 .absent-panel.show{display:block;}
 .absent-field{margin-bottom:12px;}
 .absent-field label{display:block;font-size:11px;font-weight:700;color:#b91c1c;margin-bottom:5px;letter-spacing:.5px;}
-.absent-field input, .absent-field select, .absent-field textarea{width:100%;border:1.5px solid #fca5a5;border-radius:8px;padding:8px 12px;font-size:13px;outline:none;background:#fff;font-family:inherit;}
+.absent-field input[type="text"], .absent-field input[type="date"], .absent-field input[type="time"], .absent-field select, .absent-field textarea {width:100%;border:1.5px solid #fca5a5;border-radius:8px;padding:8px 12px;font-size:13px;outline:none;background:#fff;font-family:inherit;}
 .absent-field textarea{min-height:50px;resize:none;}
+.absent-radio-group { display:flex; flex-direction:column; gap:8px; background:#fef2f2; padding:12px; border-radius:8px; border:1px solid #fca5a5; margin-bottom:15px;}
+.absent-radio-group label { display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer; color:#991b1b; font-weight:bold; margin:0; }
 
-.hw-row{border:1.5px solid var(--border);border-top:none;overflow:hidden;}
-@media(min-width:600px){.hw-row{display:grid;grid-template-columns:25% 15% 1fr;}.hw-c1,.hw-c2,.hw-c3{padding:8px 10px;border-right:1.5px solid var(--border);}.hw-c3{border-right:none;}.hw-c2{display:flex;align-items:center;}}
-@media(max-width:599px){.hw-row{display:block;}.hw-c1{padding:8px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}.hw-c2{padding:4px 10px;}.hw-c3{padding:6px 10px 8px;border-top:1px dashed var(--border);}}
-.hw-c1 input{flex:1;min-width:80px;border:1px solid var(--border);border-radius:8px;padding:6px 9px;font-size:13px;outline:none;background:#fafbff;}
-.hw-c2 select{width:100%;border:1px solid var(--border);border-radius:8px;padding:6px 4px;font-size:12px;outline:none;background:#fafbff;}
-.hw-c3 textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:13px;outline:none;background:#fafbff;resize:vertical;min-height:50px;}
+/* 과제/수업 레이아웃 (수정됨: 겹침 방지 gap 추가) */
+.hw-row{border:1.5px solid var(--border);border-top:none;overflow:hidden; padding:5px;}
+@media(min-width:600px){
+  .hw-row{display:grid; grid-template-columns:35% 15% 1fr; gap:12px;} /* 간격 띄움 */
+  .hw-c1,.hw-c2,.hw-c3{padding:4px 0;}
+  .hw-c1{border-right:1.5px solid var(--border); padding-right:12px;}
+  .hw-c2{border-right:1.5px solid var(--border); padding-right:12px; display:flex;align-items:center;}
+}
+@media(max-width:599px){
+  .hw-row{display:flex; flex-direction:column; gap:8px; padding:10px;}
+}
+.hw-c1 input{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px;font-size:13px;outline:none;background:#fafbff;}
+.hw-c2 select{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px;font-size:12px;outline:none;background:#fafbff;}
+.hw-c3 textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px;font-size:13px;outline:none;background:#fafbff;resize:vertical;min-height:40px;font-family:inherit;}
 
+/* 과목/사진 레이아웃 */
+.subj-row-wrap{border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;}
+.photos-grid{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;}
+.photo-card{position:relative;display:flex;flex-direction:column;gap:6px;width:160px;background:#fafbff;border:1px solid var(--border);padding:8px;border-radius:12px;}
+.photo-card img{width:100%;height:120px;object-fit:cover;border-radius:8px;}
+.photo-input{width:100%;border:1px solid var(--border);border-radius:6px;padding:6px;font-size:11px;outline:none;}
+
+/* 링크 및 알림창 */
 .link-result{display:none;background:#eff6ff;padding:15px;border-radius:14px;margin-bottom:15px;border:1px solid #93c5fd;}
 .msg-box{background:#fffbeb;border:1.5px solid #fde68a;border-radius:14px;padding:16px 18px;margin-bottom:14px;}
 .msg-box textarea{width:100%;border:1px solid #fde68a;border-radius:10px;padding:12px;font-size:13px;font-family:inherit;background:#fff;color:#1a1d2e;resize:none;min-height:160px;line-height:1.7;outline:none;}
 
+/* 버튼 공통 */
 .btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;}
-.kakao-btn{grid-column:1/-1;background:#FEE500;color:#191919;border:none;border-radius:14px;padding:15px;font-weight:800;cursor:pointer;font-size:15px;}
-.btn-dl{padding:15px;background:var(--accent-g);color:#fff;border:none;border-radius:14px;font-size:14px;font-weight:800;cursor:pointer;}
-.btn-gh{padding:15px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:14px;font-size:14px;font-weight:800;cursor:pointer;}
-.notion-btn{grid-column:1/-1;background:#000000;color:#fff;border:none;border-radius:14px;padding:15px;font-weight:800;cursor:pointer;font-size:15px;}
+.kakao-btn{grid-column:1/-1;background:#FEE500;color:#191919;border:none;border-radius:14px;padding:15px;font-weight:800;cursor:pointer;font-size:15px;box-shadow:0 4px 6px rgba(0,0,0,0.05);}
+.btn-dl{padding:15px;background:var(--accent-g);color:#fff;border:none;border-radius:14px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.05);}
+.btn-gh{padding:15px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:14px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.05);}
+.notion-btn{grid-column:1/-1;background:#000000;color:#fff;border:none;border-radius:14px;padding:15px;font-weight:800;cursor:pointer;font-size:15px;box-shadow:0 4px 6px rgba(0,0,0,0.05);}
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1d2e;color:#fff;padding:12px 24px;border-radius:30px;font-size:13px;font-weight:700;opacity:0;transition:opacity .3s;z-index:9999;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;align-items:center;justify-content:center;}
 .modal-overlay.show{display:flex;}
 .modal{background:#fff;border-radius:20px;padding:28px 24px;max-width:480px;width:90%;max-height:85vh;overflow-y:auto;}
 .gemini-btn{background:#f0f4ff;color:#16417C;border:1px solid #c7d2fe;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;margin-left:4px;}
-.msg-copy-btn{margin-top:8px;background:#f59e42;color:#fff;border:none;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:800;cursor:pointer;width:100%;}
+.msg-copy-btn{margin-top:8px;background:#f59e42;color:#fff;border:none;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:800;cursor:pointer;width:100%;box-shadow:0 4px 6px rgba(0,0,0,0.05);}
 
 .key-field{margin-bottom:14px;}
 .key-field label{display:block;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.8px;margin-bottom:6px;}
@@ -85,18 +108,10 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
 .modal-save{width:100%;padding:13px;background:var(--accent-g);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;margin-top:8px;}
 .dashboard-bar{background:#e0e7ff;border:1.5px solid #a5b4fc;border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;font-size:13px;}
 .dashboard-bar a{background:#4f46e5;color:#fff;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;text-decoration:none;}
-
-/* 사진 첨부 뷰 */
-.subj-row-wrap{border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;}
-.photos-grid{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;}
-.photo-card{position:relative;display:flex;flex-direction:column;gap:6px;width:160px;background:#fafbff;border:1px solid var(--border);padding:8px;border-radius:12px;}
-.photo-card img{width:100%;height:120px;object-fit:cover;border-radius:8px;}
-.photo-input{width:100%;border:1px solid var(--border);border-radius:6px;padding:6px;font-size:11px;outline:none;}
 </style>
 </head>
 <body>
 
-<!-- 우측 To-Do 플로팅 -->
 <div class="todo-fab" onclick="document.getElementById('todoPanel').style.display='block'">📌</div>
 <div class="todo-panel" id="todoPanel">
   <div class="todo-head" onclick="document.getElementById('todoPanel').style.display='none'">
@@ -112,7 +127,6 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
 <div class="wrap">
 <div id="keyStatusBar"></div>
 
-<!-- 모드 전환 -->
 <div class="mode-tabs">
   <label><input type="radio" name="docType" value="리포트" checked onclick="toggleMode()"><span>📚 학습 리포트</span></label>
   <label><input type="radio" name="docType" value="상담" onclick="toggleMode()"><span>📞 CS 관리</span></label>
@@ -124,10 +138,10 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
 </div>
 
 <div style="display:flex; gap:10px; margin-bottom:16px;" id="fileLoaderWrap">
-  <label style="flex:1; background:#f59e0b; color:#fff; padding:14px; border-radius:12px; font-weight:800; text-align:center; cursor:pointer; font-size:14px;">
+  <label style="flex:1; background:#f59e0b; color:#fff; padding:14px; border-radius:12px; font-weight:800; text-align:center; cursor:pointer; font-size:14px; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
     ⚡ 이전 과제 불러오기<input type="file" accept=".html" style="display:none;" onchange="loadFromFile(event, 'homework')">
   </label>
-  <label style="flex:1; background:#2563eb; color:#fff; padding:14px; border-radius:12px; font-weight:800; text-align:center; cursor:pointer; font-size:14px;">
+  <label style="flex:1; background:#2563eb; color:#fff; padding:14px; border-radius:12px; font-weight:800; text-align:center; cursor:pointer; font-size:14px; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
     📑 전체 리포트 덮어쓰기<input type="file" accept=".html" style="display:none;" onchange="loadFromFile(event, 'all')">
   </label>
 </div>
@@ -139,7 +153,7 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
     <div class="hd-tag active" data-type="정규수업" onclick="setType(this)">정규수업</div>
     <div class="hd-tag" data-type="추가수업" onclick="setType(this)">추가수업</div>
     <div class="hd-tag" data-type="보강" onclick="setType(this)">보강</div>
-    <div class="hd-tag" data-type="결석/일정" onclick="setType(this)">결석/일정</div> <!-- 태그명 변경 -->
+    <div class="hd-tag" data-type="결석/일정" onclick="setType(this)">결석/일정</div>
   </div>
   <div class="hd-tags" id="tagsCS" style="display:none;">
     <div class="hd-tag active" data-type="재원생상담" onclick="setType(this)">재원생 상담</div>
@@ -159,7 +173,6 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
   <div class="icard" id="courseCard"><div class="ilabel">과정</div><input type="text" id="courseInput" placeholder="심화 수학" oninput="updateMsgBox()"></div>
 </div>
 
-<!-- CS 모드: 학생 DB 정보 -->
 <div id="studentDbPanel" style="display:none; background:#fff; border:1px solid #d97706; border-radius:16px; padding:18px; margin-bottom:14px;">
   <h3 style="font-size:14px; font-weight:800; color:#b45309;">👤 학생 DB 정보 (자동저장)</h3>
   <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
@@ -174,7 +187,6 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
   <div class="history-view" id="historyView"><span style="color:#999; font-size:12px;">이름을 검색하면 이전 이력이 표시됩니다.</span></div>
 </div>
 
-<!-- CS 세부 설정 패널 -->
 <div id="csDetailPanel" style="display:none; background:#fffbf0; border:1.5px solid #fde68a; border-radius:16px; padding:18px; margin-bottom:14px;">
   <div id="testSetting" style="display:none; margin-bottom:10px;">
     <b style="font-size:12px; color:#92400e;">⏱ 테스트 설정: </b>
@@ -198,15 +210,14 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
   </div>
 </div>
 
-<!-- 결석/일정 공지 설정 영역 (고도화됨) -->
 <div class="absent-panel" id="absentPanel">
   <h3>🚫/📅 결석 및 일정 공지 설정</h3>
-  <div class="absent-field" style="background:#fef2f2; padding:10px; border-radius:8px; margin-bottom:15px; border:1px solid #fca5a5;">
-    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; color:#991b1b; font-size:13px; margin:0;">
-      <input type="checkbox" id="isAbsentCheck" onchange="updateAbsentUI()" checked style="width:16px; height:16px; accent-color:#ef4444;">
-      <span>결석/휴강으로 인한 보강입니다. (상단 날짜가 결석일이 됩니다)</span>
-    </label>
+  <div class="absent-radio-group">
+    <label><input type="radio" name="absentReasonType" value="absent" onchange="updateAbsentUI()" checked> <span>수업 결석으로 인한 보강/일정 (상단 날짜가 결석일이 됩니다)</span></label>
+    <label><input type="radio" name="absentReasonType" value="cancelled" onchange="updateAbsentUI()"> <span style="color:#b91c1c;">수업 휴강으로 인한 보강/일정 (상단 날짜가 휴강일이 됩니다)</span></label>
+    <label><input type="radio" name="absentReasonType" value="free" onchange="updateAbsentUI()"> <span style="color:#166534;">무료보강/보충 (결석·휴강 아님, 상단 날짜는 공지일이 됩니다)</span></label>
   </div>
+  
   <div class="absent-field">
     <label>보강/보충 일정 분류</label>
     <select id="absentMakeupType" onchange="toggleMakeupDate()">
@@ -217,46 +228,50 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
     </select>
   </div>
   <div class="absent-field" id="makeupDateField" style="display:none;">
-    <label id="makeupDateLabel">보강 예정일 (시간 포함 가능)</label>
-    <input type="text" id="absentMakeupDate" placeholder="예: 5/1 14:00" oninput="updateMsgBox()">
+    <label id="makeupDateLabel">보강/보충 예정일 및 시간</label>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <input type="date" id="absentMakeupDate" onchange="updateMsgBox()" style="flex:2;">
+      <input type="time" id="absentMakeupStartTime" onchange="updateMsgBox()" style="flex:1;">
+      <span style="font-weight:bold;color:#b91c1c;">~</span>
+      <input type="time" id="absentMakeupEndTime" onchange="updateMsgBox()" style="flex:1;">
+    </div>
   </div>
   <div class="absent-field">
-    <label id="absentReasonLabel">결석 사유 (선택)</label>
+    <label id="absentReasonLabel">사유 (선택)</label>
     <textarea id="absentReason" placeholder="예: 개인 사정으로 인한 결석" oninput="updateMsgBox()"></textarea>
-  </div>
-  <div class="absent-field">
-    <label>추가 전달 사항 (선택)</label>
-    <textarea id="absentExtra" placeholder="예: 과제는 다음 수업 때 확인하겠습니다." oninput="updateMsgBox()"></textarea>
   </div>
 </div>
 
-<!-- 리포트 및 일정용 기타 전달사항 -->
 <div class="sec" style="background:#fffbf0;border-color:#fde68a;" id="noticeSection">
   <div style="font-size:11px;font-weight:800;color:#92400e;margin-bottom:8px;">📢 기타/추가 전달 사항 및 공지 <button class="gemini-btn" onclick="askGemini('noticeArea')">✨ AI 다듬기</button></div>
   <textarea id="noticeArea" style="width:100%;border:none;background:transparent;font-size:14px;min-height:60px;outline:none;line-height:1.6;" placeholder="내용을 입력하세요." oninput="updateMsgBox()"></textarea>
 </div>
 
-<!-- 리포트 본문 (정규수업 등) -->
 <div id="mainContentSection">
-  <div class="sec">
+  <div class="sec" id="secHw">
     <div class="sec-hd"><div class="sec-title">✅ 과제 확인</div></div>
+    <div class="hw-head-pc" style="display:grid;grid-template-columns:35% 15% 1fr; gap:12px; background:#f7f8fe;border:1.5px solid var(--border);border-radius:10px 10px 0 0;">
+      <div style="padding:9px 12px;font-size:11px;font-weight:700;color:var(--muted);">과정</div>
+      <div style="padding:9px 12px;font-size:11px;font-weight:700;color:var(--muted);border-left:1.5px solid var(--border);">수행</div>
+      <div style="padding:9px 12px;font-size:11px;font-weight:700;color:var(--muted);border-left:1.5px solid var(--border);">코멘트</div>
+    </div>
     <div id="hwList"></div>
     <button style="width:100%;padding:10px;margin-top:10px;border:1.5px dashed #ccc;border-radius:10px;cursor:pointer;background:transparent;" onclick="addHwRow()">+ 과제 항목 추가</button>
   </div>
-  <div class="sec">
+  <div class="sec" id="secSubj">
     <div class="sec-hd"><div class="sec-title">📖 학습 내용 요약 <button class="gemini-btn" onclick="askGeminiSec('subjectList')">✨ AI 다듬기</button></div></div>
     <div id="subjectList"></div>
     <button style="width:100%;padding:10px;border:1.5px dashed #ccc;border-radius:10px;cursor:pointer;background:transparent;" onclick="addSubjRow()">+ 학습 내용 추가</button>
   </div>
-  <div class="sec"><div class="sec-hd"><div class="sec-title">📸 수업 사진</div></div><input type="file" accept="image/*" multiple onchange="handlePhotoUpload(event,'classPhotos')"><div class="photos-grid" id="classPhotos"></div></div>
-  <div class="sec"><div class="sec-hd"><div class="sec-title">🎬 동영상 강의 (유튜브)</div></div><div style="display:flex;gap:8px;margin-bottom:12px;"><input type="url" id="videoUrlInput" placeholder="비워두고 추가 누르면 스튜디오 열림" style="flex:1;border:1px solid var(--border);border-radius:8px;padding:8px;outline:none;"><button style="padding:8px 12px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;" onclick="addVideo()">추가</button></div><div id="videoList" style="display:flex;flex-wrap:wrap;gap:10px;"></div></div>
-  <div class="sec"><div class="sec-hd"><div class="sec-title">🔗 추가 자료 링크</div></div><div id="resourceList"></div><button style="width:100%;padding:10px;border:1.5px dashed #ccc;border-radius:10px;cursor:pointer;background:transparent;" onclick="addResourceRow()">+ 링크 추가</button></div>
-  <div class="sec"><div class="sec-hd"><div class="sec-title">✏️ 오늘의 과제</div></div><div style="display:grid;grid-template-columns:30% 20% 1fr;background:#f7f8fe;border:1px solid var(--border);border-radius:10px 10px 0 0;font-size:11px;font-weight:700;color:var(--muted);text-align:center;padding:9px 0;"><div>과정</div><div>구분</div><div>내용</div></div><div id="todayHwList"></div><button style="width:100%;padding:10px;border:1.5px dashed #ccc;border-radius:10px;cursor:pointer;background:transparent;" onclick="addTodayHwRow()">+ 과제 추가</button></div>
+  <div class="sec" id="secPhoto"><div class="sec-hd"><div class="sec-title">📸 수업 사진</div></div><input type="file" accept="image/*" multiple onchange="handlePhotoUpload(event,'classPhotos')"><div class="photos-grid" id="classPhotos"></div></div>
+  <div class="sec" id="secToday"><div class="sec-hd"><div class="sec-title">✏️ 오늘의 과제</div></div><div style="display:grid;grid-template-columns:30% 20% 1fr;background:#f7f8fe;border:1px solid var(--border);border-radius:10px 10px 0 0;font-size:11px;font-weight:700;color:var(--muted);text-align:center;padding:9px 0;"><div>과정</div><div>구분</div><div>내용</div></div><div id="todayHwList"></div><button style="width:100%;padding:10px;border:1.5px dashed #ccc;border-radius:10px;cursor:pointer;background:transparent;" onclick="addTodayHwRow()">+ 과제 추가</button></div>
 </div>
+
+<div class="sec" id="secVideo"><div class="sec-hd"><div class="sec-title">🎬 동영상 강의 (유튜브)</div></div><div style="display:flex;gap:8px;margin-bottom:12px;"><input type="url" id="videoUrlInput" placeholder="비워두고 추가 누르면 스튜디오 열림" style="flex:1;border:1px solid var(--border);border-radius:8px;padding:8px;outline:none;"><button style="padding:8px 12px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;" onclick="addVideo()">추가</button></div><div id="videoList" style="display:flex;flex-wrap:wrap;gap:10px;"></div></div>
+<div class="sec" id="secLink"><div class="sec-hd"><div class="sec-title">🔗 추가 자료 링크</div></div><div id="resourceList"></div><button style="width:100%;padding:10px;border:1.5px dashed #ccc;border-radius:10px;cursor:pointer;background:transparent;" onclick="addResourceRow()">+ 링크 추가</button></div>
 
 <div class="link-result" id="linkResult"><div style="font-size:11px;font-weight:800;color:#1d4ed8;margin-bottom:5px;">🌐 생성된 공유 링크</div><a id="resultUrl" href="#" target="_blank" style="font-size:13px;color:#2563eb;word-break:break-all;"></a></div>
 
-<!-- 라이브 메시지 박스 및 알리고 영역 -->
 <div class="msg-box" id="msgBox" style="display:block;">
   <div style="font-size:11px;font-weight:800;color:#92400e;margin-bottom:10px;">📱 안내 메시지 (실시간 완성)</div>
   <textarea id="msgText" readonly></textarea>
@@ -276,7 +291,6 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
   <button class="msg-copy-btn" onclick="copyMsg()">📋 메시지 수동 복사하기</button>
 </div>
 
-<!-- 기능 버튼들 -->
 <div class="btns">
   <button class="kakao-btn" onclick="shareKakao()">💬 카카오톡으로 보내기 (템플릿 연결)</button>
   <button class="btn-dl" onclick="saveToDrive()">💾 1단계: 구글 드라이브/시트 기록</button>
@@ -344,13 +358,25 @@ function toggleMode() {
   document.getElementById('mainHeader').className = isCS ? 'header cs-mode' : 'header';
   document.getElementById('tagsReport').style.display = isCS ? 'none' : 'flex';
   document.getElementById('tagsCS').style.display = isCS ? 'flex' : 'none';
-  document.getElementById('mainContentSection').style.display = isCS ? 'none' : 'block';
   document.getElementById('absentPanel').style.display = 'none';
   document.getElementById('studentDbPanel').style.display = isCS ? 'block' : 'none';
   document.getElementById('csDetailPanel').style.display = isCS ? 'block' : 'none';
   document.getElementById('searchBtn').style.display = isCS ? 'block' : 'none';
-  document.getElementById('aligoArea').style.display = 'block'; // 알리고는 모든 모드에서 표시
-  if(isCS) { document.querySelector('#tagsCS .hd-tag').click(); } else { document.querySelector('#tagsReport .hd-tag').click(); }
+  document.getElementById('aligoArea').style.display = 'block'; 
+
+  if(isCS) { 
+    document.getElementById('mainContentSection').style.display = 'none';
+    document.getElementById('noticeSection').style.display = 'none';
+    document.getElementById('secVideo').style.display = 'none';
+    document.getElementById('secLink').style.display = 'none';
+    document.querySelector('#tagsCS .hd-tag').click(); 
+  } else { 
+    document.getElementById('mainContentSection').style.display = 'block';
+    document.getElementById('noticeSection').style.display = 'block';
+    document.getElementById('secVideo').style.display = 'block';
+    document.getElementById('secLink').style.display = 'block';
+    document.querySelector('#tagsReport .hd-tag').click(); 
+  }
   updateMsgBox();
 }
 
@@ -358,14 +384,21 @@ function setType(el){
   document.querySelectorAll('.hd-tag').forEach(t=>t.classList.remove('active'));
   el.classList.add('active'); classType = el.dataset.type;
   document.getElementById('hdTitle').textContent = `지필드 영재교육 (${el.innerText})`;
+  
   if(currentMode==='리포트') {
     if(classType === '결석/일정') {
       document.getElementById('absentPanel').style.display = 'block';
-      document.getElementById('mainContentSection').style.display = 'none';
-      updateAbsentUI(); // 결석/보충 UI 세팅
+      document.getElementById('secHw').style.display = 'none';
+      document.getElementById('secSubj').style.display = 'none';
+      document.getElementById('secPhoto').style.display = 'none';
+      document.getElementById('secToday').style.display = 'none';
+      updateAbsentUI();
     } else {
       document.getElementById('absentPanel').style.display = 'none';
-      document.getElementById('mainContentSection').style.display = 'block';
+      document.getElementById('secHw').style.display = 'block';
+      document.getElementById('secSubj').style.display = 'block';
+      document.getElementById('secPhoto').style.display = 'block';
+      document.getElementById('secToday').style.display = 'block';
       document.getElementById('dateLabel').innerText = '날짜 (상담/수업일)';
     }
   } else {
@@ -379,16 +412,16 @@ function setType(el){
 
 function updateAbsentUI() {
   if(classType !== '결석/일정') return;
-  const isAbsent = document.getElementById('isAbsentCheck').checked;
+  const reasonType = document.querySelector('input[name="absentReasonType"]:checked').value;
   const dateLabel = document.getElementById('dateLabel');
   const reasonLabel = document.getElementById('absentReasonLabel');
   
-  if(isAbsent) {
-    dateLabel.innerText = '결석일';
-    reasonLabel.innerText = '결석 사유 (선택)';
-  } else {
+  if(reasonType === 'free') {
     dateLabel.innerText = '공지일 (결석아님)';
     reasonLabel.innerText = '사유/내용 (선택)';
+  } else {
+    dateLabel.innerText = '결석/휴강일';
+    reasonLabel.innerText = '결석 사유 (선택)';
   }
   updateMsgBox();
 }
@@ -396,7 +429,7 @@ function updateAbsentUI() {
 function toggleMakeupDate() {
   const t = document.getElementById('absentMakeupType').value;
   document.getElementById('makeupDateField').style.display = (t==='decided'||t==='changed')?'block':'none';
-  document.getElementById('makeupDateLabel').innerText = t==='changed'?'보강 변경일 (시간 포함 가능)':'보강 예정일 (시간 포함 가능)';
+  document.getElementById('makeupDateLabel').innerText = t==='changed'?'보강 변경일 (시간 포함)':'보강 예정일 (시간 포함)';
   updateMsgBox();
 }
 
@@ -411,7 +444,7 @@ function addClassRow() {
   document.getElementById('classList').appendChild(div);
 }
 
-// 학생 DB 연동 (GAS 호출)
+// 학생 DB 연동
 function searchStudent() {
   const name = document.getElementById('nameInput').value.trim();
   if(!name) return showToast('이름을 입력하세요.');
@@ -465,7 +498,7 @@ function delTodo(i) { todos.splice(i,1); localStorage.setItem('gf_todos', JSON.s
 function getDayName(dateStr) {const days=['일','월','화','수','목','금','토']; return days[new Date(dateStr).getDay()];}
 function getGreeting(){const h=new Date().getHours(),d=new Date().getDay();if(d===0||d===6)return '즐거운 주말 되세요 😊';if(h>=6&&h<12)return '좋은 아침 되세요 🌅';if(h>=12&&h<20)return '즐거운 오후 되세요 ☀️';return '평안한 밤 되세요 🌙';}
 
-// 동적 메시지 조립
+// 메시지 조립
 function updateMsgBox(forcedUrl) {
   const name = document.getElementById('nameInput').value.trim() || '학생';
   const dateStr = document.getElementById('dateInput').value || new Date().toISOString().split('T')[0];
@@ -499,24 +532,51 @@ function updateMsgBox(forcedUrl) {
     // 리포트 모드 (정규, 결석/일정 등)
     if(classType === '결석/일정') {
       const mt = document.getElementById('absentMakeupType').value;
-      const md = document.getElementById('absentMakeupDate').value;
-      const isAbsent = document.getElementById('isAbsentCheck').checked;
+      const mdDate = document.getElementById('absentMakeupDate').value;
+      const mdStart = document.getElementById('absentMakeupStartTime').value;
+      const mdEnd = document.getElementById('absentMakeupEndTime').value;
+      const reasonType = document.querySelector('input[name="absentReasonType"]:checked').value;
       const abReason = document.getElementById('absentReason').value.trim();
-      const abExtra = document.getElementById('absentExtra').value.trim();
       const notice = document.getElementById('noticeArea').value.trim();
 
-      msg = `안녕하세요. 지필드 영재교육 노관호입니다.\n`;
-      if(isAbsent) msg += `${fTime} 수업 결석, 휴강에 대한 ${name} 학생 보강 공지입니다.\n`;
-      else msg += `${name} 학생 무료보강/보충 일정 안내입니다.\n`;
+      // 날짜/시간 포맷팅
+      let mStr = "추후 결정";
+      if(mdDate) {
+        const mdObj = new Date(mdDate);
+        mStr = `${mdObj.getMonth()+1}/${mdObj.getDate()}`;
+        if(mdStart) mStr += ` ${mdStart}`;
+        if(mdEnd) mStr += `~${mdEnd}`;
+      }
 
-      if(mt === 'decided') msg += `보강 예정일은 ${md}로 확정되었습니다.\n보강 시간 변경 및 취소 시 반드시 24시간 전에는 전달부탁드립니다.\n`;
-      else if(mt === 'changed') msg += `보강 예정일이 ${md}로 변경되었습니다.\n보강 시간 변경 및 취소 시 반드시 24시간 전에는 전달부탁드립니다.\n`;
+      msg = `안녕하세요. 지필드 영재교육 노관호입니다.\n`;
+      
+      if(reasonType === 'free') {
+        msg += `${name} 학생 무료보강/보충 일정 안내입니다.\n`;
+      } else {
+        const rTxt = reasonType === 'absent' ? '수업 결석에 대한' : '휴강에 대한';
+        msg += `${fmtDate} ${rTxt} ${name} 학생 보강 공지입니다.\n`;
+      }
+
+      if(mt === 'decided') msg += `보강 예정일은 ${mStr}으로 확정되었습니다.\n보강 시간 변경 및 취소 시 반드시 24시간 전에는 전달부탁드립니다.\n`;
+      else if(mt === 'changed') msg += `보강 예정일이 ${mStr}으로 변경되었습니다.\n보강 시간 변경 및 취소 시 반드시 24시간 전에는 전달부탁드립니다.\n`;
       else if(mt === 'canceled') msg += `예정되어 있던 보강이 취소되었습니다.\n`;
       else msg += `보강 일정은 추후 안내해 드리겠습니다.\n`;
 
-      if(abReason && isAbsent) msg += `\n* 사유: ${abReason}`;
-      if(abExtra) msg += `\n* 추가안내: ${abExtra}`;
+      if(abReason && reasonType !== 'free') msg += `\n* 사유: ${abReason}`;
       if(notice) msg += `\n* 공지: ${notice}`;
+
+      // 동영상/링크 리스트 메시지에 삽입
+      let resMsg = '';
+      document.querySelectorAll('#resourceList > div').forEach(r=>{
+        const sn=r.querySelector('.v-name')?.value, l=r.querySelector('.v-link')?.value;
+        if(sn&&l) resMsg += `\n- ${sn}: ${l}`;
+      });
+      document.querySelectorAll('#videoList div').forEach(r=>{
+        const img=r.querySelector('img'); if(!img)return;
+        const u=img.getAttribute('data-url');
+        if(u) resMsg += `\n- 동영상 링크: ${u}`;
+      });
+      if(resMsg) msg += `\n\n[참고 자료]${resMsg}`;
 
       msg += `\n\n${curUrl}\n${getGreeting()}`;
     } else { 
@@ -526,12 +586,12 @@ function updateMsgBox(forcedUrl) {
   document.getElementById('msgText').value = msg;
 }
 
-// 부가 요소 동적 생성
+// 부가요소 생성
 function addHwRow(c='',p='',m=''){ const d=document.createElement('div');d.className='hw-row';d.innerHTML=`<div class="hw-c1"><input type="text" class="v-course" placeholder="과정명" value="${c}" oninput="updateMsgBox()"></div><div class="hw-c2"><select class="v-perf" onchange="updateMsgBox()"><option value="">선택</option><option value="done" ${p==='done'?'selected':''}>✅ 수행</option><option value="partial" ${p==='partial'?'selected':''}>🔶 부분</option><option value="miss" ${p==='miss'?'selected':''}>❌ 미수행</option></select></div><div class="hw-c3" style="position:relative;"><textarea class="v-content" placeholder="코멘트" oninput="updateMsgBox()">${m}</textarea><button style="position:absolute;right:6px;top:6px;border:none;background:none;color:red;cursor:pointer;" onclick="this.parentElement.parentElement.remove(); updateMsgBox();">✕</button></div>`;document.getElementById('hwList').appendChild(d); }
 function addSubjRow(s='',c=''){ const d=document.createElement('div');d.className='subj-row-wrap';d.innerHTML=`<div style="padding:10px;background:#fafbff;display:flex;justify-content:space-between;border-bottom:1px solid var(--border);"><input type="text" class="v-subj" value="${s}" placeholder="과목명" style="border:none;background:transparent;font-weight:bold;width:85%;" oninput="updateMsgBox()"><button style="border:none;background:none;color:red;cursor:pointer;" onclick="this.parentElement.parentElement.remove(); updateMsgBox();">✕</button></div><textarea class="v-content" style="width:100%;border:none;padding:10px;min-height:70px;outline:none;" placeholder="학습 내용" oninput="updateMsgBox()">${c}</textarea>`;document.getElementById('subjectList').appendChild(d); }
 function addTodayHwRow(c='',t='필수',m=''){ const d=document.createElement('div');d.style='display:grid;grid-template-columns:30% 20% 1fr;border:1.5px solid var(--border);border-top:none;';d.innerHTML=`<div style="padding:8px 10px;border-right:1.5px solid var(--border);"><input type="text" class="v-course" value="${c}" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:13px;outline:none;background:#fafbff;" oninput="updateMsgBox()"></div><div style="padding:8px 10px;border-right:1.5px solid var(--border);"><select class="v-type" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:7px;font-size:13px;outline:none;background:#fafbff;" onchange="updateMsgBox()"><option ${t==='필수'?'selected':''}>필수</option><option ${t==='선택'?'selected':''}>선택</option></select></div><div style="padding:8px 10px;position:relative;"><textarea class="v-content" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:13px;outline:none;background:#fafbff;resize:vertical;min-height:50px;font-family:inherit;" oninput="updateMsgBox()">${m}</textarea><button style="position:absolute;right:6px;top:6px;border:none;background:none;color:red;cursor:pointer;" onclick="this.parentElement.parentElement.remove(); updateMsgBox();">✕</button></div>`;document.getElementById('todayHwList').appendChild(d); }
-function addResourceRow(name='',link=''){ const d=document.createElement('div');d.style='display:flex;gap:5px;margin-bottom:5px;align-items:center;';d.innerHTML=`<input type="text" class="v-name" value="${name}" placeholder="자료명" style="flex:1;border:1px solid var(--border);border-radius:8px;padding:8px;outline:none;"><input type="url" class="v-link" value="${link}" placeholder="링크" style="flex:2;border:1px solid var(--border);border-radius:8px;padding:8px;outline:none;"><button style="border:none;background:none;font-size:16px;cursor:pointer;color:red;" onclick="this.parentElement.remove()">✕</button>`;document.getElementById('resourceList').appendChild(d); }
-function addVideo(){ const url=document.getElementById('videoUrlInput').value.trim(); if(!url){window.open('https://studio.youtube.com/','_blank');return;} const m=url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i); if(!m)return showToast('유튜브 링크 확인 필요'); const d=document.createElement('div');d.style='width:150px;position:relative;';d.innerHTML=`<img src="https://img.youtube.com/vi/${m[1]}/hqdefault.jpg" style="width:100%;border-radius:8px;" data-url="${url}"><input type="text" class="v-cmt" placeholder="코멘트" style="width:100%;border:1px solid var(--border);font-size:11px;margin-top:4px;border-radius:6px;padding:4px;outline:none;"><button style="position:absolute;top:-5px;right:-5px;background:red;color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;" onclick="this.parentElement.remove()">✕</button>`;document.getElementById('videoList').appendChild(d);document.getElementById('videoUrlInput').value=''; }
+function addResourceRow(name='',link=''){ const d=document.createElement('div');d.style='display:flex;gap:5px;margin-bottom:5px;align-items:center;';d.innerHTML=`<input type="text" class="v-name" value="${name}" placeholder="자료명" style="flex:1;border:1px solid var(--border);border-radius:8px;padding:8px;outline:none;"><input type="url" class="v-link" value="${link}" placeholder="링크" style="flex:2;border:1px solid var(--border);border-radius:8px;padding:8px;outline:none;"><button style="border:none;background:none;font-size:16px;cursor:pointer;color:red;" onclick="this.parentElement.remove(); updateMsgBox();">✕</button>`;document.getElementById('resourceList').appendChild(d); updateMsgBox();}
+function addVideo(){ const url=document.getElementById('videoUrlInput').value.trim(); if(!url){window.open('https://studio.youtube.com/','_blank');return;} const m=url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i); if(!m)return showToast('유튜브 링크 확인 필요'); const d=document.createElement('div');d.style='width:150px;position:relative;';d.innerHTML=`<img src="https://img.youtube.com/vi/${m[1]}/hqdefault.jpg" style="width:100%;border-radius:8px;" data-url="${url}"><input type="text" class="v-cmt" placeholder="코멘트" style="width:100%;border:1px solid var(--border);font-size:11px;margin-top:4px;border-radius:6px;padding:4px;outline:none;"><button style="position:absolute;top:-5px;right:-5px;background:red;color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;" onclick="this.parentElement.remove(); updateMsgBox();">✕</button>`;document.getElementById('videoList').appendChild(d);document.getElementById('videoUrlInput').value=''; updateMsgBox();}
 
 let hwPhotos=[], classPhotos=[];
 function handlePhotoUpload(e,cid){ const arr=cid==='hwPhotos'?hwPhotos:classPhotos; Array.from(e.target.files).forEach(f=>{const r=new FileReader();r.onload=ev=>{const img=new Image();img.onload=()=>{const cvs=document.createElement('canvas');const sc=Math.min(600/img.width,1);cvs.width=img.width*sc;cvs.height=img.height*sc;cvs.getContext('2d').drawImage(img,0,0,cvs.width,cvs.height);arr.push({id:'p'+Date.now()+Math.random(),src:cvs.toDataURL('image/jpeg',.7),driveUrl:'',caption:''});renderPhotos(cid,arr);};img.src=ev.target.result;};r.readAsDataURL(f);});e.target.value=''; }
@@ -581,23 +641,35 @@ function loadFromFile(e, mode) {
 
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
-// 결석/보충 공지 웹 빌더
 function buildAbsentSnapshot(){
   const n=document.getElementById('nameInput').value||'학생', d=document.getElementById('dateInput').value.replace(/-/g,'.');
-  const mt=document.getElementById('absentMakeupType').value, md=document.getElementById('absentMakeupDate').value;
-  const r=document.getElementById('absentReason').value, e=document.getElementById('absentExtra').value, nt=document.getElementById('noticeArea').value;
-  const isAbsent = document.getElementById('isAbsentCheck').checked;
+  const mt=document.getElementById('absentMakeupType').value, mdDate=document.getElementById('absentMakeupDate').value;
+  const mdStart=document.getElementById('absentMakeupStartTime').value, mdEnd=document.getElementById('absentMakeupEndTime').value;
+  const r=document.getElementById('absentReason').value, nt=document.getElementById('noticeArea').value;
+  const reasonType = document.querySelector('input[name="absentReasonType"]:checked').value;
   
-  let mStr="추후 결정", rLab = isAbsent ? "결석 사유" : "사유/내용";
-  let badgeText = isAbsent ? "🚫 결석/보강 공지" : "📅 무료보강/일정 공지";
-  let titleText = isAbsent ? `${esc(n)} 학생 결석 확인` : `${esc(n)} 학생 일정 안내`;
-  let dateLabel = isAbsent ? "결석(수업)일" : "공지일";
+  let mStr="추후 결정", rLab = reasonType === 'free' ? "사유/내용" : "결석 사유";
+  let badgeText = reasonType === 'free' ? "📅 무료보강/일정 공지" : "🚫 결석/보강 공지";
+  let titleText = reasonType === 'free' ? `${esc(n)} 학생 일정 안내` : `${esc(n)} 학생 결석 확인`;
+  let dateLabel = reasonType === 'free' ? "공지일" : "결석(수업)일";
 
-  if(mt==='decided'&&md) mStr=esc(md);
-  else if(mt==='changed'&&md) mStr=esc(md)+" (변경됨)";
+  if(mdDate) {
+    const mdObj = new Date(mdDate);
+    mStr = `${mdObj.getMonth()+1}/${mdObj.getDate()}`;
+    if(mdStart) mStr += ` ${mdStart}`;
+    if(mdEnd) mStr += `~${mdEnd}`;
+  }
+
+  if(mt==='changed') mStr += " (변경됨)";
   else if(mt==='canceled'){ mStr="취소됨"; rLab="취소 사유"; }
 
-  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${esc(n)} 일정공지</title><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:sans-serif;background:#f1f5f9;color:#0f172a;}.wrap{max-width:480px;margin:0 auto;padding:30px 16px;}.card{background:#fff;border-radius:20px;padding:28px;margin-bottom:16px;box-shadow:0 4px 15px rgba(0,0,0,.05);}.badge{background:${isAbsent?'#fee2e2':'#dbeafe'};color:${isAbsent?'#b91c1c':'#166534'};padding:4px 14px;border-radius:20px;font-size:12px;font-weight:800;display:inline-block;margin-bottom:16px;}h1{font-size:20px;margin-bottom:6px;}.info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9;font-size:14px;}.info-label{color:#64748b;font-weight:600;}.info-val{font-weight:700;}.notice-box{background:#fffbeb;padding:14px;border-radius:12px;border:1px solid #fde68a;white-space:pre-wrap;margin-top:4px;}</style></head><body><div class="wrap"><div class="card"><div class="badge">${badgeText}</div><h1>${titleText}</h1><div style="color:#64748b;font-size:13px;margin-bottom:20px;">${d}</div><div class="info-row"><span class="info-label">${dateLabel}</span><span class="info-val">${d}</span></div>${r?`<div class="info-row"><span class="info-label">${rLab}</span><span class="info-val">${esc(r)}</span></div>`:''}<div class="info-row"><span class="info-label">보강/보충 일정</span><span class="info-val">${mStr}</span></div></div>${e||nt?`<div class="card"><div style="font-weight:800;color:#16417C;margin-bottom:12px;">📢 추가 전달 사항</div>${nt?`<div class="notice-box">${esc(nt)}</div>`:''}${e?`<div style="margin-top:10px;white-space:pre-wrap;">${esc(e)}</div>`:''}</div>`:''}<div style="text-align:center;color:#94a3b8;font-size:11px;margin-top:30px;">© G-Field Gifted Education</div></div></body></html>`;
+  let vidH='', resH='';
+  document.querySelectorAll('#videoList div').forEach(r=>{const img=r.querySelector('img');if(!img)return;const u=img.getAttribute('data-url'),s=img.src,c=r.querySelector('.v-cmt').value;vidH+=`<div style="margin-bottom:15px;"><a href="${u}" target="_blank" style="display:block;position:relative;"><img src="${s}" style="width:100%;border-radius:12px;"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,0,0,.8);color:#fff;width:40px;height:40px;border-radius:50%;text-align:center;line-height:40px;font-size:16px;">▶</div></a>${c?`<div style="text-align:center;margin-top:5px;font-weight:600;">${esc(c)}</div>`:''}</div>`;});
+  document.querySelectorAll('#resourceList > div').forEach(r=>{const sn=r.querySelector('.v-name')?.value,l=r.querySelector('.v-link')?.value;if(sn&&l) resH+=`<div style="display:flex;justify-content:space-between;align-items:center;background:#f1f5f9;padding:12px;border-radius:10px;margin-bottom:8px;"><span style="font-weight:700;">${esc(sn)}</span><a href="${l}" target="_blank" style="background:#16417C;color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-size:12px;">연결</a></div>`;});
+
+  const sr=(t,i,c)=>c?`<div class="card"><div style="font-weight:800;color:#16417C;margin-bottom:12px;">${i} ${t}</div>${c}</div>`:'';
+
+  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${esc(n)} 일정공지</title><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:sans-serif;background:#f1f5f9;color:#0f172a;}.wrap{max-width:480px;margin:0 auto;padding:30px 16px;}.card{background:#fff;border-radius:20px;padding:28px;margin-bottom:16px;box-shadow:0 4px 15px rgba(0,0,0,.05);}.badge{background:${reasonType==='free'?'#dbeafe':'#fee2e2'};color:${reasonType==='free'?'#166534':'#b91c1c'};padding:4px 14px;border-radius:20px;font-size:12px;font-weight:800;display:inline-block;margin-bottom:16px;}h1{font-size:20px;margin-bottom:6px;}.info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9;font-size:14px;}.info-label{color:#64748b;font-weight:600;}.info-val{font-weight:700;}.notice-box{background:#fffbeb;padding:14px;border-radius:12px;border:1px solid #fde68a;white-space:pre-wrap;margin-top:4px;}</style></head><body><div class="wrap"><div class="card"><div class="badge">${badgeText}</div><h1>${titleText}</h1><div style="color:#64748b;font-size:13px;margin-bottom:20px;">${d}</div><div class="info-row"><span class="info-label">${dateLabel}</span><span class="info-val">${d}</span></div>${r&&reasonType!=='free'?`<div class="info-row"><span class="info-label">${rLab}</span><span class="info-val">${esc(r)}</span></div>`:''}<div class="info-row"><span class="info-label">보강/보충 일정</span><span class="info-val">${mStr}</span></div></div>${nt?`<div class="card"><div style="font-weight:800;color:#16417C;margin-bottom:12px;">📢 추가 전달 사항 및 공지</div><div class="notice-box">${esc(nt)}</div></div>`:''}${sr('동영상 강의','🎬',vidH)}${sr('추가 자료','🔗',resH)}<div style="text-align:center;color:#94a3b8;font-size:11px;margin-top:30px;">© G-Field Gifted Education</div></div></body></html>`;
 }
 
 function buildSnapshot(){
@@ -615,7 +687,7 @@ function buildSnapshot(){
   const hwPH=hwPhotos.length?`<div style="margin-top:15px;border-top:1px dashed #eee;padding-top:15px;">${pRen(hwPhotos)}</div>`:'';
   const sr=(t,i,c)=>c?`<div class="rpt-sec" style="background:#fff;border-radius:20px;padding:24px 20px;margin-bottom:16px;box-shadow:0 4px 15px rgba(0,0,0,.03);"><div class="rpt-sec-title" style="font-size:16px;font-weight:800;color:#16417C;margin-bottom:16px;border-bottom:2px solid #16417C;display:inline-block;padding-bottom:4px;">${i} ${t}</div>${c}</div>`:'';
 
-  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>지필드 리포트 - ${esc(n)}</title><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:sans-serif;background:#f1f5f9;color:#0f172a;}.web-wrap{max-width:900px;margin:0 auto;padding:30px 24px;}.web-header{background:linear-gradient(135deg,#16417C,#2a5b9e);border-radius:20px;padding:28px 32px;color:#fff;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;}.hd-l h1{font-size:22px;font-weight:800;margin-bottom:4px;}.hd-l p{font-size:13px;opacity:.8;}.hd-r{text-align:right;}.s-name{font-size:28px;font-weight:800;}.date{font-size:13px;opacity:.8;margin-top:4px;}.badge{display:inline-block;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.4);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;margin-top:8px;}</style></head><body><div class="web-wrap"><div class="web-header"><div class="hd-l"><h1>지필드 영재교육 학습 리포트</h1><p>G-Field Gifted Education</p><div class="badge">${classType}</div></div><div class="hd-r"><div class="s-name">${esc(n)} 학생</div><div class="date">${d}${crs?' · '+esc(crs):''}</div></div></div>${nt?`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:16px;padding:16px;margin-bottom:16px;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#451a03;">📢 ${esc(nt)}</div>`:''}${sr('과제 확인','✅',hwR+hwPH)}${sr('학습 요약','📖',subH)}${sr('수업 사진','📸',pRen(classPhotos))}${sr('동영상 강의','🎬',vidH)}${sr('추가 자료','🔗',resH)}${sr('오늘의 과제','✏️',tHwH)}<div style="text-align:center;margin:36px 0;font-size:11px;color:#94a3b8;">© G-Field Gifted Education</div>${hideD}</div></body></html>`;
+  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>지필드 리포트 - ${esc(n)}</title><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:sans-serif;background:#f1f5f9;color:#0f172a;}.mobile-wrap{display:none;}.web-wrap{display:block;}@media(max-width:768px){.mobile-wrap{display:block;}.web-wrap{display:none;}body{background:#0d1117;}}.web-wrap{max-width:900px;margin:0 auto;padding:30px 24px;}.web-header{background:linear-gradient(135deg,#16417C,#2a5b9e);border-radius:20px;padding:28px 32px;color:#fff;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;}.hd-l h1{font-size:22px;font-weight:800;margin-bottom:4px;}.hd-l p{font-size:13px;opacity:.8;}.hd-r{text-align:right;}.s-name{font-size:28px;font-weight:800;}.date{font-size:13px;opacity:.8;margin-top:4px;}.badge{display:inline-block;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.4);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;margin-top:8px;}</style></head><body><div class="web-wrap"><div class="web-header"><div class="hd-l"><h1>지필드 영재교육 학습 리포트</h1><p>G-Field Gifted Education</p><div class="badge">${classType}</div></div><div class="hd-r"><div class="s-name">${esc(n)} 학생</div><div class="date">${d}${crs?' · '+esc(crs):''}</div></div></div>${nt?`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:16px;padding:16px;margin-bottom:16px;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#451a03;">📢 ${esc(nt)}</div>`:''}${sr('과제 확인','✅',hwR+hwPH)}${sr('학습 요약','📖',subH)}${sr('수업 사진','📸',pRen(classPhotos))}${sr('동영상 강의','🎬',vidH)}${sr('추가 자료','🔗',resH)}${sr('오늘의 과제','✏️',tHwH)}<div style="text-align:center;margin:36px 0;font-size:11px;color:#94a3b8;">© G-Field Gifted Education</div>${hideD}</div></body></html>`;
 }
 
 // 구글 드라이브 및 배포
@@ -623,8 +695,12 @@ async function saveToDrive(){
   const sUrl=getKey('script');if(!sUrl){openKeyModal();return;}
   const n=document.getElementById('nameInput').value.trim();if(!n){showToast('이름 입력 필요!');return;}
   document.getElementById('saveDriveBtn').textContent='⏳ 저장 중...';
+  
   let actualType = classType;
-  if(classType === '결석/일정') actualType = document.getElementById('isAbsentCheck').checked ? '결석' : '무료보강/보충';
+  if(classType === '결석/일정') {
+    const reasonType = document.querySelector('input[name="absentReasonType"]:checked').value;
+    actualType = reasonType === 'free' ? '무료보강/보충' : '결석/휴강';
+  }
   
   const fName=`지필드_${document.getElementById('dateInput').value.replace(/-/g,'')}_${n}_${actualType}_리포트.html`;
   const subs = Array.from(document.querySelectorAll('#subjectList .v-subj')).map(e=>e.value.trim()).filter(v=>v);
@@ -639,14 +715,17 @@ async function deployToGitHubPages(){
   if(!ghTok){openKeyModal();return;} document.getElementById('ghBtn').textContent='⏳ 배포 중...';
   
   let actualType = classType;
-  if(classType === '결석/일정') actualType = document.getElementById('isAbsentCheck').checked ? '결석' : '무료보강/보충';
+  if(classType === '결석/일정') {
+    const reasonType = document.querySelector('input[name="absentReasonType"]:checked').value;
+    actualType = reasonType === 'free' ? '무료보강/보충' : '결석/휴강';
+  }
   
   try{
     const n=document.getElementById('nameInput').value.trim()||'학생';
     const fName=`지필드_${document.getElementById('dateInput').value.replace(/-/g,'')}_${n}_${actualType}_리포트.html`;
     const apiUrl=`https://api.github.com/repos/${ghU}/${ghR}/contents/${encodeURIComponent(n+'/'+fName)}`;
     let sha=null;const chk=await fetch(apiUrl,{headers:{'Authorization':'Bearer '+ghTok}});if(chk.ok)sha=(await chk.json()).sha;
-    const body={message:`[자동배포] ${n} 리포트`,content:btoa(unescape(encodeURIComponent(buildSnapshot()))),branch:'main'};if(sha)body.sha=sha;
+    const body={message:`[자동배포] ${n} 일정공지/리포트`,content:btoa(unescape(encodeURIComponent(buildSnapshot()))),branch:'main'};if(sha)body.sha=sha;
     const up=await fetch(apiUrl,{method:'PUT',headers:{'Authorization':'Bearer '+ghTok,'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(!up.ok) throw new Error('업로드 실패');
     setLink(`https://${ghU}.github.io/${ghR}/${encodeURIComponent(n)}/${encodeURIComponent(fName)}`);showToast('🎉 전용 웹 링크 생성 완료!');
@@ -655,12 +734,33 @@ async function deployToGitHubPages(){
 
 async function saveToNotion(){
   const sUrl=getKey('script'), nKey=getKey('notionKey'), nDb=getKey('notionDb'); if(!sUrl||!nKey||!nDb){openKeyModal();return;}
-  document.getElementById('notionBtn').textContent='⏳ 노션 기록 중...';
+  const btn = document.getElementById('notionBtn');
+  
+  const n=document.getElementById('nameInput').value.trim()||'학생';
+  const mdDate = document.getElementById('absentMakeupDate')?.value || '';
+  
+  // 로컬에서 중복 검사 (프론트엔드 경고용)
+  if(classType === '결석/일정' && mdDate) {
+    let savedSchedules = JSON.parse(localStorage.getItem('gf_schedules') || '[]');
+    let conflict = savedSchedules.find(s => s.date === mdDate && s.name !== n);
+    if(conflict) {
+      if(!confirm(`⚠️ 경고: [${mdDate}] 해당 날짜에 이미 [${conflict.name}] 학생의 일정이 등록되어 있습니다. 겹치는 일정이 맞습니까?\n\n(확인을 누르시면 같이 진행/저장합니다.)`)) {
+        return; // 취소시 중단
+      }
+    }
+    savedSchedules.push({date: mdDate, name: n});
+    localStorage.setItem('gf_schedules', JSON.stringify(savedSchedules));
+  }
+
+  btn.disabled = true; btn.textContent = '⏳ 노션 기록 중...';
   
   let actualType = classType;
-  if(classType === '결석/일정') actualType = document.getElementById('isAbsentCheck').checked ? '결석' : '무료보강/보충';
+  if(classType === '결석/일정') {
+    const reasonType = document.querySelector('input[name="absentReasonType"]:checked').value;
+    actualType = reasonType === 'free' ? '무료보강/보충' : '결석/휴강';
+  }
 
-  const docType=document.querySelector('input[name="docType"]:checked').value, n=document.getElementById('nameInput').value.trim()||'학생', u=document.getElementById('resultUrl').href;
+  const docType=document.querySelector('input[name="docType"]:checked').value, u=document.getElementById('resultUrl').href;
   const payload={action:'notion',notionKey:nKey,notionDb:nDb,name:n,docType:docType,url:(u&&u!=='#'&&!u.includes('github.io'))?u:null};
   
   if(docType==='상담'){
@@ -668,12 +768,12 @@ async function saveToNotion(){
     payload.testDate=document.getElementById('c_date')?.value || '';
     payload.school=document.getElementById('dbSchool').value; payload.grade=document.getElementById('dbGrade').value; payload.phone=document.getElementById('dbPhone').value; payload.content=document.getElementById('csMemo').value;
   }else{
-    payload.date=document.getElementById('dateInput').value; payload.course=document.getElementById('courseInput').value.trim(); payload.type=actualType; payload.makeupType=document.getElementById('absentMakeupType')?.value || ''; payload.makeupDate=document.getElementById('absentMakeupDate')?.value || '';
+    payload.date=document.getElementById('dateInput').value; payload.course=document.getElementById('courseInput').value.trim(); payload.type=actualType; payload.makeupType=document.getElementById('absentMakeupType')?.value || ''; payload.makeupDate=mdDate;
   }
   try{
     const res=await fetch(sUrl,{method:'POST',body:JSON.stringify(payload)}); const r=await res.json();
     if(r.result==='success')showToast('📅 노션 CRM 등록 성공!'); else throw new Error(r.error);
-  }catch(e){alert('❌ 노션 실패: '+e.message);}finally{document.getElementById('notionBtn').textContent='📓 3단계: 노션 캘린더 자동 등록';}
+  }catch(e){alert('❌ 노션 실패: '+e.message);}finally{btn.disabled = false; btn.textContent = '📓 3단계: 노션 캘린더 자동 등록';}
 }
 
 function sendAligoSms(isScheduled) {
