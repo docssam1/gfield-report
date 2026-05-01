@@ -382,12 +382,13 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
 
   <div class="sidebar-box" style="border-color:#3b82f6;">
     <div class="todo-head" style="background:#eff6ff; color:#1d4ed8;">
-      <span>🤖 AI 대화 / 프롬프트 작성</span>
+      <span>🤖 AI 프롬프트 준비 (메모장)</span>
     </div>
     <div style="padding:15px; font-size:12px; color:#475569; line-height:1.5;">
-      복잡한 문구나 코드 수정을 원하실 때, 아래에 생각을 정리하신 후 복사하여 AI 대화창에 붙여넣어 보세요.
-      <textarea id="aiPromptMemo" style="width:100%; min-height:100px; margin-top:10px; padding:10px; border-radius:8px; border:1px solid #bfdbfe; resize:vertical; font-family:inherit; outline:none;" placeholder="AI에게 요청할 내용을 메모하세요..."></textarea>
-      <a href="https://drive.google.com/drive/folders/1e8XRoU0jr-1_7s1aKq2qSejbkW1PYWzg?usp=drive_link" target="_blank" style="display:block; text-align:center; background:#2563eb; color:#fff; padding:10px; border-radius:8px; text-decoration:none; font-weight:bold; margin-top:10px;">📁 AI 대화/프롬프트 저장소 열기</a>
+      저(Gemini)에게 지시할 복잡한 내용을 아래에 정리하고 <b>복사</b>한 뒤, <b>왼쪽 채팅창</b>에 붙여넣어 대화해 주세요!
+      <textarea id="aiPromptMemo" style="width:100%; min-height:100px; margin-top:10px; padding:10px; border-radius:8px; border:1px solid #bfdbfe; resize:vertical; font-family:inherit; outline:none;" placeholder="예: 리포트 표 색상을 노란색으로 바꿔줘..."></textarea>
+      <button onclick="copyAiPrompt()" style="display:block; width:100%; text-align:center; background:#2563eb; color:#fff; padding:10px; border-radius:8px; border:none; font-weight:bold; cursor:pointer; margin-top:10px;">📋 질문 내용 복사하기</button>
+      <a href="https://drive.google.com/drive/folders/1e8XRoU0jr-1_7s1aKq2qSejbkW1PYWzg?usp=drive_link" target="_blank" style="display:block; text-align:center; color:#64748b; font-size:11px; margin-top:10px; text-decoration:underline;">📁 백업용 드라이브 폴더 열기</a>
     </div>
   </div>
 </div>
@@ -743,6 +744,14 @@ function addTodo() {
 function toggleTodo(i) { todos[i].done = !todos[i].done; localStorage.setItem('gf_todos', JSON.stringify(todos)); renderTodos(); if(todos[i].done && !showCompletedTodos) { setTimeout(() => { renderTodos(); }, 300); } }
 function delTodo(i) { todos.splice(i, 1); localStorage.setItem('gf_todos', JSON.stringify(todos)); renderTodos(); }
 function loadTodos() { todos = JSON.parse(localStorage.getItem('gf_todos')||'[]'); renderTodos(); }
+
+function copyAiPrompt() {
+  const t = document.getElementById('aiPromptMemo');
+  if(!t.value.trim()) return showToast('복사할 내용을 먼저 작성해주세요.');
+  t.select();
+  document.execCommand('copy');
+  showToast('📋 복사되었습니다! 왼쪽 채팅창에 붙여넣어주세요.');
+}
 
 function autoAddTodoForSchedule() {
   const n = document.getElementById('nameInput').value.trim();
