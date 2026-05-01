@@ -624,7 +624,7 @@ function saveDbData() {
   })});
 }
 
-// --- CSV 학생DB 일괄 업로드 로직 ---
+// --- CSV 학생DB 일괄 업로드 로직 (F열 상담내용 포함) ---
 function downloadCSVTemplate() {
   const csvContent = "\uFEFF이름,학교,학년,연락처,구분,상담내용\n홍길동,대치초,초3,010-1234-5678,재원생,학습 태도가 매우 우수함.\n김철수,역삼초,초4,010-9876-5432,퇴원생,\"개인 사정으로 퇴원, 겨울방학 복귀 예정\"";
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
