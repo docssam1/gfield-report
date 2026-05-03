@@ -840,7 +840,7 @@ function autoAddTodoForSchedule() {
   }
 }
 
-// 🌟 AI 미니 챗봇 로직 (상고모드 + 이미지 붙여넣기) 🌟
+// 🌟 AI 미니 챗봇 로직 (상고모드 + 이미지 붙여넣기 + gemini-1.5-flash) 🌟
 let attachedAiImage = null;
 function removeAiImage() {
   attachedAiImage = null;
@@ -880,7 +880,7 @@ async function sendAiChat() {
   btn.textContent = '⏳ 답변 생성 중...';
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     const sysInst = "너는 지필드 영재교육의 AI 비서야. 원장님의 질문에 간단명료하고 친절하게 답변해. 특히 수학 문제를 답할 때는 정확한 상고모드로 오답이 없게 단계별로 논리적인 풀이를 제공해줘.";
     
     const parts = [];
@@ -1043,14 +1043,12 @@ function addDrivePhoto(cid){
   const url = inp.value.trim();
   if(!url) return showToast('구글 드라이브 링크를 입력하세요.');
   
-  // 구글 드라이브 URL에서 File ID 추출 (정규식)
   const m = url.match(/\/d\/([a-zA-Z0-9_-]+)|\?id=([a-zA-Z0-9_-]+)/);
   if(!m) return alert('유효한 구글 드라이브 공유 링크가 아닙니다.');
   
   const fileId = m[1] || m[2];
   const arr = cid === 'hwPhotos' ? hwPhotos : classPhotos;
   
-  // 드라이브 썸네일 API 활용
   const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w800`;
   
   arr.push({
