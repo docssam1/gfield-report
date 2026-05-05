@@ -42,10 +42,8 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
   .mobile-app-nav { display: flex; }
   .page-layout { flex-direction: column; padding: 10px; }
   .btns { grid-template-columns: 1fr !important; }
-  /* 모바일 큼직한 터치 영역 */
   input[type="text"], input[type="number"], input[type="date"], input[type="time"], select, textarea { font-size: 16px !important; padding: 14px !important; border-radius: 10px; }
   
-  /* 사이드바 -> 바텀시트 변신 */
   .sidebar { position: fixed; top: auto; bottom: 0; left: 0; width: 100%; height: 85vh; background: #f4f5fb; z-index: 1000; border-radius: 24px 24px 0 0; padding: 20px; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); margin: 0; overflow-y: auto; display:block; box-shadow: 0 -10px 40px rgba(0,0,0,0.2);}
   .sidebar.show { transform: translateY(0); }
   .sheet-close-bar { display: block; }
@@ -73,7 +71,7 @@ input[value="상담"]:checked ~ .slider { transform:translateX(100%); background
 .header.cs-mode .hd-tag.active { color:#d97706; }
 
 /* 입력 폼 공통 */
-.icard{background:var(--surface);border-radius:16px;padding:14px 18px;border:1.5px solid var(--border); position:relative;}
+.icard{background:var(--surface);border-radius:16px;padding:14px 18px;border:1.5px solid var(--border); position:relative; margin-bottom:10px;}
 .ilabel{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.8px;margin-bottom:7px;text-transform:uppercase;}
 .icard input, .icard select{border:none;outline:none;font-size:14px;font-weight:700;color:var(--text);width:100%;background:transparent;}
 
@@ -112,7 +110,7 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
 .todo-item input[type="checkbox"] { margin-top:3px; cursor:pointer; accent-color:#d97706; width:18px; height:18px; }
 .todo-item.done span { text-decoration:line-through; color:#9ca3af; }
 
-/* 🌟 AI 미니 챗봇 스타일 🌟 */
+/* AI 미니 챗봇 스타일 */
 .chat-msg { padding:10px 12px; border-radius:12px; font-size:13px; max-width:90%; word-break:break-word; line-height:1.5; margin-bottom:8px;}
 .chat-user { background:#e0e7ff; color:#1e3a8a; align-self:flex-end; border-bottom-right-radius:2px; }
 .chat-ai { background:#fff; color:#334155; align-self:flex-start; border:1px solid #e2e8f0; border-bottom-left-radius:2px; }
@@ -120,21 +118,21 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
 #aiImagePreview img { max-height:80px; border-radius:6px; border:1px solid #bfdbfe; }
 #aiImagePreview button { position:absolute; top:-5px; right:-5px; background:red; color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer; font-size:10px; text-align:center; padding:0; }
 
-/* 워크플로우 버튼들 (디자인 통일) */
-.btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+/* 워크플로우 버튼들 */
+.btns{display:flex; flex-direction:column; gap:12px; margin-top:20px;}
 .workflow-btn { padding:16px; border:none; border-radius:14px; font-size:15px; font-weight:900; cursor:pointer; width:100%; text-align:center; box-shadow:0 4px 6px rgba(0,0,0,0.05); color:#fff; transition:0.2s; }
 .workflow-btn:hover { filter:brightness(0.9); transform:translateY(-1px); }
 .btn-dl { background:var(--accent-g); }
 .btn-gh { background:linear-gradient(135deg,#22c55e,#16a34a); }
 .notion-btn { background:#000000; }
-.kakao-btn { background:#FEE500; color:#191919; grid-column:1/-1; }
+.kakao-btn { background:#FEE500; color:#191919; }
 
 .workflow-box { border:2px solid #16417C; background:#f8fafc; border-radius: 20px; padding: 24px; margin-top: 20px; margin-bottom: 20px;}
 .workflow-title { color:#16417C; text-align:center; font-size:18px; font-weight: 800; margin-bottom: 5px; }
 .workflow-desc { text-align:center; font-size:13px; color:#666; margin-bottom:20px; }
 
 /* 토스트 & 모달 */
-.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1d2e;color:#fff;padding:14px 28px;border-radius:30px;font-size:14px;font-weight:700;opacity:0;transition:opacity .3s;z-index:10000;pointer-events:none;white-space:nowrap;}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1d2e;color:#fff;padding:14px 28px;border-radius:30px;font-size:14px;font-weight:700;opacity:0;transition:opacity .3s;z-index:10000;pointer-events:none;}
 .toast.show{opacity:1;}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;align-items:center;justify-content:center; backdrop-filter: blur(4px);}
 .modal-overlay.show{display:flex;}
@@ -143,7 +141,7 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
 /* 메시지 라이브 뷰어 및 링크 */
 .msg-box{background:#eff6ff;border:1.5px solid #93c5fd;border-radius:16px;padding:20px;margin-bottom:14px;}
 .msg-box textarea{width:100%;border:1px solid #bfdbfe;border-radius:12px;padding:15px;font-size:14px;background:#fff;color:#1a1d2e;resize:none;min-height:200px;line-height:1.7;}
-.link-result{display:none;background:#f0fdf4;padding:15px;border-radius:14px;margin-bottom:15px;border:1px solid #86efac;}
+.link-result{display:none;background:#f0fdf4;padding:20px;border-radius:16px;margin-bottom:15px;border:1px solid #86efac;}
 .msg-copy-btn{margin-top:8px;background:#2563eb;color:#fff;border:none;border-radius:10px;padding:14px 18px;font-size:14px;font-weight:800;cursor:pointer;width:100%;}
 
 /* 동적 생성 영역 (과제/사진/결석) */
@@ -154,7 +152,7 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
 
 .hw-row{border:1.5px solid var(--border);border-top:none;overflow:hidden; background:#fff;}
 @media(min-width:600px){.hw-row{display:grid;grid-template-columns:30% 20% 1fr;gap:12px;}.hw-c1,.hw-c2,.hw-c3{padding:10px 0;}.hw-c1{border-right:1.5px solid var(--border);padding-right:12px;}.hw-c2{border-right:1.5px solid var(--border);padding-right:12px;display:flex;align-items:center;}}
-@media(max-width:599px){.hw-row{display:block;}.hw-c1{padding:12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}.hw-c2{padding:8px 12px; border-bottom:1px solid var(--border);}.hw-c3{padding:12px;}}
+@media(max-width:599px){.hw-row{display:block;}.hw-c1{padding:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}.hw-c2{padding:8px 10px;border-bottom:1px solid var(--border);}.hw-c3{padding:10px;}}
 .hw-c1 input{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:14px;}
 .hw-c2 select{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:14px;}
 .hw-c3 textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:14px;resize:none;overflow:hidden;min-height:50px;}
@@ -204,7 +202,7 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
     ⚡ 이전 과제 불러오기<input type="file" accept=".html" style="display:none;" onchange="loadFromFile(event, 'homework')">
   </label>
   <label style="flex:1; min-width:140px; background:#2563eb; color:#fff; padding:15px; border-radius:12px; font-weight:800; text-align:center; cursor:pointer; font-size:14px;">
-    📑 전체 리포트 덮어쓰기<input type="file" accept=".html" style="display:none;" onchange="loadFromFile(event, 'all')">
+    📑 리포트 덮어쓰기<input type="file" accept=".html" style="display:none;" onchange="loadFromFile(event, 'all')">
   </label>
   <button style="flex:1; min-width:140px; background:#10b981; color:#fff; padding:15px; border-radius:12px; font-weight:800; border:none; cursor:pointer; font-size:14px;" onclick="document.getElementById('csvModal').classList.add('show')">📁 엑셀 일괄업로드</button>
 </div>
@@ -347,10 +345,10 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
     <button style="width:100%;padding:14px;margin-top:10px;border:1.5px dashed #ccc;border-radius:12px;cursor:pointer;background:transparent;font-weight:bold; color:var(--text); font-size:14px;" onclick="addHwRow()">+ 과제 항목 추가</button>
     
     <div style="margin-top:25px; padding-top:20px; border-top:1px dashed #ccc;">
-      <div style="font-size:15px; font-weight:900; color:#16417C; margin-bottom:12px;"><i class="fa-solid fa-camera"></i> 과제 수행 사진 첨부</div>
+      <div style="font-size:14px; font-weight:900; color:#16417C; margin-bottom:12px;"><i class="fa-solid fa-camera"></i> 과제 수행 사진 첨부</div>
       <div style="display:flex; gap:10px; margin-bottom:12px; align-items:center; flex-wrap:wrap;">
-        <input type="url" id="driveHwPhotoUrl" placeholder="구글 드라이브 공유 링크 붙여넣기" style="flex:1; min-width:200px; border:1px solid var(--border); border-radius:10px; padding:14px; outline:none; font-size:14px;">
-        <button style="padding:14px 20px; background:#10b981; color:#fff; border:none; border-radius:10px; cursor:pointer; font-weight:bold; white-space:nowrap; font-size:14px;" onclick="addDrivePhoto('hwPhotos', 'driveHwPhotoUrl')">☁️ 링크 추가</button>
+        <input type="url" id="driveHwPhotoUrl" placeholder="☁️ 구글 드라이브 공유 링크 붙여넣기" style="flex:1; min-width:200px; border:1px solid var(--border); border-radius:10px; padding:14px; outline:none; font-size:14px;">
+        <button style="padding:14px 20px; background:#10b981; color:#fff; border:none; border-radius:10px; cursor:pointer; font-weight:bold; white-space:nowrap; font-size:14px;" onclick="addDrivePhoto('hwPhotos', 'driveHwPhotoUrl')">링크 추가</button>
       </div>
       <div class="photos-grid" id="hwPhotos"></div>
     </div>
@@ -365,8 +363,8 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
   <div class="sec" id="secPhoto">
     <div class="sec-hd"><div class="sec-title">📸 수업 활동 사진 첨부</div></div>
     <div style="display:flex; gap:10px; margin-bottom:12px; align-items:center; flex-wrap:wrap;">
-      <input type="url" id="drivePhotoUrl" placeholder="구글 드라이브 공유 링크 붙여넣기" style="flex:1; min-width:200px; border:1px solid var(--border); border-radius:10px; padding:14px; outline:none; font-size:14px;">
-      <button style="padding:14px 20px; background:#10b981; color:#fff; border:none; border-radius:10px; cursor:pointer; font-weight:bold; white-space:nowrap; font-size:14px;" onclick="addDrivePhoto('classPhotos', 'drivePhotoUrl')">☁️ 링크 추가</button>
+      <input type="url" id="drivePhotoUrl" placeholder="☁️ 구글 드라이브 공유 링크 붙여넣기" style="flex:1; min-width:200px; border:1px solid var(--border); border-radius:10px; padding:14px; outline:none; font-size:14px;">
+      <button style="padding:14px 20px; background:#10b981; color:#fff; border:none; border-radius:10px; cursor:pointer; font-weight:bold; white-space:nowrap; font-size:14px;" onclick="addDrivePhoto('classPhotos', 'drivePhotoUrl')">링크 추가</button>
     </div>
     <div style="font-size:12px; color:#94a3b8; margin-bottom:12px; font-weight:bold;">* 드라이브 링크는 반드시 '링크가 있는 모든 사용자 보기 가능' 상태여야 합니다.</div>
     <div class="photos-grid" id="classPhotos"></div>
@@ -711,7 +709,7 @@ function addClassBlock() {
   document.getElementById('classBlocks').appendChild(div);
 }
 
-// --- 🌟 검색 기능 (에러 완벽 차단 & 옵셔널 체이닝 적용) 🌟 ---
+// --- 🌟 검색 기능 (에러 완벽 차단 및 안정화) 🌟 ---
 let currentSearchResults = [];
 
 function searchStudent() {
@@ -721,7 +719,6 @@ function searchStudent() {
   
   showToast('조회 중...');
   
-  // 에러 방지: 요소가 존재할 때만 접근
   const sd = document.getElementById('searchDropdown');
   if(sd) sd.style.display = 'none';
 
@@ -746,7 +743,7 @@ function searchStudent() {
 
 function renderSearchDropdown(results) {
   const dropdown = document.getElementById('searchDropdown');
-  if(!dropdown) return; // 에러 원천 차단
+  if(!dropdown) return; 
   dropdown.innerHTML = '';
   results.forEach((st, idx) => {
     const div = document.createElement('div');
@@ -778,17 +775,13 @@ function selectStudent(idx) {
     hView.innerHTML = '<span style="color:#999; font-size:12px;">이력이 없습니다.</span>';
   }
   
-  // 🌟 [핵심 수리] Cannot read properties of null (reading 'style') 에러 방어 🌟
   const dropdown = document.getElementById('searchDropdown');
-  if (dropdown) {
-    dropdown.style.display = 'none';
-  }
+  if (dropdown) dropdown.style.display = 'none';
 
   showToast(`✅ ${st.name} 학생 정보를 불러왔습니다.`);
   updateMsgBox();
 }
 
-// 외부 클릭 시 드롭다운 닫기
 document.addEventListener('click', function(e) {
   const dropdown = document.getElementById('searchDropdown');
   const input = document.getElementById('nameInput');
@@ -864,8 +857,8 @@ function processCSV() {
         .then(r=>r.json()).then(res => {
           if(res.result === 'success') { showToast("✅ DB 일괄 업로드 완료!"); } 
           else if (res.result === 'conflict') { pendingConflicts = res.conflicts; pendingBulkData = res.safe_data; renderConflicts(); }
-          else { alert("서버 처리 실패. 스크립트 연결을 확인하세요."); }
-        });
+          else { alert("❌ 서버 오류: " + (res.error || "스크립트 연결 문제")); }
+        }).catch(err => alert("❌ 통신 오류: " + err.message));
     } catch (err) { alert("엑셀 분석 오류입니다. 양식을 확인하세요."); }
   };
   reader.readAsArrayBuffer(file);
@@ -1258,7 +1251,6 @@ function buildAbsentSnapshot(){
 }
 
 function buildSnapshot(){
-  if(classType === '결석') return buildAbsentSnapshot();
   const n=document.getElementById('nameInput').value||'학생',d=document.getElementById('dateInput').value.replace(/-/g,'.'),crs=document.getElementById('courseInput').value||'',nt=document.getElementById('noticeArea').value;
   let hwR='',subH='',vidH='',resH='',tHwH='',hideD='';
   
@@ -1269,7 +1261,6 @@ function buildSnapshot(){
   document.querySelectorAll('#todayHwList > div').forEach(r=>{const c=r.querySelector('.v-course').value,ty=r.querySelector('.v-type').value,ct=r.querySelector('.v-content').value;if(c||ct){tHwH+=`<div class="today-hw-item" style="border-bottom:1px solid #e2e8f0; padding:16px 0;"><label style="display:flex; align-items:center; gap:10px; cursor:pointer;"><input type="checkbox" class="hw-chk" value="${esc(c)}" style="width:20px; height:20px; accent-color:#16417C; cursor:pointer;"><span class="hw-course-title" style="font-weight:700; color:#16417C; font-size:16px;">${esc(c)}</span><span style="background:${ty==='필수'?'#ef4444':'#3b82f6'};color:#fff;font-size:11px;padding:4px 8px;border-radius:6px;font-weight:bold;">${ty}</span></label>${ct ? `<div class="hw-content-text" style="font-size:14px; white-space:pre-wrap; line-height:1.6; color:#333; margin-left:30px; margin-top:10px;">${esc(ct)}</div>`:''}</div>`;}});
   if(tHwH){tHwH=`<div id="hw-container">${tHwH}<div style="margin-top:25px; text-align:center;"><button onclick="sendBulkKakao()" style="background:#FEE500; color:#191919; border:none; padding:16px 20px; border-radius:12px; font-weight:800; font-size:15px; cursor:pointer; width:100%; box-shadow:0 4px 6px rgba(0,0,0,0.05);">💬 지필드 영재교육으로 과제 완료 알리기</button><div style="font-size:12px; color:#64748b; margin-top:10px;">* 완료된 과제에 체크하신 후 버튼을 눌러주세요.</div></div></div><script>function sendBulkKakao(){var c=Array.from(document.querySelectorAll('.hw-chk:checked')).map(function(cb){return cb.value;});if(c.length===0){alert('과제를 먼저 체크해주세요!');return;}var m="[과제완료] ${esc(n)} 학생\\n\\n✅ 완료 내역:\\n"+c.map(function(x){return "- "+x;}).join('\\n');var ta=document.createElement("textarea");ta.value=m;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(m).catch(function(){});}alert('📋 복사 완료! [확인]을 누르면 오픈채팅방으로 이동합니다.\\n붙여넣기 해주세요!');window.location.href='https://open.kakao.com/me/gfield';}<\/script>`;}
   
-  // 📸 고해상도 링크 및 캡션 렌더링 
   const pRen=arr=>arr.map(p=>`<div style="margin-bottom:20px; background:#fff; border-radius:12px; border:1px solid #eee; overflow:hidden;"><a href="${p.driveUrl||p.src}" target="_blank" style="display:block;"><img src="${p.src}" style="width:100%; height:auto; display:block;"></a>${p.caption?`<div style="padding:12px 15px; font-size:14px; color:#334155; line-height:1.5; background:#f8fafc; border-top:1px solid #eee; white-space:pre-wrap;">${esc(p.caption)}</div>`:''}</div>`).join('');
   
   const hwPH=hwPhotos.length?`<div style="margin-top:20px;border-top:1px dashed #e2e8f0;padding-top:20px;"><h4 style="color:#16417C; margin-bottom:12px; font-size:16px;">📸 과제 수행 사진</h4>${pRen(hwPhotos)}</div>`:'';
@@ -1299,7 +1290,7 @@ async function saveToDrive(){
       attendance:{date:document.getElementById('dateInput').value, type:classType, subjects_merged:subjects}, 
       sheetId:getKey('sheetId')||DEFAULT_SHEET
     })});
-    const r=await res.json(); if(r.result==='success'){window.setLink(r.url);showToast('✅ 드라이브 및 대시보드 저장 완료!');}
+    const r=await res.json(); if(r.result==='success'){window.setLink(r.url);showToast('✅ 드라이브 및 시트 기록 완료!');}
   }catch(e){}finally{btn.textContent='1단계: 💾 구글 드라이브 및 시트 기록'; btn.disabled = false;}
 }
 
@@ -1380,6 +1371,3 @@ function copyMsg(){const t=document.getElementById('msgText');t.select();documen
 </script>
 </body>
 </html>
-
-
-원장님, 이 코드가 바로 모든 요구사항이 깔끔하게 정리된 궁극의 버전입니다. 아무 걱정 마시고 덮어씌워서 사용해 보세요! ☀️
