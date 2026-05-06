@@ -4,8 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>지필드 영재교육 스마트 CRM & 리포트</title>
+<!-- 카카오 SDK -->
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" crossorigin="anonymous"></script>
+<!-- 엑셀(XLSX) 라이브러리 추가: 한글 깨짐 완벽 방지 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- FontAwesome for Icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
@@ -13,7 +16,7 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);font-size:14px; position:relative; overflow-x:hidden;}
 
-/* 🌟 상단 퀵 링크 바 (버튼형 UI로 디자인 개편) 🌟 */
+/* 🌟 상단 퀵 링크 바 */
 .quick-links { display: flex; justify-content: space-between; gap: 10px; padding: 15px 20px 0; max-width: 1180px; margin: 0 auto; align-items:center; flex-wrap:wrap;}
 .quick-links-left { display: flex; gap: 8px; flex-wrap:wrap; }
 .quick-links-right { display: flex; gap: 8px; }
@@ -24,12 +27,12 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(
 .page-layout { display: flex; max-width: 1180px; margin: 0 auto; padding: 15px 20px 80px; gap: 24px; align-items: flex-start; }
 .wrap { flex: 1; min-width: 0; padding: 0; margin: 0; }
 
-/* 🌟 PC 사이드바 🌟 */
+/* 🌟 PC 사이드바 */
 .sidebar { width: 340px; flex-shrink: 0; display:flex; flex-direction:column; gap:16px; position: sticky; top: 20px;}
 .sidebar-box { background: #fff; border-radius: 16px; border: 1.5px solid #fcd34d; box-shadow: 0 10px 25px rgba(0,0,0,0.05); overflow:hidden; margin-bottom:15px;}
 .todo-head { background: #fef3c7; padding: 16px; font-weight: 800; color: #b45309; text-align: center; font-size: 15px; display:flex; justify-content:space-between; align-items:center; }
 
-/* 📱 모바일 앱 전용 UI (미디어 쿼리 기반 완전 자동화) 📱 */
+/* 📱 모바일 앱 전용 UI */
 .mobile-app-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; box-shadow: 0 -4px 20px rgba(0,0,0,0.08); z-index: 990; border-top: 1px solid #e2e8f0; padding-bottom: env(safe-area-inset-bottom); justify-content: space-around; }
 .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px 0; color: #94a3b8; font-size: 12px; font-weight: 800; cursor: pointer; transition: 0.2s; }
 .nav-tab i { font-size: 22px; margin-bottom: 5px; }
@@ -71,11 +74,11 @@ input[value="상담"]:checked ~ .slider { transform:translateX(100%); background
 .header.cs-mode .hd-tag.active { color:#d97706; }
 
 /* 입력 폼 공통 */
-.icard{background:var(--surface);border-radius:16px;padding:14px 18px;border:1.5px solid var(--border); position:relative; margin-bottom:10px;}
+.icard{background:var(--surface);border-radius:16px;padding:14px 18px;border:1.5px solid var(--border); position:relative;}
 .ilabel{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.8px;margin-bottom:7px;text-transform:uppercase;}
 .icard input, .icard select{border:none;outline:none;font-size:14px;font-weight:700;color:var(--text);width:100%;background:transparent;}
 
-/* 🌟 검색 버튼 & 드롭다운 */
+/* 검색 버튼 & 드롭다운 */
 .search-btn { position:absolute; right:8px; top:20px; background:#e0e7ff; color:#4f46e5; border:none; padding:8px 14px; border-radius:8px; font-weight:800; font-size:14px; cursor:pointer; }
 .dropdown-item { padding: 12px 15px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .dropdown-item:last-child { border-bottom: none; }
@@ -84,7 +87,7 @@ input[value="상담"]:checked ~ .slider { transform:translateX(100%); background
 .dropdown-item .d-info { color: #64748b; font-size: 13px; font-weight: 500;}
 
 .history-scroll { display:flex; gap:10px; overflow-x:auto; padding:10px 0; margin-bottom:10px; }
-.history-card { min-width:220px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px; font-size:12px; white-space:pre-wrap; }
+.history-card { min-width:250px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px; font-size:12px; white-space:pre-wrap; }
 
 /* 공통 섹션 */
 .sec{background:var(--surface);border-radius:20px;padding:22px 24px;margin-bottom:14px;border:1.5px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.02);}
@@ -110,7 +113,7 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
 .todo-item input[type="checkbox"] { margin-top:3px; cursor:pointer; accent-color:#d97706; width:18px; height:18px; }
 .todo-item.done span { text-decoration:line-through; color:#9ca3af; }
 
-/* AI 미니 챗봇 스타일 */
+/* AI 미니 챗봇 */
 .chat-msg { padding:10px 12px; border-radius:12px; font-size:13px; max-width:90%; word-break:break-word; line-height:1.5; margin-bottom:8px;}
 .chat-user { background:#e0e7ff; color:#1e3a8a; align-self:flex-end; border-bottom-right-radius:2px; }
 .chat-ai { background:#fff; color:#334155; align-self:flex-start; border:1px solid #e2e8f0; border-bottom-left-radius:2px; }
@@ -152,7 +155,7 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
 
 .hw-row{border:1.5px solid var(--border);border-top:none;overflow:hidden; background:#fff;}
 @media(min-width:600px){.hw-row{display:grid;grid-template-columns:30% 20% 1fr;gap:12px;}.hw-c1,.hw-c2,.hw-c3{padding:10px 0;}.hw-c1{border-right:1.5px solid var(--border);padding-right:12px;}.hw-c2{border-right:1.5px solid var(--border);padding-right:12px;display:flex;align-items:center;}}
-@media(max-width:599px){.hw-row{display:block;}.hw-c1{padding:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}.hw-c2{padding:8px 10px;border-bottom:1px solid var(--border);}.hw-c3{padding:10px;}}
+@media(max-width:599px){.hw-row{display:block;}.hw-c1{padding:12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}.hw-c2{padding:8px 12px; border-bottom:1px solid var(--border);}.hw-c3{padding:12px;}}
 .hw-c1 input{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:14px;}
 .hw-c2 select{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:14px;}
 .hw-c3 textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:14px;resize:none;overflow:hidden;min-height:50px;}
@@ -170,9 +173,10 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
 </head>
 <body class="mobile-optimized">
 
+<!-- 🌟 상단 퀵 링크 바 🌟 -->
 <div class="quick-links">
   <div class="quick-links-left">
-    <button onclick="window.open('https://docs.google.com/spreadsheets/d/1Ta1o_v504jtDsyHPY0bER6WpI3xYTbVVffEl0iy58f8/edit','_blank')" style="background:#10b981; color:#fff;"><i class="fa-solid fa-table"></i> 대시보드</button>
+    <button onclick="window.open('https://docs.google.com/spreadsheets/d/1Ta1o_v504jtDsyHPY0bER6WpI3xYTbVVffEl0iy58f8/edit','_blank')" style="background:#10b981; color:#fff;"><i class="fa-solid fa-table"></i> 찐 대시보드 열기</button>
     <button onclick="window.open('https://github.com/docssam1/gfield-report','_blank')" style="background:#1e293b; color:#fff;"><i class="fa-brands fa-github"></i> GitHub</button>
     <button onclick="window.open('https://script.google.com/home','_blank')" style="background:#2563eb; color:#fff;"><i class="fa-solid fa-code"></i> Apps Script</button>
   </div>
@@ -185,6 +189,7 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
 <div class="page-layout">
 <div class="wrap">
 
+<!-- 🌟 모드 스위치 🌟 -->
 <div class="mode-toggle-wrap">
   <label>
     <input type="radio" name="docType" value="리포트" checked onclick="toggleMode()">
@@ -197,9 +202,10 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
   <div class="slider"></div>
 </div>
 
+<!-- 데이터 로더 모음 -->
 <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;" id="fileLoaders">
   <label style="flex:1; min-width:140px; background:#f59e0b; color:#fff; padding:15px; border-radius:12px; font-weight:800; text-align:center; cursor:pointer; font-size:14px;">
-    ⚡ 이전 과제 불러오기<input type="file" accept=".html" style="display:none;" onchange="loadFromFile(event, 'homework')">
+    ⚡ 이전 과제 로드<input type="file" accept=".html" style="display:none;" onchange="loadFromFile(event, 'homework')">
   </label>
   <label style="flex:1; min-width:140px; background:#2563eb; color:#fff; padding:15px; border-radius:12px; font-weight:800; text-align:center; cursor:pointer; font-size:14px;">
     📑 리포트 덮어쓰기<input type="file" accept=".html" style="display:none;" onchange="loadFromFile(event, 'all')">
@@ -207,6 +213,7 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
   <button style="flex:1; min-width:140px; background:#10b981; color:#fff; padding:15px; border-radius:12px; font-weight:800; border:none; cursor:pointer; font-size:14px;" onclick="document.getElementById('csvModal').classList.add('show')">📁 엑셀 일괄업로드</button>
 </div>
 
+<!-- 🌟 헤더 영역 🌟 -->
 <div class="header" id="mainHeader">
   <img src="logo.png" alt="G-Field 로고" class="header-logo" onerror="this.style.display='none'">
   <div class="hd-sub" id="hdSub">성공하는 공부습관을 만드는</div>
@@ -226,6 +233,7 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
   </div>
 </div>
 
+<!-- ⭐ 기본 정보 폼 ⭐ -->
 <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;margin-bottom:12px;">
   <div class="icard" style="margin-bottom:0; position:relative; overflow:visible;">
     <div class="ilabel">이름 / 연락처 (예: 박서연,3075)</div>
@@ -253,11 +261,13 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
   </div>
 </div>
 
+<!-- 📜 과거 누적 이력 -->
 <div class="sec" style="margin-bottom:14px; padding:15px 20px;">
-    <div class="sec-hd" style="margin-bottom:10px;"><div class="sec-title" style="font-size:14px; color:#b45309;">📜 과거 누적 이력 (Live)</div></div>
+    <div class="sec-hd" style="margin-bottom:10px;"><div class="sec-title" style="font-size:14px; color:#b45309;">📜 과거 누적 이력 (대시보드 실시간 연동)</div></div>
     <div id="historyView" class="history-scroll" style="min-height:50px; font-size:13px; color:#666;">이름이나 연락처 검색 시, 시트에 기록된 과거 히스토리가 여기에 로드됩니다.</div>
 </div>
 
+<!-- ================= 🌟 CS 모드 전용 패널 🌟 ================= -->
 <div id="studentDbPanel" style="display:none; background:#fffbf0; border:1px solid #fde68a; border-radius:16px; padding:20px; margin-bottom:14px;">
   <div id="csExtraSetupArea">
     <div id="testSetupArea" style="display:none; margin-bottom:15px;">
@@ -285,23 +295,24 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
   </div>
 
   <div class="icard" style="margin-top:15px;">
-    <div class="ilabel">🔒 내부 상담 기록 (문자 전송 X, 시트에만 저장)</div>
-    <textarea id="csInnerMemo" placeholder="원장님만 보시는 내부 기록 및 상담 내용입니다." style="width:100%; padding:12px; border-radius:8px; border:1px solid #fcd34d; min-height:80px; outline:none; resize:none; font-family:inherit; margin-top:5px; background:#fff; overflow:hidden;" oninput="autoResizeTextarea(this); updateMsgBox();" onchange="saveDbData()"></textarea>
+    <div class="ilabel">🔒 상담 내용 (문자 전송X, 대시보드 시트에만 저장됨)</div>
+    <textarea id="csInnerMemo" placeholder="원장님만 보시는 상담/학부모 문의 내용입니다." style="width:100%; padding:12px; border-radius:8px; border:1px solid #fcd34d; min-height:80px; outline:none; resize:none; font-family:inherit; margin-top:5px; background:#fff; overflow:hidden;" oninput="autoResizeTextarea(this); updateMsgBox();"></textarea>
   </div>
   <div class="icard">
     <div class="ilabel">💬 학부모 전송용 추가 텍스트/링크 (선택)</div>
     <input type="text" id="csExtraLink" placeholder="추가 자료 링크 (http://...)" style="width:100%; padding:12px; border-radius:8px; border:1px solid #fcd34d; margin-top:5px; margin-bottom:10px;" oninput="updateMsgBox()">
     <textarea id="csMemo" placeholder="문자에 포함될 특이사항 및 추가 전달사항..." style="width:100%; border:1px solid #fcd34d; border-radius:8px; padding:12px; min-height:80px; resize:none; overflow:hidden;" oninput="autoResizeTextarea(this); updateMsgBox();"></textarea>
   </div>
-  <button onclick="saveDbData()" style="width:100%; padding:16px; background:#d97706; color:#fff; border:none; border-radius:12px; font-weight:900; cursor:pointer; font-size:15px; box-shadow:0 4px 6px rgba(0,0,0,0.1);">💾 현재 학생 상담 내역만 시트에 개별 저장</button>
+  <button onclick="saveDbData()" style="width:100%; padding:16px; background:#d97706; color:#fff; border:none; border-radius:12px; font-weight:900; cursor:pointer; font-size:15px; box-shadow:0 4px 6px rgba(0,0,0,0.1);">💾 현재 학생 정보 및 상담 내역만 시트에 개별 저장</button>
 </div>
 
+<!-- ================= 🌟 결석 공지 패널 🌟 ================= -->
 <div class="sec" id="absentPanel" style="display:none; background:#fff5f5; border-color:#fca5a5;">
   <h3 style="color:#b91c1c; margin-bottom:12px;"><i class="fa-solid fa-triangle-exclamation"></i> 결석 및 일정 공지 설정</h3>
   <div style="display:flex; flex-direction:column; gap:10px; background:#fef2f2; padding:15px; border-radius:10px; border:1px solid #fca5a5; margin-bottom:15px;">
-    <label style="display:flex; align-items:center; gap:8px; font-size:14px; cursor:pointer; color:#991b1b; font-weight:bold;"><input type="radio" name="absentReasonType" value="absent" onchange="updateAbsentUI()" checked> <span>수업 결석 (결석일)</span></label>
-    <label style="display:flex; align-items:center; gap:8px; font-size:14px; cursor:pointer; color:#991b1b; font-weight:bold;"><input type="radio" name="absentReasonType" value="cancelled" onchange="updateAbsentUI()"> <span>수업 휴강 (휴강일)</span></label>
-    <label style="display:flex; align-items:center; gap:8px; font-size:14px; cursor:pointer; color:#166534; font-weight:bold;"><input type="radio" name="absentReasonType" value="free" onchange="updateAbsentUI()"> <span>보강/보충 안내 (공지일)</span></label>
+    <label style="display:flex; align-items:center; gap:8px; font-size:14px; cursor:pointer; color:#991b1b; font-weight:bold; margin:0;"><input type="radio" name="absentReasonType" value="absent" onchange="updateAbsentUI()" checked> <span>수업 결석 (결석일)</span></label>
+    <label style="display:flex; align-items:center; gap:8px; font-size:14px; cursor:pointer; color:#991b1b; font-weight:bold; margin:0;"><input type="radio" name="absentReasonType" value="cancelled" onchange="updateAbsentUI()"> <span>수업 휴강 (휴강일)</span></label>
+    <label style="display:flex; align-items:center; gap:8px; font-size:14px; cursor:pointer; color:#166534; font-weight:bold; margin:0;"><input type="radio" name="absentReasonType" value="free" onchange="updateAbsentUI()"> <span>보강/보충 안내 (공지일)</span></label>
   </div>
   <div class="absent-field">
     <label>보강 일정 분류</label>
@@ -322,6 +333,7 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
   </div>
 </div>
 
+<!-- ================= 🌟 리포트 모드 본문 섹션 🌟 ================= -->
 <div id="mainContentSection">
   <div class="sec" style="background:#fffbf0;border-color:#fde68a;" id="noticeSection">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -347,15 +359,15 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
     <div style="margin-top:25px; padding-top:20px; border-top:1px dashed #ccc;">
       <div style="font-size:14px; font-weight:900; color:#16417C; margin-bottom:12px;"><i class="fa-solid fa-camera"></i> 과제 수행 사진 첨부</div>
       <div style="display:flex; gap:10px; margin-bottom:12px; align-items:center; flex-wrap:wrap;">
-        <input type="url" id="driveHwPhotoUrl" placeholder="☁️ 구글 드라이브 공유 링크 붙여넣기" style="flex:1; min-width:200px; border:1px solid var(--border); border-radius:10px; padding:14px; outline:none; font-size:14px;">
-        <button style="padding:14px 20px; background:#10b981; color:#fff; border:none; border-radius:10px; cursor:pointer; font-weight:bold; white-space:nowrap; font-size:14px;" onclick="addDrivePhoto('hwPhotos', 'driveHwPhotoUrl')">링크 추가</button>
+        <input type="url" id="driveHwPhotoUrl" placeholder="구글 드라이브 공유 링크 붙여넣기" style="flex:1; min-width:200px; border:1px solid var(--border); border-radius:10px; padding:14px; outline:none; font-size:14px;">
+        <button style="padding:14px 20px; background:#10b981; color:#fff; border:none; border-radius:10px; cursor:pointer; font-weight:bold; white-space:nowrap; font-size:14px;" onclick="addDrivePhoto('hwPhotos', 'driveHwPhotoUrl')">☁️ 링크 추가</button>
       </div>
       <div class="photos-grid" id="hwPhotos"></div>
     </div>
   </div>
   
   <div class="sec">
-    <div class="sec-hd"><div class="sec-title">📖 학습 내용 요약</div></div>
+    <div class="sec-hd"><div class="sec-title">📖 학습 내용 요약 (과정명은 쉼표로 분리되어 대시보드 저장)</div></div>
     <div id="subjectList"></div>
     <button style="width:100%;padding:14px;border:1.5px dashed #ccc;border-radius:12px;cursor:pointer;background:transparent;font-weight:bold; color:var(--text); font-size:14px;" onclick="addSubjRow()">+ 학습 내용 추가</button>
   </div>
@@ -363,8 +375,8 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
   <div class="sec" id="secPhoto">
     <div class="sec-hd"><div class="sec-title">📸 수업 활동 사진 첨부</div></div>
     <div style="display:flex; gap:10px; margin-bottom:12px; align-items:center; flex-wrap:wrap;">
-      <input type="url" id="drivePhotoUrl" placeholder="☁️ 구글 드라이브 공유 링크 붙여넣기" style="flex:1; min-width:200px; border:1px solid var(--border); border-radius:10px; padding:14px; outline:none; font-size:14px;">
-      <button style="padding:14px 20px; background:#10b981; color:#fff; border:none; border-radius:10px; cursor:pointer; font-weight:bold; white-space:nowrap; font-size:14px;" onclick="addDrivePhoto('classPhotos', 'drivePhotoUrl')">링크 추가</button>
+      <input type="url" id="drivePhotoUrl" placeholder="구글 드라이브 공유 링크 붙여넣기" style="flex:1; min-width:200px; border:1px solid var(--border); border-radius:10px; padding:14px; outline:none; font-size:14px;">
+      <button style="padding:14px 20px; background:#10b981; color:#fff; border:none; border-radius:10px; cursor:pointer; font-weight:bold; white-space:nowrap; font-size:14px;" onclick="addDrivePhoto('classPhotos', 'drivePhotoUrl')">☁️ 링크 추가</button>
     </div>
     <div style="font-size:12px; color:#94a3b8; margin-bottom:12px; font-weight:bold;">* 드라이브 링크는 반드시 '링크가 있는 모든 사용자 보기 가능' 상태여야 합니다.</div>
     <div class="photos-grid" id="classPhotos"></div>
@@ -389,12 +401,14 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
   </div>
 </div>
 
+<!-- ================= 🌟 공통 결과 & 워크플로우 영역 ================= -->
 <div class="msg-box" id="msgBox" style="margin-top:20px;">
   <div style="font-size:15px;font-weight:900;color:#1d4ed8;margin-bottom:12px;"><i class="fa-solid fa-comment-sms"></i> 발송용 메시지 프리뷰</div>
   <textarea id="msgText" readonly style="font-size:15px; padding:20px; min-height:180px; resize:none; overflow:hidden;" oninput="autoResizeTextarea(this)"></textarea>
   <button class="msg-copy-btn" onclick="copyMsg()" style="padding:16px; font-size:15px; border-radius:12px; box-shadow:0 4px 6px rgba(0,0,0,0.05);">📋 완성된 메시지 클립보드 복사</button>
 </div>
 
+<!-- ⭐ 알리고 SMS 전송 영역 ⭐ -->
 <div class="aligo-wrap" id="aligoWrap">
   <h4>📨 알리고 문자 시스템 (위 메시지 프리뷰 내용이 발송됩니다)</h4>
   <div class="aligo-btns">
@@ -416,19 +430,23 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
   <a id="resultUrl" href="#" target="_blank" style="font-size:15px;color:#15803d;word-break:break-all;font-weight:bold;text-decoration:underline; display:block; padding:10px; background:#fff; border-radius:8px; border:1px dashed #166534;"></a>
 </div>
 
+<!-- ⭐ 스마트 워크플로우 버튼 패널 ⭐ -->
 <div class="workflow-box">
   <div class="workflow-title">🚀 스마트 데이터 배포 워크플로우</div>
   <div class="workflow-desc">순서대로 누르시면 시트 기록부터 웹 배포, 노션 연동까지 자동 완성됩니다. (CS/리포트 공통)</div>
   
   <div class="workflow-grid btns" style="grid-template-columns: 1fr; gap: 10px; margin-top:0;">
-    <button class="workflow-btn btn-dl" id="saveDriveBtn" onclick="saveToDrive()">1단계: 💾 구글 드라이브 및 시트 기록</button>
+    <button class="workflow-btn btn-dl" id="saveDriveBtn" onclick="saveToDrive()">1단계: 💾 구글 드라이브 및 대시보드 저장</button>
     <button class="workflow-btn btn-gh" id="ghBtn" onclick="deployToGitHubPages()">2단계: 🔗 학부모용 웹 링크 생성 (GitHub 배포)</button>
     <button class="workflow-btn notion-btn" id="notionBtn" onclick="saveToNotion()">3단계: 📓 노션 CRM 및 캘린더 자동 등록</button>
     <button class="workflow-btn kakao-btn" id="kakaoBtn" onclick="shareKakao()" style="margin-top:5px;">💬 4단계: 완성된 내역 카카오톡 템플릿 전송</button>
   </div>
 </div>
 
-</div> <div class="mobile-app-nav">
+</div> <!-- main-content 끝 -->
+
+<!-- 모바일 앱 하단 네비게이션 바 -->
+<div class="mobile-app-nav">
   <div class="nav-tab active" id="tabHome" onclick="closeBottomSheet()">
     <i class="fa-solid fa-pen-to-square"></i>
     <span>기록작성</span>
@@ -443,6 +461,7 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
   </div>
 </div>
 
+<!-- 사이드바 (PC 우측 고정, 모바일 하단 바텀시트) -->
 <div class="sheet-overlay" id="sheetOverlay" onclick="closeBottomSheet()"></div>
 
 <div class="sidebar" id="rightSidebar">
@@ -476,7 +495,10 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
     </div>
   </div>
 </div>
-</div> <div class="modal-overlay" id="keyModal">
+</div> <!-- page-layout 끝 -->
+
+<!-- ================= 🌟 모달 창 영역 🌟 ================= -->
+<div class="modal-overlay" id="keyModal">
   <div class="modal">
     <h2 style="margin-bottom: 20px; font-weight:900; color:var(--accent);"><i class="fa-solid fa-gear"></i> 시스템 설정</h2>
     <div class="icard"><div class="ilabel">🤖 GEMINI API KEY</div><input type="password" id="k_gemini"></div>
@@ -487,7 +509,7 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
     <div class="icard"><div class="ilabel">📓 NOTION DATABASE ID</div><input type="text" id="k_notion_db"></div>
     <div class="icard"><div class="ilabel">🐱 GITHUB 사용자명</div><input type="text" id="k_ghuser"></div>
     <div class="icard"><div class="ilabel">🐱 GITHUB 저장소명</div><input type="text" id="k_ghrepo"></div>
-    <div class="icard"><div class="ilabel">📊 대시보드 시트 ID</div><input type="text" id="k_sheet_id" placeholder="기본 시트 ID 사용"></div>
+    <div class="icard"><div class="ilabel">📊 대시보드 시트 ID</div><input type="text" id="k_sheet_id" placeholder="1Ta1o_v504jtDsyHPY0bER6WpI3xYTbVVffEl0iy58f8"></div>
     <button onclick="saveKeys()" style="width:100%; padding:18px; border:none; border-radius:12px; background:var(--accent-g); color:white; font-weight:bold; cursor:pointer; margin-top:15px; font-size:16px;">💾 저장하고 적용하기</button>
     <button onclick="closeKeyModal()" style="width:100%; margin-top:10px; color:#999; border:none; background:none; cursor:pointer; font-weight:bold; padding:15px; font-size:15px;">닫기</button>
   </div>
@@ -495,10 +517,11 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
 
 <div class="modal-overlay" id="csvModal">
   <div class="modal">
-    <h2 style="color:#16417C; margin-bottom:15px;"><i class="fa-solid fa-file-excel"></i> 엑셀 학생 DB 일괄 업로드</h2>
+    <h2 style="color:#16417C; margin-bottom:15px;"><i class="fa-solid fa-file-excel"></i> 학생 DB 엑셀 일괄 업로드</h2>
     <div style="background:#f8fafc; padding:15px; border-radius:12px; margin-bottom:15px; font-size:13px; color:#475569; line-height:1.6; border:1px solid #cbd5e1;">
       - <b>필수 양식(7열):</b> <span style="color:red; font-weight:bold;">상담일, 이름, 학교, 학년, 연락처, 구분, 상담내용</span><br>
-      - <b>스마트 보정:</b> '상담일' 빈칸 시 위 날짜로 복사, '구분' 빈칸 시 '비재원' 자동 채움!
+      - <b>스마트 보정:</b> '상담일' 빈칸 시 위 날짜 복사, '구분' 빈칸 시 '비재원' 처리<br>
+      - <b>주의:</b> 한글 파일은 `.csv`보다 <b>`.xlsx`</b> 파일로 저장해서 올리는 것을 강력히 권장합니다.
     </div>
     <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px;">
       <button onclick="downloadCSVTemplate()" style="padding:15px; background:#e2e8f0; border:none; border-radius:12px; cursor:pointer; font-weight:bold; color:#1e293b; font-size:15px;">📄 A열 상담일 표준 양식 다운로드</button>
@@ -534,10 +557,11 @@ function printReport() {
     printWindow.onload = function() { setTimeout(() => { printWindow.print(); }, 500); };
 }
 
+// 🌟 원장님 찐 대시보드 시트 ID를 강제로 기본값 지정 🌟
+const DEFAULT_SHEET = '1Ta1o_v504jtDsyHPY0bER6WpI3xYTbVVffEl0iy58f8';
 const KEYS={gemini:'gf_gemini_key',gh:'gf_gh_token',script:'gf_script_url',kakao:'gf_kakao_key',notionKey:'gf_notion_key',notionDb:'gf_notion_db',ghUser:'gf_gh_user',ghRepo:'gf_gh_repo',sheetId:'gf_sheet_id'};
 const getKey=k=>localStorage.getItem(KEYS[k])||'';
 const setKey=(k,v)=>localStorage.setItem(KEYS[k],v.trim());
-const DEFAULT_SHEET = '1Ta1o_v504jtDsyHPY0bER6WpI3xYTbVVffEl0iy58f8';
 
 function openKeyModal(){
   ['gemini','gh','script','kakao','notion_key','notion_db'].forEach(k=>document.getElementById('k_'+k).value=getKey(k.replace('_','').replace('key','Key').replace('db','Db')));
@@ -593,10 +617,10 @@ window.setLink = function(url) {
 function showToast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),3000);
+  setTimeout(()=>t.classList.remove('show'),4000);
 }
 
-// --- 모바일 UI 바텀시트 ---
+// --- 모바일 UI 탭 컨트롤 ---
 function openBottomSheet(target) {
     document.body.classList.add('mobile-optimized');
     document.getElementById('rightSidebar').classList.add('show');
@@ -616,7 +640,6 @@ function closeBottomSheet() {
     document.getElementById('tabHome').classList.add('active');
 }
 
-// PC 뷰 강제 전환
 let isForcePC = false;
 function togglePCView() {
     isForcePC = !isForcePC;
@@ -640,7 +663,7 @@ function togglePCView() {
     }
 }
 
-// --- 🌟 모드 전환 로직 ---
+// --- 모드 전환 로직 ---
 let currentMode = '리포트', classType = '정규수업'; 
 function toggleMode() {
   currentMode = document.querySelector('input[name="docType"]:checked').value;
@@ -709,7 +732,7 @@ function addClassBlock() {
   document.getElementById('classBlocks').appendChild(div);
 }
 
-// --- 🌟 검색 기능 (에러 완벽 차단 및 안정화) 🌟 ---
+// --- 🌟 검색 기능 🌟 ---
 let currentSearchResults = [];
 
 function searchStudent() {
@@ -768,7 +791,8 @@ function selectStudent(idx) {
   if(st.history && st.history.length > 0) {
     st.history.forEach(item => {
        const card = document.createElement('div'); card.className = 'history-card'; 
-       card.innerHTML = `<b>[${item.date}]</b>\n과정: ${item.course || '-'}\n내용: <span style="color:#16417C;">${item.content || '-'}</span>`;
+       // 🌟 과거 이력 UI에서 과정/상담내용 분리하여 표시
+       card.innerHTML = `<b>[${item.date}]</b>\n과정/유형: <span style="color:#16417C;">${item.course || '-'}</span>\n내용: <span style="color:#d97706;">${item.content || '-'}</span>`;
        hView.appendChild(card);
     });
   } else {
@@ -855,7 +879,11 @@ function processCSV() {
         showToast("⏳ 서버 전송 중...");
         fetch(getKey('script'), { method: 'POST', body: JSON.stringify({ action: 'bulk_upload', students: students, sheetId: getKey('sheetId')||DEFAULT_SHEET })})
         .then(r=>r.json()).then(res => {
-          if(res.result === 'success') { showToast("✅ DB 일괄 업로드 완료!"); } 
+          if(res.result === 'success') { 
+              let msg = `✅ DB ${res.counts ? res.counts.dbCount : ''}건 업데이트 완료!`;
+              if(res.counts && res.counts.historyCount > 0) msg += ` (상담기록 ${res.counts.historyCount}건 추가됨)`;
+              showToast(msg); 
+          } 
           else if (res.result === 'conflict') { pendingConflicts = res.conflicts; pendingBulkData = res.safe_data; renderConflicts(); }
           else { alert("❌ 서버 오류: " + (res.error || "스크립트 연결 문제")); }
         }).catch(err => alert("❌ 통신 오류: " + err.message));
@@ -1111,7 +1139,6 @@ function updateMsgBox(forcedUrl) {
   autoResizeTextarea(msgBox);
 }
 
-// 🌟 과제 확인 행 추가 시 AI 다듬기 버튼 포함 🌟
 function addHwRow(c='',p='',m=''){ 
   const tid = 'hw_' + Date.now() + Math.floor(Math.random()*1000);
   const d=document.createElement('div'); d.className='hw-row';
@@ -1169,7 +1196,6 @@ function addDrivePhoto(cid, inputId){
   renderPhotos(cid, arr); inp.value = ''; updateMsgBox(); showToast('☁️ 드라이브 사진이 추가되었습니다!');
 }
 
-// 🌟 이전 리포트 파싱 호환성 강화 🌟
 function loadFromFile(e, mode) {
   const f = e.target.files[0]; if(!f) return; showToast('분석 중...');
   const r = new FileReader();
@@ -1223,7 +1249,6 @@ function loadFromFile(e, mode) {
   r.readAsText(f); e.target.value = '';
 }
 
-// 🌟 스냅샷 렌더링 🌟
 function buildAbsentSnapshot(){
   const n=document.getElementById('nameInput').value||'학생', d=document.getElementById('dateInput').value.replace(/-/g,'.');
   const mt=document.getElementById('absentMakeupType').value, mdDate=document.getElementById('absentMakeupDate').value;
@@ -1290,8 +1315,9 @@ async function saveToDrive(){
       attendance:{date:document.getElementById('dateInput').value, type:classType, subjects_merged:subjects}, 
       sheetId:getKey('sheetId')||DEFAULT_SHEET
     })});
-    const r=await res.json(); if(r.result==='success'){window.setLink(r.url);showToast('✅ 드라이브 및 시트 기록 완료!');}
-  }catch(e){}finally{btn.textContent='1단계: 💾 구글 드라이브 및 시트 기록'; btn.disabled = false;}
+    const r=await res.json(); if(r.result==='success'){window.setLink(r.url);showToast('✅ 드라이브 및 대시보드 저장 완료!');}
+    else throw new Error(r.error);
+  }catch(e){alert("❌ 에러 발생: " + e.message);}finally{btn.textContent='1단계: 💾 구글 드라이브 및 시트 기록'; btn.disabled = false;}
 }
 
 // 🌐 2단계: 웹 리포트 배포 🌐
