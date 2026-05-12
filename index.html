@@ -809,26 +809,6 @@ document.addEventListener('input', e=>{ if(e.target && e.target.tagName === 'TEX
 // --- 모드 전환 로직 ---
 let currentMode = '리포트';
 let classType = '정규수업'; 
-
-function updateActionButtonLabels(){
-  const saveBtn = document.getElementById('saveDriveBtn');
-  const ghBtn = document.getElementById('ghBtn');
-  const notionBtn = document.getElementById('notionBtn');
-  const kakaoBtn = document.getElementById('kakaoBtn');
-
-  if(currentMode === '상담'){
-    if(saveBtn) saveBtn.textContent = '💾 1단계: 상담내용 드라이브 저장 및 시트 기록';
-    if(ghBtn) ghBtn.textContent = '🔗 2단계: 상담/안내 웹 링크 생성';
-    if(notionBtn) notionBtn.textContent = '📅 3단계: 캘린더 전송';
-    if(kakaoBtn) kakaoBtn.textContent = '💬 카카오톡 템플릿 전송 (상담/안내문)';
-  } else {
-    if(saveBtn) saveBtn.textContent = '💾 1단계: 드라이브 저장 및 시트 기록';
-    if(ghBtn) ghBtn.textContent = '🔗 2단계: 웹 링크 생성 (배포)';
-    if(notionBtn) notionBtn.textContent = '📅 3단계: 캘린더 전송';
-    if(kakaoBtn) kakaoBtn.textContent = '💬 카카오톡 템플릿 전송 (리포트/안내문)';
-  }
-}
-
 function toggleMode() {
   currentMode = document.querySelector('input[name="docType"]:checked').value;
   const isCS = currentMode === '상담';
@@ -849,8 +829,8 @@ function toggleMode() {
   document.getElementById('noticeSection').style.display = isCS ? 'none' : 'block';
   document.getElementById('absentPanel').style.display = 'none'; 
   document.getElementById('fileLoaders').style.display = isCS ? 'none' : 'flex';
-  document.getElementById('saveDriveBtn').style.display = 'block';
-  document.getElementById('ghBtn').style.display = 'block';
+  document.getElementById('saveDriveBtn').style.display = isCS ? 'none' : 'block';
+  document.getElementById('ghBtn').style.display = isCS ? 'none' : 'block';
   
   document.getElementById('studentDbPanel').style.display = isCS ? 'block' : 'none';
   document.getElementById('csExtraPanel').style.display = isCS ? 'block' : 'none';
@@ -858,7 +838,6 @@ function toggleMode() {
   
   if(isCS) { document.querySelector('#tagListCS .hd-tag').click(); } 
   else { document.querySelector('#tagListReport .hd-tag').click(); }
-  updateActionButtonLabels();
   updateMsgBox();
 }
 
@@ -1768,32 +1747,7 @@ button:disabled{opacity:.55;cursor:not-allowed;}
 }
 
 // --- 통신 및 발송 ---
-async 
-function getCSRecordSummary(){
-  const name = document.getElementById('nameInput')?.value?.trim() || '';
-  const date = document.getElementById('dateInput')?.value || '';
-  const start = document.getElementById('startTimeInput')?.value || '';
-  const end = document.getElementById('endTimeInput')?.value || '';
-  const course = document.getElementById('courseInput')?.value?.trim() || '';
-  const school = document.getElementById('dbSchool')?.value?.trim() || '';
-  const grade = document.getElementById('dbGrade')?.value?.trim() || '';
-  const phone = document.getElementById('dbPhone')?.value?.trim() || '';
-  const inner = document.getElementById('csInnerMemo')?.value?.trim() || '';
-  const memo = document.getElementById('csMemo')?.value?.trim() || '';
-  const msg = document.getElementById('msgText')?.value?.trim() || '';
-  return {
-    name, date, start, end, course, school, grade, phone,
-    type: currentMode === '상담' ? classType : classType,
-    content: [
-      inner ? '[내부 상담기록]\\n' + inner : '',
-      memo ? '[학부모 전달사항]\\n' + memo : '',
-      msg ? '[전송 메시지]\\n' + msg : ''
-    ].filter(Boolean).join('\\n\\n')
-  };
-}
-
-function saveToDrive(){
-  const csRec = getCSRecordSummary();
+async function saveToDrive(){
   const sUrl=getKey('script');if(!sUrl){openKeyModal();return;}
   const n=document.getElementById('nameInput').value.trim();if(!n){showToast('이름 입력 필요!');return;}
   
