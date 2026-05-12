@@ -150,6 +150,13 @@ textarea{overflow:hidden;}
 #parentPreviewFrame{width:100%;height:100%;border:none;background:#fff;}
 .preview-note{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:9px 11px;}
 
+
+.key-field input[data-secure="true"]{letter-spacing:1.5px;font-family:monospace;}
+
+
+.ai-answer-box{max-height:260px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;}
+.ai-btn:disabled{opacity:.65;cursor:wait;}
+
 </style>
 </head>
 <body>
@@ -412,6 +419,7 @@ textarea{overflow:hidden;}
       <span>📝 실무 To-Do 리스트</span>
       <button onclick="toggleCompletedTodos()" style="font-size:11px; background:none; border:1px solid #d97706; padding:2px 6px; border-radius:4px; color:#d97706; cursor:pointer;">완료내역</button>
     </div>
+    <div style="font-size:11px;color:#92400e;padding:10px 15px 0;">※ To-Do는 구글 시트에 저장됩니다. 완료 체크 시 기본 목록에서 사라지고 시트에는 완료로 남습니다.</div>
     <div style="padding:15px; max-height: 400px; overflow-y: auto;" id="todoList"></div>
     <div style="padding:15px; border-top:1px solid #eee; display:flex; flex-direction:column; gap:8px;">
       <input type="text" id="todoIn" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; outline:none; font-size:13px; font-family:inherit;" placeholder="수동 일정/할일 입력..." onkeypress="if(event.key==='Enter') addTodo()">
@@ -424,9 +432,13 @@ textarea{overflow:hidden;}
       <span>🤖 AI 대화 / 프롬프트 작성</span>
     </div>
     <div style="padding:15px; font-size:12px; color:#475569; line-height:1.5;">
-      오른쪽 배치 그대로, 이 칸에서 AI와 바로 대화할 수 있습니다.
+      오른쪽 배치 그대로, 이 칸에서 AI와 바로 대화할 수 있습니다.<br>
+      <span style="display:block;margin-top:4px;color:#64748b;">※ 일회성 AI창입니다. 대화기록을 저장하지 않고, 새로고침/닫기 시 답변은 사라집니다.</span>
       <textarea id="aiPromptMemo" style="width:100%; min-height:100px; margin-top:10px; padding:10px; border-radius:8px; border:1px solid #bfdbfe; resize:none; overflow:hidden; font-family:inherit; outline:none;" placeholder="AI에게 바로 질문하세요. 예: 이 안내문을 더 부드럽게 바꿔줘"></textarea>
-      <button id="aiAskBtn" class="ai-btn" onclick="askAI()">🤖 AI에게 질문하기</button>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:8px;">
+        <button id="aiAskBtn" class="ai-btn" onclick="askAI()" style="margin-top:0;">🤖 AI에게 질문하기</button>
+        <button onclick="clearOneTimeAI()" style="border:none;border-radius:8px;background:#e2e8f0;color:#475569;font-weight:900;padding:0 10px;cursor:pointer;font-size:12px;">지우기</button>
+      </div>
       <div id="aiAnswerBox" class="ai-answer-box">AI 답변이 여기에 표시됩니다.</div>
       <a href="https://drive.google.com/drive/folders/1e8XRoU0jr-1_7s1aKq2qSejbkW1PYWzg?usp=drive_link" target="_blank" style="display:block; text-align:center; background:#2563eb; color:#fff; padding:10px; border-radius:8px; text-decoration:none; font-weight:bold; margin-top:10px;">📁 AI 대화/자료 저장소 열기</a>
     </div>
@@ -461,12 +473,18 @@ textarea{overflow:hidden;}
 <div class="modal-overlay" id="keyModal">
   <div class="modal">
     <h2>⚙️ 시스템 연동 설정</h2>
-    <div class="key-field"><label>🤖 GEMINI API KEY</label><input type="password" id="k_gemini"></div>
-    <div class="key-field"><label>🐱 GITHUB TOKEN</label><input type="password" id="k_gh"></div>
+    <div style="background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.55;margin-bottom:14px;">
+      🔐 보안값은 화면에서 ●●●●로 표시됩니다. GitHub Token, Gemini API Key, Notion API Key, Aligo API Key는 외부에 공유하지 마세요.
+    </div>
+    <div class="key-field"><label>🤖 GEMINI API KEY</label><input type="password" id="k_gemini" autocomplete="off" autocapitalize="off" spellcheck="false" data-secure="true"></div>
+    <div class="key-field"><label>🐱 GITHUB TOKEN</label><input type="password" id="k_gh" autocomplete="off" autocapitalize="off" spellcheck="false" data-secure="true"></div>
     <div class="key-field"><label>📦 GOOGLE APPS SCRIPT URL</label><input type="text" id="k_script"></div>
     <div class="key-field"><label>⚙️ APPS SCRIPT 편집기 URL</label><input type="text" id="k_script_editor" placeholder="https://script.google.com/home/projects/.../edit"></div>
     <div class="key-field"><label>💬 KAKAO JAVASCRIPT KEY</label><input type="text" id="k_kakao"></div>
-    <div class="key-field"><label>📓 NOTION API KEY</label><input type="password" id="k_notion_key"></div>
+    <div class="key-field"><label>📨 ALIGO USER ID</label><input type="text" id="k_aligo_id" placeholder="알리고 아이디" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+    <div class="key-field"><label>📨 ALIGO API KEY</label><input type="password" id="k_aligo_key" placeholder="알리고 API KEY" autocomplete="off" autocapitalize="off" spellcheck="false" data-secure="true"></div>
+    <div class="key-field"><label>🛠 APPS SCRIPT 편집기 URL</label><input type="text" id="k_script_edit_url" placeholder="https://script.google.com/home/projects/.../edit"></div>
+    <div class="key-field"><label>📓 NOTION API KEY</label><input type="password" id="k_notion_key" autocomplete="off" autocapitalize="off" spellcheck="false" data-secure="true"></div>
     <div class="key-field"><label>📓 NOTION DATABASE ID</label><input type="text" id="k_notion_db"></div>
     <div class="key-field"><label>🐱 GITHUB 사용자명</label><input type="text" id="k_ghuser"></div>
     <div class="key-field"><label>🐱 GITHUB 저장소명</label><input type="text" id="k_ghrepo"></div>
@@ -506,10 +524,16 @@ textarea{overflow:hidden;}
 
 <script>
 // --- 전역 설정 및 초기화 ---
-const KEYS={gemini:'gf_gemini_key',gh:'gf_gh_token',script:'gf_script_url',scriptEditor:'gf_script_editor_url',kakao:'gf_kakao_key',notionKey:'gf_notion_key',notionDb:'gf_notion_db',ghUser:'gf_gh_user',ghRepo:'gf_gh_repo',sheetId:'gf_sheet_id'};
+const KEYS={gemini:'gf_gemini_key',gh:'gf_gh_token',script:'gf_script_url',scriptEditor:'gf_script_editor_url',kakao:'gf_kakao_key',notionKey:'gf_notion_key',notionDb:'gf_notion_db',ghUser:'gf_gh_user',ghRepo:'gf_gh_repo',sheetId:'gf_sheet_id',aligoId:'gf_aligo_id',aligoKey:'gf_aligo_key',scriptEditUrl:'gf_script_edit_url'};
 const getKey=k=>localStorage.getItem(KEYS[k])||'';
 const setKey=(k,v)=>localStorage.setItem(KEYS[k],String(v||'').trim());
 const DEFAULT_SHEET = '1Ta1o_v504jtDsyHPY0bER6WpI3xYTbVVffEl0iy58f8';
+
+
+function openAppsScriptEditor(){
+  const url = getKey('scriptEditUrl') || 'https://script.google.com/home';
+  window.open(url, '_blank');
+}
 
 function openKeyModal(){
   document.getElementById('k_gemini').value=getKey('gemini');
@@ -522,6 +546,9 @@ function openKeyModal(){
   document.getElementById('k_ghuser').value=getKey('ghUser')||'docssam1';
   document.getElementById('k_ghrepo').value=getKey('ghRepo')||'gfield-report';
   document.getElementById('k_sheet_id').value=getKey('sheetId')||DEFAULT_SHEET;
+  if(document.getElementById('k_aligo_id')) document.getElementById('k_aligo_id').value=getKey('aligoId')||'';
+  if(document.getElementById('k_aligo_key')) document.getElementById('k_aligo_key').value=getKey('aligoKey')||'';
+  if(document.getElementById('k_script_edit_url')) document.getElementById('k_script_edit_url').value=getKey('scriptEditUrl')||'';
   document.getElementById('keyModal').classList.add('show');
 }
 function closeKeyModal(){document.getElementById('keyModal').classList.remove('show');}
@@ -533,6 +560,9 @@ async function saveKeys(){
   setKey('ghUser',document.getElementById('k_ghuser').value||'docssam1');
   setKey('ghRepo',document.getElementById('k_ghrepo').value||'gfield-report');
   setKey('sheetId',document.getElementById('k_sheet_id').value||DEFAULT_SHEET);
+  if(document.getElementById('k_aligo_id')) setKey('aligoId',document.getElementById('k_aligo_id').value);
+  if(document.getElementById('k_aligo_key')) setKey('aligoKey',document.getElementById('k_aligo_key').value);
+  if(document.getElementById('k_script_edit_url')) setKey('scriptEditUrl',document.getElementById('k_script_edit_url').value);
   const sUrl=getKey('script');
   if(sUrl){
     try{
@@ -848,39 +878,125 @@ function submitResolvedConflicts() {
   });
 }
 
-// --- To-Do 관리 ---
+// --- To-Do 관리: 구글 시트 저장 ---
 let todos = [];
 let showCompletedTodos = false;
-function toggleCompletedTodos() { showCompletedTodos = !showCompletedTodos; renderTodos(); }
+
+function todoApi_(payload){
+  const sUrl = getKey('script');
+  if(!sUrl){
+    openKeyModal();
+    return Promise.reject(new Error('GOOGLE APPS SCRIPT URL이 필요합니다.'));
+  }
+  return fetch(sUrl, {
+    method:'POST',
+    body:JSON.stringify(Object.assign({
+      sheetId:getKey('sheetId') || DEFAULT_SHEET
+    }, payload))
+  }).then(r=>r.json());
+}
+
+function toggleCompletedTodos() {
+  showCompletedTodos = !showCompletedTodos;
+  loadTodos();
+}
 
 function renderTodos() {
-  const list = document.getElementById('todoList'); list.innerHTML = '';
-  todos.forEach((t, i) => {
-    if(!showCompletedTodos && t.done) return;
-    const div = document.createElement('div'); div.className = t.done ? 'todo-item done' : 'todo-item';
-    div.innerHTML = `<input type="checkbox" ${t.done?'checked':''} onchange="toggleTodo(${i})"> <span style="flex:1;">${t.text}</span> <button onclick="delTodo(${i})" style="border:none;background:none;color:red;cursor:pointer;">✕</button>`;
+  const list = document.getElementById('todoList');
+  if(!list) return;
+  list.innerHTML = '';
+
+  if(!todos.length){
+    list.innerHTML = `<div style="font-size:12px;color:#94a3b8;text-align:center;padding:18px 8px;">
+      ${showCompletedTodos ? '완료된 To-Do가 없습니다.' : '진행중인 To-Do가 없습니다.'}
+    </div>`;
+    return;
+  }
+
+  todos.forEach((t) => {
+    const div = document.createElement('div');
+    div.className = t.done ? 'todo-item done' : 'todo-item';
+    div.innerHTML = `
+      <input type="checkbox" ${t.done?'checked':''} onchange="toggleTodo('${t.id}', this.checked)">
+      <span style="flex:1;">${esc(t.text)}</span>
+      <button onclick="delTodo('${t.id}')" style="border:none;background:none;color:red;cursor:pointer;">✕</button>
+    `;
     list.appendChild(div);
   });
 }
+
 function addTodo() {
-  const input = document.getElementById('todoIn'); const val = input.value.trim();
-  if(!val) return; todos.push({text:val, done:false}); localStorage.setItem('gf_todos', JSON.stringify(todos)); input.value = ''; renderTodos();
+  const input = document.getElementById('todoIn');
+  const val = input.value.trim();
+  if(!val) return;
+
+  todoApi_({
+    action:'todo_add',
+    text: val,
+    writer: '원장',
+    source: '수동입력'
+  }).then(res=>{
+    if(res.result !== 'success') throw new Error(res.error || 'To-Do 저장 실패');
+    input.value = '';
+    showToast('✅ To-Do가 구글 시트에 저장되었습니다.');
+    loadTodos();
+  }).catch(err=>alert('To-Do 저장 오류: '+err.message));
 }
-function toggleTodo(i) { todos[i].done = !todos[i].done; localStorage.setItem('gf_todos', JSON.stringify(todos)); renderTodos(); if(todos[i].done && !showCompletedTodos) { setTimeout(() => { renderTodos(); }, 300); } }
-function delTodo(i) { todos.splice(i, 1); localStorage.setItem('gf_todos', JSON.stringify(todos)); renderTodos(); }
-function loadTodos() { todos = JSON.parse(localStorage.getItem('gf_todos')||'[]'); renderTodos(); }
+
+function toggleTodo(id, done) {
+  todoApi_({
+    action:'todo_toggle',
+    id: id,
+    done: done
+  }).then(res=>{
+    if(res.result !== 'success') throw new Error(res.error || 'To-Do 상태 변경 실패');
+    if(done) showToast('✅ 완료 처리되었습니다. 기본 목록에서 사라집니다.');
+    loadTodos();
+  }).catch(err=>alert('To-Do 완료 처리 오류: '+err.message));
+}
+
+function delTodo(id) {
+  if(!confirm('이 To-Do를 삭제 처리할까요? 시트에는 삭제 상태로 남습니다.')) return;
+  todoApi_({
+    action:'todo_delete',
+    id: id
+  }).then(res=>{
+    if(res.result !== 'success') throw new Error(res.error || 'To-Do 삭제 실패');
+    showToast('🗑 삭제 처리되었습니다.');
+    loadTodos();
+  }).catch(err=>alert('To-Do 삭제 오류: '+err.message));
+}
+
+function loadTodos() {
+  const list = document.getElementById('todoList');
+  if(list) list.innerHTML = '<div style="font-size:12px;color:#94a3b8;text-align:center;padding:18px 8px;">To-Do 불러오는 중...</div>';
+
+  todoApi_({
+    action:'todo_list',
+    includeCompleted: showCompletedTodos
+  }).then(res=>{
+    if(res.result !== 'success') throw new Error(res.error || 'To-Do 불러오기 실패');
+    todos = res.todos || [];
+    renderTodos();
+  }).catch(err=>{
+    if(list) list.innerHTML = '<div style="font-size:12px;color:#ef4444;padding:12px;">To-Do를 불러오지 못했습니다. Apps Script URL을 확인하세요.</div>';
+    console.warn(err);
+  });
+}
 
 function autoAddTodoForSchedule() {
   const n = document.getElementById('nameInput').value.trim();
-  const school = document.getElementById('dbSchool').value.trim();
-  const grade = document.getElementById('dbGrade').value.trim();
+  const school = document.getElementById('dbSchool')?.value.trim() || '';
+  const grade = document.getElementById('dbGrade')?.value.trim() || '';
   if(!n) return;
 
   let todoText = "";
   const dDate = document.getElementById('dateInput').value;
   const dStart = document.getElementById('startTimeInput').value;
   const dEnd = document.getElementById('endTimeInput').value;
-  let dTimeStr = dDate; if(dStart) dTimeStr += ` ${dStart}`; if(dEnd) dTimeStr += `~${dEnd}`;
+  let dTimeStr = dDate;
+  if(dStart) dTimeStr += ` ${dStart}`;
+  if(dEnd) dTimeStr += `~${dEnd}`;
 
   if (currentMode === '상담') {
     if (classType === '테스트진행' || classType === '대면상담') todoText = `[${classType}] ${dTimeStr} / ${n} / ${school} / ${grade}`;
@@ -892,8 +1008,12 @@ function autoAddTodoForSchedule() {
       const mdEnd = document.getElementById('absentMakeupEndTime').value;
       const reasonType = document.querySelector('input[name="absentReasonType"]:checked').value;
       const mt = document.getElementById('absentMakeupType').options[document.getElementById('absentMakeupType').selectedIndex].text;
-      
-      let mTimeStr = mdDate; if (mdStart) mTimeStr += ` ${mdStart}`; if (mdEnd) mTimeStr += `~${mdEnd}`; if (!mTimeStr) mTimeStr = '일정미정';
+
+      let mTimeStr = mdDate;
+      if (mdStart) mTimeStr += ` ${mdStart}`;
+      if (mdEnd) mTimeStr += `~${mdEnd}`;
+      if (!mTimeStr) mTimeStr = '일정미정';
+
       if (reasonType === 'free') todoText = `[보강/보충] ${n} / 보강: ${mTimeStr} / ${mt}`;
       else if (reasonType === 'cancelled') todoText = `[휴강] ${n} / 휴강: ${dTimeStr} / 보강: ${mTimeStr} / ${mt}`;
       else todoText = `[결석] ${n} / 결석: ${dTimeStr} / 보강: ${mTimeStr} / ${mt}`;
@@ -901,11 +1021,15 @@ function autoAddTodoForSchedule() {
   }
 
   if (todoText) {
-    if (!todos.find(t => t.text === todoText)) {
-      todos.push({text: todoText, done: false}); localStorage.setItem('gf_todos', JSON.stringify(todos)); renderTodos();
-    }
+    todoApi_({
+      action:'todo_add',
+      text: todoText,
+      writer: '원장',
+      source: '자동일정'
+    }).then(()=>loadTodos()).catch(err=>console.warn('자동 To-Do 저장 실패', err));
   }
 }
+
 
 // --- 메세지 라이브 프리뷰 업데이트 ---
 function getDayName(dateStr) {const days=['일','월','화','수','목','금','토']; return days[new Date(dateStr).getDay()];}
@@ -1112,6 +1236,13 @@ textarea{overflow:hidden;}
 #parentPreviewFrame{width:100%;height:100%;border:none;background:#fff;}
 .preview-note{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:9px 11px;}
 
+
+.key-field input[data-secure="true"]{letter-spacing:1.5px;font-family:monospace;}
+
+
+.ai-answer-box{max-height:260px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;}
+.ai-btn:disabled{opacity:.65;cursor:wait;}
+
 </style></head><body><div class="wrap"><div class="card"><div class="badge">${badgeText}</div><h1>${titleText}</h1><div style="color:#64748b;font-size:13px;margin-bottom:20px;">${d}</div><div class="info-row"><span class="info-label">${dateLabel}</span><span class="info-val">${d}</span></div>${r&&reasonType!=='free'?`<div class="info-row"><span class="info-label">${rLab}</span><span class="info-val">${esc(r)}</span></div>`:''}<div class="info-row"><span class="info-label">보강/보충 일정</span><span class="info-val">${mStr}</span></div></div>${nt?`<div class="card"><div style="font-weight:800;color:#16417C;margin-bottom:12px;">📢 추가 전달 사항 및 공지</div><div class="notice-box">${esc(nt)}</div></div>`:''}${sr('동영상 강의','🎬',vidH)}${sr('추가 자료','🔗',resH)}<div style="text-align:center;color:#94a3b8;font-size:11px;margin-top:30px;">© G-Field Gifted Education</div></div></body></html>`;
 }
 
@@ -1155,6 +1286,13 @@ textarea{overflow:hidden;}
 .preview-frame-wrap{flex:1;border:1.5px solid var(--border);border-radius:14px;overflow:hidden;background:#fff;}
 #parentPreviewFrame{width:100%;height:100%;border:none;background:#fff;}
 .preview-note{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:9px 11px;}
+
+
+.key-field input[data-secure="true"]{letter-spacing:1.5px;font-family:monospace;}
+
+
+.ai-answer-box{max-height:260px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;}
+.ai-btn:disabled{opacity:.65;cursor:wait;}
 
 </style></head><body><div class="web-wrap"><div class="web-header"><div class="hd-l"><h1>지필드 영재교육 학습 리포트</h1><p>G-Field Gifted Education</p><div class="badge">${classType}</div></div><div class="hd-r"><div class="s-name">${esc(n)} 학생</div><div class="date">${d}${crs?' · '+esc(crs):''}</div></div></div>${nt?`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:16px;padding:16px;margin-bottom:16px;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#451a03;">📢 ${esc(nt)}</div>`:''}${sr('과제 확인','✅',hwR+hwPH)}${sr('학습 요약','📖',subH)}${sr('수업 사진','📸',pRen(classPhotos))}${sr('동영상 강의','🎬',vidH)}${sr('추가 자료','🔗',resH)}${sr('오늘의 과제','✏️',tHwH)}<div style="text-align:center;margin:36px 0;font-size:11px;color:#94a3b8;">© G-Field Gifted Education</div>${hideD}</div></body></html>`;
 }
@@ -1262,30 +1400,86 @@ function sendAligoSms(isScheduled) {
 }
 
 
-let aiChatHistory=[];
+let aiAbortController = null;
+
+function clearOneTimeAI(){
+  const input=document.getElementById('aiPromptMemo');
+  const box=document.getElementById('aiAnswerBox');
+  if(input) input.value='';
+  if(box) box.textContent='AI 답변이 여기에 표시됩니다.';
+}
+
+window.addEventListener('pagehide', clearOneTimeAI);
+
 async function askAI(){
-  const sUrl=getKey('script'); if(!sUrl){openKeyModal();return;}
+  const sUrl=getKey('script'); 
+  if(!sUrl){openKeyModal();return;}
+
   const input=document.getElementById('aiPromptMemo');
   const box=document.getElementById('aiAnswerBox');
   const btn=document.getElementById('aiAskBtn');
   const q=(input?.value||'').trim();
+
   if(!q) return showToast('AI에게 물어볼 내용을 입력하세요.');
-  const context=[
+
+  // 일회성 원칙: 이전 질문/답변 기록을 절대 보내지 않음
+  // 버퍼링 방지: 너무 긴 요청은 잘라서 전송
+  const currentMsg=(document.getElementById('msgText')?.value || '').slice(0,1200);
+  const currentNotice=(document.getElementById('noticeArea')?.value || '').slice(0,800);
+  const oneTimePrompt=[
+    '너는 지필드 영재교육 운영 보조 AI다.',
+    '이번 요청은 일회성이다. 이전 대화가 있다고 가정하지 말고, 이번 입력만 보고 답한다.',
     `현재 모드: ${currentMode}`,
     `현재 유형: ${classType}`,
-    `학생: ${document.getElementById('nameInput').value || '-'}`,
-    `현재 안내 메시지:\n${document.getElementById('msgText').value || '-'}`
-  ].join('\n');
-  const historyText=aiChatHistory.slice(-4).map(x=>`사용자: ${x.q}\nAI: ${x.a}`).join('\n\n');
-  btn.disabled=true; btn.textContent='⏳ AI 답변 중...'; box.textContent='AI가 답변을 작성 중입니다...';
+    `학생: ${document.getElementById('nameInput')?.value || '-'}`,
+    currentNotice ? `전달사항 초안:
+${currentNotice}` : '',
+    currentMsg ? `현재 안내 메시지:
+${currentMsg}` : '',
+    `사용자 질문:
+${q.slice(0,2500)}`
+  ].filter(Boolean).join('
+
+');
+
+  if(aiAbortController) aiAbortController.abort();
+  aiAbortController = new AbortController();
+
+  const timeoutId = setTimeout(() => {
+    try { aiAbortController.abort(); } catch(e) {}
+  }, 25000);
+
+  btn.disabled=true; 
+  btn.textContent='⏳ AI 답변 중...'; 
+  box.textContent='AI가 답변을 작성 중입니다...';
+
   try{
-    const res=await fetch(sUrl,{method:'POST',body:JSON.stringify({action:'ask_ai_pro',message:`${context}\n\n이전 대화:\n${historyText}\n\n사용자 질문:\n${q}`,sheetId:getKey('sheetId')||DEFAULT_SHEET})});
+    const res=await fetch(sUrl,{
+      method:'POST',
+      body:JSON.stringify({
+        action:'ask_ai_pro',
+        message:oneTimePrompt,
+        sheetId:getKey('sheetId')||DEFAULT_SHEET
+      }),
+      signal:aiAbortController.signal
+    });
+
     const data=await res.json();
     if(data.result==='error') throw new Error(data.error || 'AI 호출 실패');
+
     const answer=data.reply || '답변이 비어 있습니다.';
-    aiChatHistory.push({q,a:answer}); box.textContent=answer; autoGrow(box);
-  }catch(e){ box.textContent='❌ AI 오류: '+e.message; }
-  finally{ btn.disabled=false; btn.textContent='🤖 AI에게 질문하기'; }
+    box.textContent=answer;
+    if(typeof autoGrow === 'function') autoGrow(box);
+  }catch(e){ 
+    box.textContent = e.name === 'AbortError'
+      ? '⏱️ AI 응답 시간이 길어져 중단했습니다. 질문을 조금 짧게 다시 입력해 주세요.'
+      : '❌ AI 오류: '+e.message; 
+  }finally{ 
+    clearTimeout(timeoutId);
+    btn.disabled=false; 
+    btn.textContent='🤖 AI에게 질문하기'; 
+    aiAbortController=null;
+  }
 }
 
 function shareKakao(){
@@ -1403,6 +1597,13 @@ function buildParentPreviewFallbackHtml(){
   .photo .memo{font-size:12px;color:#475569;margin-top:7px;white-space:pre-wrap}
   .empty{color:#94a3b8;font-size:13px}
   @media(max-width:520px){.meta{grid-template-columns:1fr}.hero h1{font-size:22px}}
+
+.key-field input[data-secure="true"]{letter-spacing:1.5px;font-family:monospace;}
+
+
+.ai-answer-box{max-height:260px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;}
+.ai-btn:disabled{opacity:.65;cursor:wait;}
+
 </style>
 </head>
 <body>
