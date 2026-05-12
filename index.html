@@ -1438,9 +1438,7 @@ ${currentNotice}` : '',
 ${currentMsg}` : '',
     `사용자 질문:
 ${q.slice(0,2500)}`
-  ].filter(Boolean).join('
-
-');
+  ].filter(Boolean).join('\n\n');
 
   if(aiAbortController) aiAbortController.abort();
   aiAbortController = new AbortController();
