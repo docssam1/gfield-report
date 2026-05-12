@@ -154,8 +154,6 @@ textarea{overflow:hidden;}
 .key-field input[data-secure="true"]{letter-spacing:1.5px;font-family:monospace;}
 
 
-.ai-answer-box{max-height:260px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;}
-.ai-btn:disabled{opacity:.65;cursor:wait;}
 
 </style>
 </head>
@@ -417,9 +415,12 @@ textarea{overflow:hidden;}
   <div class="sidebar-box">
     <div class="todo-head">
       <span>📝 실무 To-Do 리스트</span>
-      <button onclick="toggleCompletedTodos()" style="font-size:11px; background:none; border:1px solid #d97706; padding:2px 6px; border-radius:4px; color:#d97706; cursor:pointer;">완료내역</button>
+      <div style="display:flex;gap:5px;">
+        <button onclick="refreshTodosManually()" style="font-size:11px; background:none; border:1px solid #d97706; padding:2px 6px; border-radius:4px; color:#d97706; cursor:pointer;">새로고침</button>
+        <button onclick="toggleCompletedTodos()" style="font-size:11px; background:none; border:1px solid #d97706; padding:2px 6px; border-radius:4px; color:#d97706; cursor:pointer;">완료내역</button>
+      </div>
     </div>
-    <div style="font-size:11px;color:#92400e;padding:10px 15px 0;">※ To-Do는 구글 시트에 저장됩니다. 완료 체크 시 기본 목록에서 사라지고 시트에는 완료로 남습니다.</div>
+    <div style="font-size:11px;color:#92400e;padding:10px 15px 0;">※ To-Do는 구글 시트에 저장됩니다. 화면은 즉시 반영되고, 시트 저장은 뒤에서 1회만 처리됩니다.</div>
     <div style="padding:15px; max-height: 400px; overflow-y: auto;" id="todoList"></div>
     <div style="padding:15px; border-top:1px solid #eee; display:flex; flex-direction:column; gap:8px;">
       <input type="text" id="todoIn" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; outline:none; font-size:13px; font-family:inherit;" placeholder="수동 일정/할일 입력..." onkeypress="if(event.key==='Enter') addTodo()">
@@ -427,23 +428,6 @@ textarea{overflow:hidden;}
     </div>
   </div>
 
-  <div class="sidebar-box" style="border-color:#3b82f6;">
-    <div class="todo-head" style="background:#eff6ff; color:#1d4ed8;">
-      <span>🤖 AI 대화 / 프롬프트 작성</span>
-    </div>
-    <div style="padding:15px; font-size:12px; color:#475569; line-height:1.5;">
-      오른쪽 배치 그대로, 이 칸에서 AI와 바로 대화할 수 있습니다.<br>
-      <span style="display:block;margin-top:4px;color:#64748b;">※ 일회성 AI창입니다. 대화기록을 저장하지 않고, 새로고침/닫기 시 답변은 사라집니다.</span>
-      <textarea id="aiPromptMemo" style="width:100%; min-height:100px; margin-top:10px; padding:10px; border-radius:8px; border:1px solid #bfdbfe; resize:none; overflow:hidden; font-family:inherit; outline:none;" placeholder="AI에게 바로 질문하세요. 예: 이 안내문을 더 부드럽게 바꿔줘"></textarea>
-      <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:8px;">
-        <button id="aiAskBtn" class="ai-btn" onclick="askAI()" style="margin-top:0;">🤖 AI에게 질문하기</button>
-        <button onclick="clearOneTimeAI()" style="border:none;border-radius:8px;background:#e2e8f0;color:#475569;font-weight:900;padding:0 10px;cursor:pointer;font-size:12px;">지우기</button>
-      </div>
-      <div id="aiAnswerBox" class="ai-answer-box">AI 답변이 여기에 표시됩니다.</div>
-      <a href="https://drive.google.com/drive/folders/1e8XRoU0jr-1_7s1aKq2qSejbkW1PYWzg?usp=drive_link" target="_blank" style="display:block; text-align:center; background:#2563eb; color:#fff; padding:10px; border-radius:8px; text-decoration:none; font-weight:bold; margin-top:10px;">📁 AI 대화/자료 저장소 열기</a>
-    </div>
-  </div>
-</div>
 </div> <!-- page-layout 끝 -->
 
 
@@ -474,9 +458,8 @@ textarea{overflow:hidden;}
   <div class="modal">
     <h2>⚙️ 시스템 연동 설정</h2>
     <div style="background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.55;margin-bottom:14px;">
-      🔐 보안값은 화면에서 ●●●●로 표시됩니다. GitHub Token, Gemini API Key, Notion API Key, Aligo API Key는 외부에 공유하지 마세요.
+      🔐 보안값은 화면에서 ●●●●로 표시됩니다. GitHub Token, Notion API Key, Aligo API Key는 외부에 공유하지 마세요.
     </div>
-    <div class="key-field"><label>🤖 GEMINI API KEY</label><input type="password" id="k_gemini" autocomplete="off" autocapitalize="off" spellcheck="false" data-secure="true"></div>
     <div class="key-field"><label>🐱 GITHUB TOKEN</label><input type="password" id="k_gh" autocomplete="off" autocapitalize="off" spellcheck="false" data-secure="true"></div>
     <div class="key-field"><label>📦 GOOGLE APPS SCRIPT URL</label><input type="text" id="k_script"></div>
     <div class="key-field"><label>⚙️ APPS SCRIPT 편집기 URL</label><input type="text" id="k_script_editor" placeholder="https://script.google.com/home/projects/.../edit"></div>
@@ -524,7 +507,7 @@ textarea{overflow:hidden;}
 
 <script>
 // --- 전역 설정 및 초기화 ---
-const KEYS={gemini:'gf_gemini_key',gh:'gf_gh_token',script:'gf_script_url',scriptEditor:'gf_script_editor_url',kakao:'gf_kakao_key',notionKey:'gf_notion_key',notionDb:'gf_notion_db',ghUser:'gf_gh_user',ghRepo:'gf_gh_repo',sheetId:'gf_sheet_id',aligoId:'gf_aligo_id',aligoKey:'gf_aligo_key',scriptEditUrl:'gf_script_edit_url'};
+const KEYS={gh:'gf_gh_token',script:'gf_script_url',scriptEditor:'gf_script_editor_url',kakao:'gf_kakao_key',notionKey:'gf_notion_key',notionDb:'gf_notion_db',ghUser:'gf_gh_user',ghRepo:'gf_gh_repo',sheetId:'gf_sheet_id',aligoId:'gf_aligo_id',aligoKey:'gf_aligo_key',scriptEditUrl:'gf_script_edit_url'};
 const getKey=k=>localStorage.getItem(KEYS[k])||'';
 const setKey=(k,v)=>localStorage.setItem(KEYS[k],String(v||'').trim());
 const DEFAULT_SHEET = '1Ta1o_v504jtDsyHPY0bER6WpI3xYTbVVffEl0iy58f8';
@@ -553,7 +536,7 @@ function openKeyModal(){
 }
 function closeKeyModal(){document.getElementById('keyModal').classList.remove('show');}
 async function saveKeys(){
-  ['gemini','gh','script','kakao'].forEach(k=>setKey(k,document.getElementById('k_'+k).value));
+  ['gh','script','kakao'].forEach(k=>setKey(k,document.getElementById('k_'+k).value));
   if(document.getElementById('k_script_editor')) setKey('scriptEditor', document.getElementById('k_script_editor').value);
   setKey('notionKey',document.getElementById('k_notion_key').value);
   setKey('notionDb',document.getElementById('k_notion_db').value);
@@ -878,9 +861,12 @@ function submitResolvedConflicts() {
   });
 }
 
-// --- To-Do 관리: 구글 시트 저장 ---
+// --- To-Do 관리: 구글 시트 저장 + 빠른 화면 반응 ---
 let todos = [];
 let showCompletedTodos = false;
+let todoLoadedOnce = false;
+let todoLoading = false;
+let todoPendingIds = new Set();
 
 function todoApi_(payload){
   const sUrl = getKey('script');
@@ -896,9 +882,37 @@ function todoApi_(payload){
   }).then(r=>r.json());
 }
 
+function cacheTodos_(){
+  try{
+    localStorage.setItem('gf_todos_cache_v2', JSON.stringify({
+      savedAt: Date.now(),
+      todos: todos || []
+    }));
+  }catch(e){}
+}
+
+function loadTodosFromCache_(){
+  try{
+    const cached = JSON.parse(localStorage.getItem('gf_todos_cache_v2') || '{}');
+    if(Array.isArray(cached.todos)){
+      todos = cached.todos;
+      renderTodos();
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
 function toggleCompletedTodos() {
   showCompletedTodos = !showCompletedTodos;
-  loadTodos();
+
+  // 완료내역 버튼을 눌러도 시트를 매번 다시 읽지 않고 현재 캐시에서 즉시 전환
+  renderTodos();
+
+  // 완료내역을 처음 열 때만 조용히 한 번 동기화
+  if(showCompletedTodos && !todoLoading){
+    syncTodosFromSheet_({silent:true, includeCompleted:true});
+  }
 }
 
 function renderTodos() {
@@ -906,20 +920,27 @@ function renderTodos() {
   if(!list) return;
   list.innerHTML = '';
 
-  if(!todos.length){
+  const visible = (todos || []).filter(t => {
+    if(showCompletedTodos) return true;
+    return !t.done && t.status !== '완료' && t.status !== '삭제';
+  });
+
+  if(!visible.length){
     list.innerHTML = `<div style="font-size:12px;color:#94a3b8;text-align:center;padding:18px 8px;">
       ${showCompletedTodos ? '완료된 To-Do가 없습니다.' : '진행중인 To-Do가 없습니다.'}
     </div>`;
     return;
   }
 
-  todos.forEach((t) => {
+  visible.forEach((t) => {
+    const isPending = todoPendingIds.has(String(t.id));
     const div = document.createElement('div');
     div.className = t.done ? 'todo-item done' : 'todo-item';
+    div.style.opacity = isPending ? '.62' : '1';
     div.innerHTML = `
-      <input type="checkbox" ${t.done?'checked':''} onchange="toggleTodo('${t.id}', this.checked)">
-      <span style="flex:1;">${esc(t.text)}</span>
-      <button onclick="delTodo('${t.id}')" style="border:none;background:none;color:red;cursor:pointer;">✕</button>
+      <input type="checkbox" ${t.done?'checked':''} ${isPending?'disabled':''} onchange="toggleTodo('${t.id}', this.checked)">
+      <span style="flex:1;">${esc(t.text)}${isPending ? ' <small style="color:#64748b;">저장중...</small>' : ''}</span>
+      <button ${isPending?'disabled':''} onclick="delTodo('${t.id}')" style="border:none;background:none;color:red;cursor:${isPending?'wait':'pointer'};">✕</button>
     `;
     list.appendChild(div);
   });
@@ -930,6 +951,23 @@ function addTodo() {
   const val = input.value.trim();
   if(!val) return;
 
+  const tempId = 'tmp_' + Date.now();
+  const tempTodo = {
+    id: tempId,
+    text: val,
+    status: '진행중',
+    done: false,
+    source: '수동입력',
+    createdAt: new Date().toISOString()
+  };
+
+  // 화면 먼저 반영
+  todos.unshift(tempTodo);
+  input.value = '';
+  todoPendingIds.add(String(tempId));
+  cacheTodos_();
+  renderTodos();
+
   todoApi_({
     action:'todo_add',
     text: val,
@@ -937,51 +975,131 @@ function addTodo() {
     source: '수동입력'
   }).then(res=>{
     if(res.result !== 'success') throw new Error(res.error || 'To-Do 저장 실패');
-    input.value = '';
     showToast('✅ To-Do가 구글 시트에 저장되었습니다.');
-    loadTodos();
-  }).catch(err=>alert('To-Do 저장 오류: '+err.message));
+
+    // 새 row id를 받는 백엔드가 아니어도, 전체 재조회는 조용히 한 번만
+    todoPendingIds.delete(String(tempId));
+    syncTodosFromSheet_({silent:true, includeCompleted:showCompletedTodos});
+  }).catch(err=>{
+    todoPendingIds.delete(String(tempId));
+    todos = todos.filter(t => String(t.id) !== String(tempId));
+    cacheTodos_();
+    renderTodos();
+    alert('To-Do 저장 오류: '+err.message);
+  });
 }
 
 function toggleTodo(id, done) {
+  const sid = String(id);
+  if(todoPendingIds.has(sid)) return;
+
+  const target = todos.find(t => String(t.id) === sid);
+  if(!target) return;
+
+  // 화면 먼저 반영: 완료하면 기본 목록에서 즉시 사라짐
+  const oldDone = !!target.done;
+  const oldStatus = target.status;
+  target.done = !!done;
+  target.status = done ? '완료' : '진행중';
+  target.completedAt = done ? new Date().toISOString() : '';
+
+  todoPendingIds.add(sid);
+  cacheTodos_();
+  renderTodos();
+
   todoApi_({
     action:'todo_toggle',
     id: id,
     done: done
   }).then(res=>{
     if(res.result !== 'success') throw new Error(res.error || 'To-Do 상태 변경 실패');
+    todoPendingIds.delete(sid);
+    cacheTodos_();
+    renderTodos();
     if(done) showToast('✅ 완료 처리되었습니다. 기본 목록에서 사라집니다.');
-    loadTodos();
-  }).catch(err=>alert('To-Do 완료 처리 오류: '+err.message));
+  }).catch(err=>{
+    todoPendingIds.delete(sid);
+    target.done = oldDone;
+    target.status = oldStatus;
+    cacheTodos_();
+    renderTodos();
+    alert('To-Do 완료 처리 오류: '+err.message);
+  });
 }
 
 function delTodo(id) {
+  const sid = String(id);
+  if(todoPendingIds.has(sid)) return;
   if(!confirm('이 To-Do를 삭제 처리할까요? 시트에는 삭제 상태로 남습니다.')) return;
+
+  const target = todos.find(t => String(t.id) === sid);
+  if(!target) return;
+  const oldStatus = target.status;
+
+  target.status = '삭제';
+  todoPendingIds.add(sid);
+  cacheTodos_();
+  renderTodos();
+
   todoApi_({
     action:'todo_delete',
     id: id
   }).then(res=>{
     if(res.result !== 'success') throw new Error(res.error || 'To-Do 삭제 실패');
+    todoPendingIds.delete(sid);
+    todos = todos.filter(t => String(t.id) !== sid);
+    cacheTodos_();
+    renderTodos();
     showToast('🗑 삭제 처리되었습니다.');
-    loadTodos();
-  }).catch(err=>alert('To-Do 삭제 오류: '+err.message));
+  }).catch(err=>{
+    todoPendingIds.delete(sid);
+    target.status = oldStatus;
+    cacheTodos_();
+    renderTodos();
+    alert('To-Do 삭제 오류: '+err.message);
+  });
 }
 
 function loadTodos() {
+  // 첫 화면은 캐시를 바로 보여주고, 시트는 뒤에서 1회만 동기화
+  const hasCache = loadTodosFromCache_();
+  if(!hasCache){
+    const list = document.getElementById('todoList');
+    if(list) list.innerHTML = '<div style="font-size:12px;color:#94a3b8;text-align:center;padding:18px 8px;">To-Do 불러오는 중...</div>';
+  }
+  syncTodosFromSheet_({silent:hasCache, includeCompleted:showCompletedTodos});
+}
+
+function syncTodosFromSheet_(opts = {}) {
+  if(todoLoading) return;
+  todoLoading = true;
+
   const list = document.getElementById('todoList');
-  if(list) list.innerHTML = '<div style="font-size:12px;color:#94a3b8;text-align:center;padding:18px 8px;">To-Do 불러오는 중...</div>';
+  if(!opts.silent && list){
+    list.innerHTML = '<div style="font-size:12px;color:#94a3b8;text-align:center;padding:18px 8px;">To-Do 불러오는 중...</div>';
+  }
 
   todoApi_({
     action:'todo_list',
-    includeCompleted: showCompletedTodos
+    includeCompleted: opts.includeCompleted === true
   }).then(res=>{
     if(res.result !== 'success') throw new Error(res.error || 'To-Do 불러오기 실패');
     todos = res.todos || [];
+    todoLoadedOnce = true;
+    cacheTodos_();
     renderTodos();
   }).catch(err=>{
-    if(list) list.innerHTML = '<div style="font-size:12px;color:#ef4444;padding:12px;">To-Do를 불러오지 못했습니다. Apps Script URL을 확인하세요.</div>';
+    if(!opts.silent && list){
+      list.innerHTML = '<div style="font-size:12px;color:#ef4444;padding:12px;">To-Do를 불러오지 못했습니다. Apps Script URL을 확인하세요.</div>';
+    }
     console.warn(err);
+  }).finally(()=>{
+    todoLoading = false;
   });
+}
+
+function refreshTodosManually(){
+  syncTodosFromSheet_({silent:false, includeCompleted:showCompletedTodos});
 }
 
 function autoAddTodoForSchedule() {
@@ -1021,12 +1139,30 @@ function autoAddTodoForSchedule() {
   }
 
   if (todoText) {
+    // 중복 자동 등록 방지: 현재 화면 캐시 기준
+    if((todos || []).some(t => t.text === todoText && t.status !== '삭제')) return;
+
+    const tempId = 'auto_' + Date.now();
+    todos.unshift({id:tempId,text:todoText,status:'진행중',done:false,source:'자동일정'});
+    todoPendingIds.add(String(tempId));
+    cacheTodos_();
+    renderTodos();
+
     todoApi_({
       action:'todo_add',
       text: todoText,
       writer: '원장',
       source: '자동일정'
-    }).then(()=>loadTodos()).catch(err=>console.warn('자동 To-Do 저장 실패', err));
+    }).then(()=>{
+      todoPendingIds.delete(String(tempId));
+      syncTodosFromSheet_({silent:true, includeCompleted:showCompletedTodos});
+    }).catch(err=>{
+      todoPendingIds.delete(String(tempId));
+      todos = todos.filter(t => String(t.id) !== String(tempId));
+      cacheTodos_();
+      renderTodos();
+      console.warn('자동 To-Do 저장 실패', err);
+    });
   }
 }
 
@@ -1240,8 +1376,6 @@ textarea{overflow:hidden;}
 .key-field input[data-secure="true"]{letter-spacing:1.5px;font-family:monospace;}
 
 
-.ai-answer-box{max-height:260px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;}
-.ai-btn:disabled{opacity:.65;cursor:wait;}
 
 </style></head><body><div class="wrap"><div class="card"><div class="badge">${badgeText}</div><h1>${titleText}</h1><div style="color:#64748b;font-size:13px;margin-bottom:20px;">${d}</div><div class="info-row"><span class="info-label">${dateLabel}</span><span class="info-val">${d}</span></div>${r&&reasonType!=='free'?`<div class="info-row"><span class="info-label">${rLab}</span><span class="info-val">${esc(r)}</span></div>`:''}<div class="info-row"><span class="info-label">보강/보충 일정</span><span class="info-val">${mStr}</span></div></div>${nt?`<div class="card"><div style="font-weight:800;color:#16417C;margin-bottom:12px;">📢 추가 전달 사항 및 공지</div><div class="notice-box">${esc(nt)}</div></div>`:''}${sr('동영상 강의','🎬',vidH)}${sr('추가 자료','🔗',resH)}<div style="text-align:center;color:#94a3b8;font-size:11px;margin-top:30px;">© G-Field Gifted Education</div></div></body></html>`;
 }
@@ -1291,8 +1425,6 @@ textarea{overflow:hidden;}
 .key-field input[data-secure="true"]{letter-spacing:1.5px;font-family:monospace;}
 
 
-.ai-answer-box{max-height:260px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;}
-.ai-btn:disabled{opacity:.65;cursor:wait;}
 
 </style></head><body><div class="web-wrap"><div class="web-header"><div class="hd-l"><h1>지필드 영재교육 학습 리포트</h1><p>G-Field Gifted Education</p><div class="badge">${classType}</div></div><div class="hd-r"><div class="s-name">${esc(n)} 학생</div><div class="date">${d}${crs?' · '+esc(crs):''}</div></div></div>${nt?`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:16px;padding:16px;margin-bottom:16px;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#451a03;">📢 ${esc(nt)}</div>`:''}${sr('과제 확인','✅',hwR+hwPH)}${sr('학습 요약','📖',subH)}${sr('수업 사진','📸',pRen(classPhotos))}${sr('동영상 강의','🎬',vidH)}${sr('추가 자료','🔗',resH)}${sr('오늘의 과제','✏️',tHwH)}<div style="text-align:center;margin:36px 0;font-size:11px;color:#94a3b8;">© G-Field Gifted Education</div>${hideD}</div></body></html>`;
 }
@@ -1399,86 +1531,6 @@ function sendAligoSms(isScheduled) {
   }).catch(err => alert("오류 발생: " + err));
 }
 
-
-let aiAbortController = null;
-
-function clearOneTimeAI(){
-  const input=document.getElementById('aiPromptMemo');
-  const box=document.getElementById('aiAnswerBox');
-  if(input) input.value='';
-  if(box) box.textContent='AI 답변이 여기에 표시됩니다.';
-}
-
-window.addEventListener('pagehide', clearOneTimeAI);
-
-async function askAI(){
-  const sUrl=getKey('script'); 
-  if(!sUrl){openKeyModal();return;}
-
-  const input=document.getElementById('aiPromptMemo');
-  const box=document.getElementById('aiAnswerBox');
-  const btn=document.getElementById('aiAskBtn');
-  const q=(input?.value||'').trim();
-
-  if(!q) return showToast('AI에게 물어볼 내용을 입력하세요.');
-
-  // 일회성 원칙: 이전 질문/답변 기록을 절대 보내지 않음
-  // 버퍼링 방지: 너무 긴 요청은 잘라서 전송
-  const currentMsg=(document.getElementById('msgText')?.value || '').slice(0,1200);
-  const currentNotice=(document.getElementById('noticeArea')?.value || '').slice(0,800);
-  const oneTimePrompt=[
-    '너는 지필드 영재교육 운영 보조 AI다.',
-    '이번 요청은 일회성이다. 이전 대화가 있다고 가정하지 말고, 이번 입력만 보고 답한다.',
-    `현재 모드: ${currentMode}`,
-    `현재 유형: ${classType}`,
-    `학생: ${document.getElementById('nameInput')?.value || '-'}`,
-    currentNotice ? `전달사항 초안:
-${currentNotice}` : '',
-    currentMsg ? `현재 안내 메시지:
-${currentMsg}` : '',
-    `사용자 질문:
-${q.slice(0,2500)}`
-  ].filter(Boolean).join('\n\n');
-
-  if(aiAbortController) aiAbortController.abort();
-  aiAbortController = new AbortController();
-
-  const timeoutId = setTimeout(() => {
-    try { aiAbortController.abort(); } catch(e) {}
-  }, 25000);
-
-  btn.disabled=true; 
-  btn.textContent='⏳ AI 답변 중...'; 
-  box.textContent='AI가 답변을 작성 중입니다...';
-
-  try{
-    const res=await fetch(sUrl,{
-      method:'POST',
-      body:JSON.stringify({
-        action:'ask_ai_pro',
-        message:oneTimePrompt,
-        sheetId:getKey('sheetId')||DEFAULT_SHEET
-      }),
-      signal:aiAbortController.signal
-    });
-
-    const data=await res.json();
-    if(data.result==='error') throw new Error(data.error || 'AI 호출 실패');
-
-    const answer=data.reply || '답변이 비어 있습니다.';
-    box.textContent=answer;
-    if(typeof autoGrow === 'function') autoGrow(box);
-  }catch(e){ 
-    box.textContent = e.name === 'AbortError'
-      ? '⏱️ AI 응답 시간이 길어져 중단했습니다. 질문을 조금 짧게 다시 입력해 주세요.'
-      : '❌ AI 오류: '+e.message; 
-  }finally{ 
-    clearTimeout(timeoutId);
-    btn.disabled=false; 
-    btn.textContent='🤖 AI에게 질문하기'; 
-    aiAbortController=null;
-  }
-}
 
 function shareKakao(){
   const url=document.getElementById('resultUrl').href;
@@ -1599,8 +1651,6 @@ function buildParentPreviewFallbackHtml(){
 .key-field input[data-secure="true"]{letter-spacing:1.5px;font-family:monospace;}
 
 
-.ai-answer-box{max-height:260px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;}
-.ai-btn:disabled{opacity:.65;cursor:wait;}
 
 </style>
 </head>
