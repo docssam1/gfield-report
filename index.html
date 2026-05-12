@@ -155,6 +155,70 @@ textarea{overflow:hidden;}
 
 
 
+
+/* 클릭 안정화 패치 */
+.modal-overlay{pointer-events:none;}
+.modal-overlay.show{pointer-events:auto;}
+.modal{pointer-events:auto;}
+.modal button,.modal input,.modal select,.modal textarea{pointer-events:auto;}
+button:disabled{opacity:.55;cursor:not-allowed;}
+.key-field input{position:relative;z-index:2;}
+.quick-links a, .btns button, .msg-copy-btn, .db-upload-btn{pointer-events:auto;}
+
+
+/* 모드 전환 색상 명확화 패치 */
+.mode-toggle-wrap{
+  overflow:hidden;
+  background:#ffffff;
+  border:1.5px solid #dbe3f2;
+}
+.mode-toggle-wrap label{
+  position:relative;
+  z-index:3;
+  color:#64748b;
+}
+.mode-toggle-wrap label span{
+  position:relative;
+  z-index:4;
+  display:block;
+  color:#475569;
+  text-shadow:none;
+}
+.mode-toggle-wrap .slider{
+  background:linear-gradient(135deg,#16417C,#2a5b9e);
+  box-shadow:0 8px 20px rgba(22,65,124,.22);
+}
+.mode-toggle-wrap.report-active label:first-child span,
+.mode-toggle-wrap:not(.cs-active) label:first-child span{
+  color:#ffffff !important;
+}
+.mode-toggle-wrap.cs-active label:nth-child(2) span{
+  color:#ffffff !important;
+}
+.mode-toggle-wrap.cs-active label:first-child span{
+  color:#64748b !important;
+}
+.mode-toggle-wrap.cs-active .slider{
+  transform:translateX(100%);
+  background:linear-gradient(135deg,#f59e0b,#d97706);
+  box-shadow:0 8px 20px rgba(217,119,6,.25);
+}
+.mode-toggle-wrap.cs-active{
+  border-color:#fcd34d;
+}
+.mode-toggle-wrap.report-active{
+  border-color:#9bb7ff;
+}
+.header.cs-mode{
+  background:linear-gradient(135deg,#f59e0b,#d97706) !important;
+}
+.header.cs-mode .hd-tag.active{
+  color:#b45309 !important;
+}
+.header:not(.cs-mode){
+  background:linear-gradient(135deg,#16417C,#2a5b9e) !important;
+}
+
 </style>
 </head>
 <body>
@@ -564,9 +628,128 @@ async function saveKeys(){
   }
   closeKeyModal(); initKakao(); updateAppsScriptEditorLink(); showToast('✅ 설정 저장 완료!');
 }
+
+/* =========================================================
+ * 클릭 안정화 / 함수 누락 방어
+ * ========================================================= */
+document.addEventListener('click', function(e){
+  const btn = e.target.closest('button, a, label, input, textarea, select');
+  if(!btn) return;
+  // 모바일에서 빠른 연타로 같은 버튼이 두 번 호출되는 것 방지용은 개별 함수에서 처리
+}, true);
+
+function safeGetEl_(id){ return document.getElementById(id); }
+
+function openKeyModal(){
+  const modal = safeGetEl_('keyModal');
+  if(!modal){ alert('설정창을 찾을 수 없습니다.'); return; }
+
+  const map = {
+    k_gh:'gh',
+    k_script:'script',
+    k_kakao:'kakao',
+    k_notion_key:'notionKey',
+    k_notion_db:'notionDb',
+    k_ghuser:'ghUser',
+    k_ghrepo:'ghRepo',
+    k_sheet_id:'sheetId',
+    k_aligo_id:'aligoId',
+    k_aligo_key:'aligoKey',
+    k_script_edit_url:'scriptEditUrl'
+  };
+
+  Object.keys(map).forEach(id=>{
+    const el=safeGetEl_(id);
+    if(el) el.value=getKey(map[id]) || '';
+  });
+
+  const ghUser=safeGetEl_('k_ghuser');
+  const ghRepo=safeGetEl_('k_ghrepo');
+  const sheet=safeGetEl_('k_sheet_id');
+  if(ghUser && !ghUser.value) ghUser.value='docssam1';
+  if(ghRepo && !ghRepo.value) ghRepo.value='gfield-report';
+  if(sheet && !sheet.value) sheet.value=DEFAULT_SHEET;
+
+  modal.classList.add('show');
+}
+
+function closeKeyModal(){
+  const modal = safeGetEl_('keyModal');
+  if(modal) modal.classList.remove('show');
+}
+
+let __savingKeys = false;
+async function saveKeys(){
+  if(__savingKeys) return;
+  __savingKeys = true;
+
+  const saveBtn = document.querySelector('#keyModal .modal-save');
+  const oldText = saveBtn ? saveBtn.textContent : '';
+  if(saveBtn){ saveBtn.disabled = true; saveBtn.textContent = '저장 중...'; }
+
+  try{
+    const pairs = {
+      gh:'k_gh',
+      script:'k_script',
+      kakao:'k_kakao',
+      notionKey:'k_notion_key',
+      notionDb:'k_notion_db',
+      ghUser:'k_ghuser',
+      ghRepo:'k_ghrepo',
+      sheetId:'k_sheet_id',
+      aligoId:'k_aligo_id',
+      aligoKey:'k_aligo_key',
+      scriptEditUrl:'k_script_edit_url'
+    };
+
+    Object.keys(pairs).forEach(k=>{
+      const el=safeGetEl_(pairs[k]);
+      if(el) setKey(k, el.value || '');
+    });
+
+    if(!getKey('ghUser')) setKey('ghUser','docssam1');
+    if(!getKey('ghRepo')) setKey('ghRepo','gfield-report');
+    if(!getKey('sheetId')) setKey('sheetId',DEFAULT_SHEET);
+
+    const sUrl = getKey('script');
+    if(sUrl){
+      await fetch(sUrl, {
+        method:'POST',
+        body:JSON.stringify({
+          action:'update_keys',
+          github_token:safeGetEl_('k_gh')?.value || '',
+          kakao_key:safeGetEl_('k_kakao')?.value || '',
+          notion_key:safeGetEl_('k_notion_key')?.value || '',
+          notion_db:safeGetEl_('k_notion_db')?.value || '',
+          github_user:safeGetEl_('k_ghuser')?.value || 'docssam1',
+          github_repo:safeGetEl_('k_ghrepo')?.value || 'gfield-report',
+          sheet_id:safeGetEl_('k_sheet_id')?.value || DEFAULT_SHEET,
+          aligo_id:safeGetEl_('k_aligo_id')?.value || '',
+          aligo_key:safeGetEl_('k_aligo_key')?.value || ''
+        })
+      }).catch(e=>console.warn('Apps Script 키 저장 실패:', e));
+    }
+
+    closeKeyModal();
+    if(typeof initKakao === 'function') initKakao();
+    if(typeof showToast === 'function') showToast('✅ 설정 저장 완료!');
+  }catch(e){
+    alert('설정 저장 오류: ' + e.message);
+  }finally{
+    __savingKeys = false;
+    if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = oldText || '💾 저장하고 닫기'; }
+  }
+}
+
+function openAppsScriptEditor(){
+  const url = getKey('scriptEditUrl') || 'https://script.google.com/home';
+  window.open(url, '_blank');
+}
+
 function initKakao(){const key=getKey('kakao');if(!key||!window.Kakao)return;try{if(!Kakao.isInitialized()) Kakao.init(key);}catch(e){}}
 
 window.addEventListener('DOMContentLoaded',()=>{ 
+  document.querySelector('.mode-toggle-wrap')?.classList.add('report-active');
   initKakao(); 
   document.getElementById('dateInput').value=new Date().toISOString().split('T')[0]; 
   addHwRow(); addSubjRow(); addTodayHwRow(); loadTodos(); updateAppsScriptEditorLink(); applyAutoGrow(document);
@@ -626,9 +809,35 @@ document.addEventListener('input', e=>{ if(e.target && e.target.tagName === 'TEX
 // --- 모드 전환 로직 ---
 let currentMode = '리포트';
 let classType = '정규수업'; 
+
+function updateActionButtonLabels(){
+  const saveBtn = document.getElementById('saveDriveBtn');
+  const ghBtn = document.getElementById('ghBtn');
+  const notionBtn = document.getElementById('notionBtn');
+  const kakaoBtn = document.getElementById('kakaoBtn');
+
+  if(currentMode === '상담'){
+    if(saveBtn) saveBtn.textContent = '💾 1단계: 상담내용 드라이브 저장 및 시트 기록';
+    if(ghBtn) ghBtn.textContent = '🔗 2단계: 상담/안내 웹 링크 생성';
+    if(notionBtn) notionBtn.textContent = '📅 3단계: 캘린더 전송';
+    if(kakaoBtn) kakaoBtn.textContent = '💬 카카오톡 템플릿 전송 (상담/안내문)';
+  } else {
+    if(saveBtn) saveBtn.textContent = '💾 1단계: 드라이브 저장 및 시트 기록';
+    if(ghBtn) ghBtn.textContent = '🔗 2단계: 웹 링크 생성 (배포)';
+    if(notionBtn) notionBtn.textContent = '📅 3단계: 캘린더 전송';
+    if(kakaoBtn) kakaoBtn.textContent = '💬 카카오톡 템플릿 전송 (리포트/안내문)';
+  }
+}
+
 function toggleMode() {
   currentMode = document.querySelector('input[name="docType"]:checked').value;
   const isCS = currentMode === '상담';
+
+  const modeWrap = document.querySelector('.mode-toggle-wrap');
+  if(modeWrap){
+    modeWrap.classList.toggle('cs-active', isCS);
+    modeWrap.classList.toggle('report-active', !isCS);
+  }
   
   document.getElementById('mainHeader').className = isCS ? 'header cs-mode' : 'header';
   document.getElementById('hdSub').innerText = isCS ? '지필드 스마트 CS 관리' : '성공하는 공부습관을 만드는';
@@ -640,8 +849,8 @@ function toggleMode() {
   document.getElementById('noticeSection').style.display = isCS ? 'none' : 'block';
   document.getElementById('absentPanel').style.display = 'none'; 
   document.getElementById('fileLoaders').style.display = isCS ? 'none' : 'flex';
-  document.getElementById('saveDriveBtn').style.display = isCS ? 'none' : 'block';
-  document.getElementById('ghBtn').style.display = isCS ? 'none' : 'block';
+  document.getElementById('saveDriveBtn').style.display = 'block';
+  document.getElementById('ghBtn').style.display = 'block';
   
   document.getElementById('studentDbPanel').style.display = isCS ? 'block' : 'none';
   document.getElementById('csExtraPanel').style.display = isCS ? 'block' : 'none';
@@ -649,6 +858,7 @@ function toggleMode() {
   
   if(isCS) { document.querySelector('#tagListCS .hd-tag').click(); } 
   else { document.querySelector('#tagListReport .hd-tag').click(); }
+  updateActionButtonLabels();
   updateMsgBox();
 }
 
@@ -1377,6 +1587,70 @@ textarea{overflow:hidden;}
 
 
 
+
+/* 클릭 안정화 패치 */
+.modal-overlay{pointer-events:none;}
+.modal-overlay.show{pointer-events:auto;}
+.modal{pointer-events:auto;}
+.modal button,.modal input,.modal select,.modal textarea{pointer-events:auto;}
+button:disabled{opacity:.55;cursor:not-allowed;}
+.key-field input{position:relative;z-index:2;}
+.quick-links a, .btns button, .msg-copy-btn, .db-upload-btn{pointer-events:auto;}
+
+
+/* 모드 전환 색상 명확화 패치 */
+.mode-toggle-wrap{
+  overflow:hidden;
+  background:#ffffff;
+  border:1.5px solid #dbe3f2;
+}
+.mode-toggle-wrap label{
+  position:relative;
+  z-index:3;
+  color:#64748b;
+}
+.mode-toggle-wrap label span{
+  position:relative;
+  z-index:4;
+  display:block;
+  color:#475569;
+  text-shadow:none;
+}
+.mode-toggle-wrap .slider{
+  background:linear-gradient(135deg,#16417C,#2a5b9e);
+  box-shadow:0 8px 20px rgba(22,65,124,.22);
+}
+.mode-toggle-wrap.report-active label:first-child span,
+.mode-toggle-wrap:not(.cs-active) label:first-child span{
+  color:#ffffff !important;
+}
+.mode-toggle-wrap.cs-active label:nth-child(2) span{
+  color:#ffffff !important;
+}
+.mode-toggle-wrap.cs-active label:first-child span{
+  color:#64748b !important;
+}
+.mode-toggle-wrap.cs-active .slider{
+  transform:translateX(100%);
+  background:linear-gradient(135deg,#f59e0b,#d97706);
+  box-shadow:0 8px 20px rgba(217,119,6,.25);
+}
+.mode-toggle-wrap.cs-active{
+  border-color:#fcd34d;
+}
+.mode-toggle-wrap.report-active{
+  border-color:#9bb7ff;
+}
+.header.cs-mode{
+  background:linear-gradient(135deg,#f59e0b,#d97706) !important;
+}
+.header.cs-mode .hd-tag.active{
+  color:#b45309 !important;
+}
+.header:not(.cs-mode){
+  background:linear-gradient(135deg,#16417C,#2a5b9e) !important;
+}
+
 </style></head><body><div class="wrap"><div class="card"><div class="badge">${badgeText}</div><h1>${titleText}</h1><div style="color:#64748b;font-size:13px;margin-bottom:20px;">${d}</div><div class="info-row"><span class="info-label">${dateLabel}</span><span class="info-val">${d}</span></div>${r&&reasonType!=='free'?`<div class="info-row"><span class="info-label">${rLab}</span><span class="info-val">${esc(r)}</span></div>`:''}<div class="info-row"><span class="info-label">보강/보충 일정</span><span class="info-val">${mStr}</span></div></div>${nt?`<div class="card"><div style="font-weight:800;color:#16417C;margin-bottom:12px;">📢 추가 전달 사항 및 공지</div><div class="notice-box">${esc(nt)}</div></div>`:''}${sr('동영상 강의','🎬',vidH)}${sr('추가 자료','🔗',resH)}<div style="text-align:center;color:#94a3b8;font-size:11px;margin-top:30px;">© G-Field Gifted Education</div></div></body></html>`;
 }
 
@@ -1426,11 +1700,100 @@ textarea{overflow:hidden;}
 
 
 
+
+/* 클릭 안정화 패치 */
+.modal-overlay{pointer-events:none;}
+.modal-overlay.show{pointer-events:auto;}
+.modal{pointer-events:auto;}
+.modal button,.modal input,.modal select,.modal textarea{pointer-events:auto;}
+button:disabled{opacity:.55;cursor:not-allowed;}
+.key-field input{position:relative;z-index:2;}
+.quick-links a, .btns button, .msg-copy-btn, .db-upload-btn{pointer-events:auto;}
+
+
+/* 모드 전환 색상 명확화 패치 */
+.mode-toggle-wrap{
+  overflow:hidden;
+  background:#ffffff;
+  border:1.5px solid #dbe3f2;
+}
+.mode-toggle-wrap label{
+  position:relative;
+  z-index:3;
+  color:#64748b;
+}
+.mode-toggle-wrap label span{
+  position:relative;
+  z-index:4;
+  display:block;
+  color:#475569;
+  text-shadow:none;
+}
+.mode-toggle-wrap .slider{
+  background:linear-gradient(135deg,#16417C,#2a5b9e);
+  box-shadow:0 8px 20px rgba(22,65,124,.22);
+}
+.mode-toggle-wrap.report-active label:first-child span,
+.mode-toggle-wrap:not(.cs-active) label:first-child span{
+  color:#ffffff !important;
+}
+.mode-toggle-wrap.cs-active label:nth-child(2) span{
+  color:#ffffff !important;
+}
+.mode-toggle-wrap.cs-active label:first-child span{
+  color:#64748b !important;
+}
+.mode-toggle-wrap.cs-active .slider{
+  transform:translateX(100%);
+  background:linear-gradient(135deg,#f59e0b,#d97706);
+  box-shadow:0 8px 20px rgba(217,119,6,.25);
+}
+.mode-toggle-wrap.cs-active{
+  border-color:#fcd34d;
+}
+.mode-toggle-wrap.report-active{
+  border-color:#9bb7ff;
+}
+.header.cs-mode{
+  background:linear-gradient(135deg,#f59e0b,#d97706) !important;
+}
+.header.cs-mode .hd-tag.active{
+  color:#b45309 !important;
+}
+.header:not(.cs-mode){
+  background:linear-gradient(135deg,#16417C,#2a5b9e) !important;
+}
+
 </style></head><body><div class="web-wrap"><div class="web-header"><div class="hd-l"><h1>지필드 영재교육 학습 리포트</h1><p>G-Field Gifted Education</p><div class="badge">${classType}</div></div><div class="hd-r"><div class="s-name">${esc(n)} 학생</div><div class="date">${d}${crs?' · '+esc(crs):''}</div></div></div>${nt?`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:16px;padding:16px;margin-bottom:16px;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#451a03;">📢 ${esc(nt)}</div>`:''}${sr('과제 확인','✅',hwR+hwPH)}${sr('학습 요약','📖',subH)}${sr('수업 사진','📸',pRen(classPhotos))}${sr('동영상 강의','🎬',vidH)}${sr('추가 자료','🔗',resH)}${sr('오늘의 과제','✏️',tHwH)}<div style="text-align:center;margin:36px 0;font-size:11px;color:#94a3b8;">© G-Field Gifted Education</div>${hideD}</div></body></html>`;
 }
 
 // --- 통신 및 발송 ---
-async function saveToDrive(){
+async 
+function getCSRecordSummary(){
+  const name = document.getElementById('nameInput')?.value?.trim() || '';
+  const date = document.getElementById('dateInput')?.value || '';
+  const start = document.getElementById('startTimeInput')?.value || '';
+  const end = document.getElementById('endTimeInput')?.value || '';
+  const course = document.getElementById('courseInput')?.value?.trim() || '';
+  const school = document.getElementById('dbSchool')?.value?.trim() || '';
+  const grade = document.getElementById('dbGrade')?.value?.trim() || '';
+  const phone = document.getElementById('dbPhone')?.value?.trim() || '';
+  const inner = document.getElementById('csInnerMemo')?.value?.trim() || '';
+  const memo = document.getElementById('csMemo')?.value?.trim() || '';
+  const msg = document.getElementById('msgText')?.value?.trim() || '';
+  return {
+    name, date, start, end, course, school, grade, phone,
+    type: currentMode === '상담' ? classType : classType,
+    content: [
+      inner ? '[내부 상담기록]\\n' + inner : '',
+      memo ? '[학부모 전달사항]\\n' + memo : '',
+      msg ? '[전송 메시지]\\n' + msg : ''
+    ].filter(Boolean).join('\\n\\n')
+  };
+}
+
+function saveToDrive(){
+  const csRec = getCSRecordSummary();
   const sUrl=getKey('script');if(!sUrl){openKeyModal();return;}
   const n=document.getElementById('nameInput').value.trim();if(!n){showToast('이름 입력 필요!');return;}
   
@@ -1651,6 +2014,70 @@ function buildParentPreviewFallbackHtml(){
 .key-field input[data-secure="true"]{letter-spacing:1.5px;font-family:monospace;}
 
 
+
+
+/* 클릭 안정화 패치 */
+.modal-overlay{pointer-events:none;}
+.modal-overlay.show{pointer-events:auto;}
+.modal{pointer-events:auto;}
+.modal button,.modal input,.modal select,.modal textarea{pointer-events:auto;}
+button:disabled{opacity:.55;cursor:not-allowed;}
+.key-field input{position:relative;z-index:2;}
+.quick-links a, .btns button, .msg-copy-btn, .db-upload-btn{pointer-events:auto;}
+
+
+/* 모드 전환 색상 명확화 패치 */
+.mode-toggle-wrap{
+  overflow:hidden;
+  background:#ffffff;
+  border:1.5px solid #dbe3f2;
+}
+.mode-toggle-wrap label{
+  position:relative;
+  z-index:3;
+  color:#64748b;
+}
+.mode-toggle-wrap label span{
+  position:relative;
+  z-index:4;
+  display:block;
+  color:#475569;
+  text-shadow:none;
+}
+.mode-toggle-wrap .slider{
+  background:linear-gradient(135deg,#16417C,#2a5b9e);
+  box-shadow:0 8px 20px rgba(22,65,124,.22);
+}
+.mode-toggle-wrap.report-active label:first-child span,
+.mode-toggle-wrap:not(.cs-active) label:first-child span{
+  color:#ffffff !important;
+}
+.mode-toggle-wrap.cs-active label:nth-child(2) span{
+  color:#ffffff !important;
+}
+.mode-toggle-wrap.cs-active label:first-child span{
+  color:#64748b !important;
+}
+.mode-toggle-wrap.cs-active .slider{
+  transform:translateX(100%);
+  background:linear-gradient(135deg,#f59e0b,#d97706);
+  box-shadow:0 8px 20px rgba(217,119,6,.25);
+}
+.mode-toggle-wrap.cs-active{
+  border-color:#fcd34d;
+}
+.mode-toggle-wrap.report-active{
+  border-color:#9bb7ff;
+}
+.header.cs-mode{
+  background:linear-gradient(135deg,#f59e0b,#d97706) !important;
+}
+.header.cs-mode .hd-tag.active{
+  color:#b45309 !important;
+}
+.header:not(.cs-mode){
+  background:linear-gradient(135deg,#16417C,#2a5b9e) !important;
+}
 
 </style>
 </head>
