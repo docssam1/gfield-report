@@ -565,9 +565,9 @@ textarea.auto-grow{
     <button class="search-btn" onclick="searchStudent()">🔍검색</button>
   </div>
   <div class="icard">
-    <div class="ilabel" id="dateLabel">날짜 / 시간 (시작~종료)</div>
+    <div class="ilabel" id="dateLabel">차후 일정</div>
     <div style="display:flex; gap:4px; margin-top:2px;">
-      <input type="date" id="dateInput" onchange="updateMsgBox()" style="flex:2; font-size:12px;">
+      <input type="date" id="dateInput" onchange="updateWeekday();updateMsgBox()" style="flex:2; font-size:12px;"><span id="weekdayView" style="font-size:12px;font-weight:800;color:#16417C;align-self:center;min-width:24px;text-align:center;"></span>
       <input type="time" id="startTimeInput" onchange="updateMsgBox()" style="flex:1; font-size:12px;">
       <input type="time" id="endTimeInput" onchange="updateMsgBox()" style="flex:1; font-size:12px;">
     </div>
@@ -578,11 +578,26 @@ textarea.auto-grow{
 <!-- CS 모드: 학생 DB 패널 -->
 <div id="studentDbPanel" style="display:none; background:#fff; border:1px solid #d97706; border-radius:16px; padding:18px; margin-bottom:14px;">
   <h3 style="font-size:14px; font-weight:800; color:#b45309; margin-bottom:12px;">👤 학생 DB 정보 (자동저장)</h3>
+  <datalist id="schoolOptions"></datalist>
   <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
-    <input type="text" id="dbSchool" placeholder="학교/유치원 (예: 대치초)" style="border:1px solid #fcd34d; border-radius:8px; padding:10px; font-size:13px;" onchange="saveDbData()">
-    <input type="text" id="dbGrade" placeholder="학년 (예: 3학년)" style="border:1px solid #fcd34d; border-radius:8px; padding:10px; font-size:13px;" onchange="saveDbData()">
+    <input type="text" id="dbSchool" list="schoolOptions" placeholder="학교/유치원 (예: 대치초)" style="border:1px solid #fcd34d; border-radius:8px; padding:10px; font-size:13px;" onchange="saveDbData()">
+    <select id="dbGrade" style="border:1px solid #fcd34d; border-radius:8px; padding:10px; font-size:13px;" onchange="saveDbData(); updateMsgBox();">
+      <option value="">학년/나이 선택</option>
+      <option value="5세">5세</option>
+      <option value="6세">6세</option>
+      <option value="7세">7세</option>
+      <option value="초1">초1</option>
+      <option value="초2">초2</option>
+      <option value="초3">초3</option>
+      <option value="초4">초4</option>
+      <option value="초5">초5</option>
+      <option value="초6">초6</option>
+      <option value="중1">중1</option>
+      <option value="중2">중2</option>
+      <option value="중3">중3</option>
+    </select>
     <input type="text" id="dbPhone" placeholder="학부모 연락처" style="border:1px solid #fcd34d; border-radius:8px; padding:10px; font-size:13px;" onchange="saveDbData()" oninput="updateMsgBox()">
-    <select id="dbStatus" style="border:1px solid #fcd34d; border-radius:8px; padding:10px; font-size:13px; font-weight:bold; color:#16417C;" onchange="saveDbData()">
+    <select id="dbStatus" style="border:1px solid #fcd34d; border-radius:8px; padding:10px; font-size:13px; font-weight:bold; color:#16417C;" onchange="saveDbData(); updateMsgBox();">
       <option value="비재원">⚪ 비재원 (신규/문의)</option>
       <option value="재원생" selected>🟢 재원생</option>
       <option value="퇴원생">🔴 퇴원생</option>
@@ -1100,10 +1115,26 @@ async function saveKeys(){
 
 function initKakao(){const key=getKey('kakao');if(!key||!window.Kakao)return;try{if(!Kakao.isInitialized()) Kakao.init(key);}catch(e){}}
 
+
+function getKoreanWeekday(dateStr){
+  if(!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  if(isNaN(d.getTime())) return '';
+  return ['일','월','화','수','목','금','토'][d.getDay()];
+}
+
+function updateWeekday(){
+  const dateEl = document.getElementById('dateInput');
+  const view = document.getElementById('weekdayView');
+  if(!dateEl || !view) return;
+  const w = getKoreanWeekday(dateEl.value);
+  view.textContent = w ? `(${w})` : '';
+}
+
 window.addEventListener('DOMContentLoaded',()=>{ 
   document.querySelector('.mode-toggle-wrap')?.classList.add('report-active');
   initKakao(); 
-  document.getElementById('dateInput').value=new Date().toISOString().split('T')[0]; 
+  document.getElementById('dateInput').value=new Date().toISOString().split('T')[0]; updateWeekday(); 
   addHwRow(); addSubjRow(); addTodayHwRow(); loadTodos(); updateAppsScriptEditorLink(); applyAutoGrow(document);
 });
 
@@ -1241,7 +1272,7 @@ function updateAbsentUI() {
   
   if(reasonType === 'free') { dateLabel.innerText = '공지일 / 시간'; reasonLabel.innerText = '사유/내용 (선택)'; } 
   else if (reasonType === 'cancelled') { dateLabel.innerText = '휴강일 / 시간'; reasonLabel.innerText = '휴강 사유 (선택)'; } 
-  else { dateLabel.innerText = '결석일 / 시간'; reasonLabel.innerText = '결석 사유 (선택)'; }
+  else { dateLabel.innerText = '차후 일정'; reasonLabel.innerText = '결석 사유 (선택)'; }
   updateMsgBox();
 }
 
@@ -1275,6 +1306,83 @@ function addClassBlock() {
 }
 
 // --- 학생 DB 연동 (이름 또는 뒷번호 4자리) ---
+
+/* =========================================================
+ * 학교 자동완성 / 학년 드롭다운 / 상태 자동선택 보강
+ * ========================================================= */
+const GFIELD_SCHOOL_SEED = [
+  '대치초','도성초','대곡초','언북초','문원초','영훈초','목원초','한남게이트','대치게이트','SPS','DEP','C게이트','하다','프랜시스파커','서초게이트','대현초','개원초','성동초','숙명여중','계성초','잠실 씨게이트'
+];
+
+function addSchoolOption(name){
+  const v = String(name || '').trim();
+  if(!v) return;
+  const list = document.getElementById('schoolOptions');
+  if(!list) return;
+  const exists = Array.from(list.options).some(o => o.value === v);
+  if(!exists){
+    const opt = document.createElement('option');
+    opt.value = v;
+    list.appendChild(opt);
+  }
+}
+
+function initSchoolOptions(){
+  GFIELD_SCHOOL_SEED.forEach(addSchoolOption);
+  try{
+    const saved = JSON.parse(localStorage.getItem('gfield_school_options') || '[]');
+    if(Array.isArray(saved)) saved.forEach(addSchoolOption);
+  }catch(e){}
+}
+
+function rememberSchoolOption(name){
+  const v = String(name || '').trim();
+  if(!v) return;
+  addSchoolOption(v);
+  try{
+    const saved = JSON.parse(localStorage.getItem('gfield_school_options') || '[]');
+    if(!saved.includes(v)){
+      saved.push(v);
+      localStorage.setItem('gfield_school_options', JSON.stringify(saved.slice(-200)));
+    }
+  }catch(e){}
+}
+
+function normalizeGradeForSelect(v){
+  const s = String(v || '').replace(/\s/g,'').replace('학년','');
+  if(!s) return '';
+  const m1 = s.match(/(5|6|7)세/);
+  if(m1) return `${m1[1]}세`;
+  const m2 = s.match(/초등?([1-6])/);
+  if(m2) return `초${m2[1]}`;
+  const m3 = s.match(/중등?([1-3])/);
+  if(m3) return `중${m3[1]}`;
+  const m4 = s.match(/(초|중)([1-6])/);
+  if(m4) return `${m4[1]}${m4[2]}`;
+  return s;
+}
+
+function setDbGradeValue(v){
+  const el = document.getElementById('dbGrade');
+  if(!el) return;
+  const g = normalizeGradeForSelect(v);
+  const has = Array.from(el.options || []).some(o => o.value === g);
+  el.value = has ? g : '';
+}
+
+function setDbStatusValue(v){
+  const el = document.getElementById('dbStatus');
+  if(!el) return;
+  const s = String(v || '').trim();
+  if(['비재원','재원생','퇴원생'].includes(s)) el.value = s;
+}
+
+document.addEventListener('DOMContentLoaded', initSchoolOptions);
+window.addEventListener('load', initSchoolOptions);
+document.addEventListener('change', function(e){
+  if(e.target && e.target.id === 'dbSchool') rememberSchoolOption(e.target.value);
+});
+
 function searchStudent() {
   const query = document.getElementById('nameInput').value.trim();
   if(!query) { showToast('이름이나 연락처 4자리를 입력하세요.'); return; }
@@ -1285,9 +1393,9 @@ function searchStudent() {
     if(d.found && d.info) {
       document.getElementById('nameInput').value = d.info.name || query; 
       document.getElementById('dbSchool').value = d.info.school || '';
-      document.getElementById('dbGrade').value = d.info.grade || '';
+      setDbGradeValue(d.info.grade || '');
       document.getElementById('dbPhone').value = d.info.phone || '';
-      document.getElementById('dbStatus').value = d.info.status || '재원생';
+      setDbStatusValue(d.info.status || '재원생');
       
       const hView = document.getElementById('historyView'); hView.innerHTML = '';
       if(!d.info.history || d.info.history.length === 0) {
@@ -1302,8 +1410,8 @@ function searchStudent() {
       showToast('학생 정보를 불러왔습니다.');
     } else {
       showToast('신규 학생입니다. (비재원으로 설정됨)');
-      document.getElementById('dbSchool').value = ''; document.getElementById('dbGrade').value = '';
-      document.getElementById('dbPhone').value = ''; document.getElementById('dbStatus').value = '비재원';
+      document.getElementById('dbSchool').value = ''; setDbGradeValue('');
+      document.getElementById('dbPhone').value = ''; setDbStatusValue('비재원');
       document.getElementById('historyView').innerHTML = '<div style="color:#666; font-size:12px;">이력이 없습니다.</div>';
     }
     updateMsgBox();
@@ -1311,6 +1419,7 @@ function searchStudent() {
 }
 
 function saveDbData() {
+  rememberSchoolOption(document.getElementById('dbSchool')?.value);
   const name = document.getElementById('nameInput').value.trim();
   if(!name) return;
   const sUrl = getKey('script'); if(!sUrl) return;
