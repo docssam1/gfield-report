@@ -1245,7 +1245,16 @@ window.addEventListener('DOMContentLoaded',()=>{
   addHwRow(); addSubjRow(); addTodayHwRow(); loadTodos(); updateAppsScriptEditorLink(); applyAutoGrow(document);
 });
 
-window.setLink = function(url) {
+window.state = window.state || { driveUrl:'', driveFileId:'', lastUrl:'' };
+window.setLink = function(url, kind) {
+  const label = document.querySelector('#linkResult div');
+  if(kind === 'drive'){
+    window.state.driveUrl = url;
+    if(label) label.textContent = '저장되었습니다. 구글 드라이브 HTML 링크:';
+  } else if(kind === 'github'){
+    window.state.lastUrl = url;
+    if(label) label.textContent = '웹 링크가 생성되었습니다.';
+  }
   document.getElementById('resultUrl').href = url;
   document.getElementById('resultUrl').textContent = url;
   document.getElementById('linkResult').style.display = 'block';
@@ -3141,7 +3150,6 @@ button.btn-busy{
 }
 
 // --- 통신 및 발송 ---
-async 
 function getCSRecordSummary(){
   const name = document.getElementById('nameInput')?.value?.trim() || '';
   const date = document.getElementById('dateInput')?.value || '';
@@ -3165,7 +3173,6 @@ function getCSRecordSummary(){
   };
 }
 
-async 
 /* =========================================================
  * 저장 명령 명확화 / 중복 클릭 방지 / 버튼 동작감 / null 안전
  * ========================================================= */
@@ -3231,6 +3238,30 @@ function getScriptUrlOrAlert(){
   return sUrl;
 }
 
+function getBackendReportType(){
+  if(currentMode === '상담' && typeof getCsType === 'function') return getCsType();
+  let backendType = classType || '정규수업';
+  if(backendType === '결석') {
+    const reasonEl = document.querySelector('input[name="absentReasonType"]:checked');
+    backendType = reasonEl && reasonEl.value === 'free' ? '보강' : '결석';
+  }
+  return backendType;
+}
+
+function requireStudentName(){
+  const n = val('nameInput').trim();
+  if(!n){
+    alert('학생 이름을 입력하세요.');
+    return '';
+  }
+  return n;
+}
+
+function makeReportFileName(name, type){
+  const ymd = (val('dateInput') || new Date().toISOString().slice(0,10)).replace(/-/g,'');
+  return `지필드_${ymd}_${name}_${type}_리포트.html`;
+}
+
 async function saveToDrive(e){
   if(e&&e.preventDefault)e.preventDefault();
   if(lockAction && lockAction('saveToDrive', 2500)) return false;
@@ -3240,17 +3271,10 @@ async function saveToDrive(e){
 
   try{
     const csRec = typeof getCSRecordSummary === 'function' ? getCSRecordSummary() : {};
+    const n = requireStudentName();
+    if(!n) return false;
     const sUrl = getScriptUrlOrAlert(); if(!sUrl) return false;
-
-    const n = val('nameInput').trim();
-    if(!n){ showToast('이름 입력 필요!'); return false; }
-
-    let backendType = classType || (typeof getCsType === 'function' ? getCsType() : '안내');
-    if(backendType === '결석') {
-      const reasonEl = document.querySelector('input[name="absentReasonType"]:checked');
-      const reasonType = reasonEl ? reasonEl.value : '';
-      backendType = reasonType === 'free' ? '보강' : '결석';
-    }
+    const backendType = getBackendReportType();
 
     const subjects = Array.from(document.querySelectorAll('#subjectList .subj-row-wrap')).map(row => {
       const title = row.querySelector('.v-subj')?.value?.trim() || row.querySelector('input')?.value?.trim() || '';
@@ -3258,8 +3282,31 @@ async function saveToDrive(e){
       return title ? `${title}${content ? '('+content+')' : ''}` : '';
     }).filter(Boolean).slice(0, 3).join(', ');
 
+    if(currentMode === '상담' && typeof shouldCreateCsHtml === 'function' && !shouldCreateCsHtml()){
+      const recordPayload = {
+        action:'cs_save_record',
+        mode:currentMode,
+        csRecord:csRec,
+        studentName:n,
+        name:csRec.name || n,
+        type:backendType,
+        date:val('dateInput'),
+        school:csRec.school || val('dbSchool'),
+        grade:csRec.grade || val('dbGrade'),
+        phone:csRec.phone || val('dbPhone'),
+        course:csRec.course || val('courseInput').trim(),
+        content:csRec.content || val('msgText') || val('csMemo') || '',
+        sheetId:getKey('sheetId') || DEFAULT_SHEET
+      };
+      const res = await fetch(sUrl,{method:'POST',body:JSON.stringify(recordPayload)});
+      const r = await res.json();
+      if(r.result !== 'success') throw new Error(r.error || '시트 기록 실패');
+      showToast('✅ 시트 기록 완료');
+      return false;
+    }
+
     const htmlContent = typeof buildSnapshot === 'function' ? buildSnapshot() : '<!doctype html><meta charset="utf-8"><body>내용 없음</body>';
-    const fName = `지필드_${val('dateInput').replace(/-/g,'')}_${n}_${backendType}_리포트.html`;
+    const fName = makeReportFileName(n, backendType);
 
     const payload = {
       action:'save_drive',
@@ -3292,8 +3339,9 @@ async function saveToDrive(e){
     const r = await res.json();
     if(r.result !== 'success') throw new Error(r.error || '저장 실패');
 
-    if(window.setLink) window.setLink(r.url);
-    showToast('✅ 드라이브 저장 및 시트 기록 완료');
+    if(window.state) window.state.driveFileId = r.fileId || '';
+    if(window.setLink) window.setLink(r.url, 'drive');
+    showToast('저장되었습니다.');
   }catch(err){
     alert('❌ 저장 실패: ' + err.message);
   }finally{
@@ -3311,24 +3359,18 @@ async function deployToGitHubPages(e){
   const restore = typeof setButtonBusy === 'function' ? setButtonBusy(btn, '배포 중...') : function(){};
 
   try{
+    const n = requireStudentName();
+    if(!n) return false;
     if(typeof warnIfCsHtmlNotNeeded === 'function' && warnIfCsHtmlNotNeeded()) return false;
 
     const sUrl = getScriptUrlOrAlert(); if(!sUrl) return false;
 
     const ghU = getKey('ghUser') || 'docssam1';
     const ghR = getKey('ghRepo') || 'gfield-report';
-    const n = val('nameInput').trim() || '학생';
-    if(!n){ showToast('이름 입력 필요!'); return false; }
-
-    let backendType = classType || (typeof getCsType === 'function' ? getCsType() : '안내');
-    if(backendType === '결석') {
-      const reasonEl = document.querySelector('input[name="absentReasonType"]:checked');
-      const reasonType = reasonEl ? reasonEl.value : '';
-      backendType = reasonType === 'free' ? '보강' : '결석';
-    }
+    const backendType = getBackendReportType();
 
     const htmlContent = typeof buildSnapshot === 'function' ? buildSnapshot() : '<!doctype html><meta charset="utf-8"><body>내용 없음</body>';
-    const fName = `지필드_${val('dateInput').replace(/-/g,'')}_${n}_${backendType}_리포트.html`;
+    const fName = makeReportFileName(n, backendType);
     const path = `${n}/${fName}`;
 
     const payload = {
@@ -3348,6 +3390,8 @@ async function deployToGitHubPages(e){
       phone:val('dbPhone'),
       course:val('courseInput').trim(),
       content:val('msgText') || val('csMemo') || '',
+      driveUrl:(window.state && window.state.driveUrl) || '',
+      driveFileId:(window.state && window.state.driveFileId) || '',
       attendance:{
         date:val('dateInput'),
         type:backendType,
@@ -3363,8 +3407,8 @@ async function deployToGitHubPages(e){
     const r = await res.json();
     if(r.result !== 'success') throw new Error(r.error || 'GitHub 배포 실패');
 
-    if(window.setLink) window.setLink(r.url);
-    showToast('🎉 웹 링크 생성 및 시트 링크 기록 완료');
+    if(window.setLink) window.setLink(r.url, 'github');
+    showToast('웹 링크가 생성되었습니다.');
   }catch(err){
     alert('❌ GitHub 오류: ' + err.message);
   }finally{
@@ -3864,9 +3908,13 @@ function getKakaoThumbInfo(){
 
 function shareKakao(){
   const reportUrl =
-    (window.state && state.lastUrl) ||
-    document.getElementById('resultUrl')?.href ||
-    window.location.href;
+    (window.state && window.state.lastUrl) ||
+    '';
+
+  if(!reportUrl || !/^https:\/\/docssam1\.github\.io\/gfield-report\//.test(reportUrl)){
+    alert('먼저 웹 링크를 생성해 주세요.');
+    return;
+  }
 
   if(!window.Kakao || !Kakao.isInitialized()){
     alert('카카오 JS KEY 설정을 확인해주세요.');
