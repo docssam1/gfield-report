@@ -1,0 +1,96 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>지필드 리포트 - 학생</title><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:sans-serif;background:#f1f5f9;color:#0f172a;}.mobile-wrap{display:none;}.web-wrap{display:block;}@media(max-width:768px){.mobile-wrap{display:block;}.web-wrap{display:none;}body{background:#0d1117;}}.web-wrap{max-width:900px;margin:0 auto;padding:30px 24px;}.web-header{background:linear-gradient(135deg,#16417C,#2a5b9e);border-radius:20px;padding:28px 32px;color:#fff;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;}.hd-l h1{font-size:22px;font-weight:800;margin-bottom:4px;}.hd-l p{font-size:13px;opacity:.8;}.hd-r{text-align:right;}.s-name{font-size:28px;font-weight:800;}.date{font-size:13px;opacity:.8;margin-top:4px;}.badge{display:inline-block;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.4);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;margin-top:8px;}
+/* G-FIELD 안정화: 드라이브 링크 사진/자동 높이 */
+.drive-photo-adder{display:flex;gap:8px;margin-bottom:12px;align-items:center;}
+.drive-photo-adder input{flex:1;border:1px solid var(--border);border-radius:8px;padding:9px;font-size:13px;}
+.drive-photo-adder button{padding:10px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:800;cursor:pointer;}
+.photo-card{width:180px;}
+.photo-card img{width:100%;height:auto;aspect-ratio:3/4;object-fit:cover;border-radius:8px;background:#f1f5f9;display:block;}
+.photo-card textarea.photo-input{width:100%;border:1px solid var(--border);border-radius:6px;padding:7px;font-size:12px;resize:none;overflow:hidden;line-height:1.45;min-height:34px;font-family:inherit;}
+textarea{overflow:hidden;}
+.ai-answer-box{margin-top:10px;padding:10px;border:1px solid #bfdbfe;border-radius:8px;background:#f8fbff;min-height:80px;white-space:pre-wrap;font-size:12px;line-height:1.6;color:#1e293b;}
+.ai-btn{width:100%;margin-top:8px;background:#2563eb;color:#fff;padding:10px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;}
+
+
+/* 학부모 HTML 템플릿 미리보기 */
+.preview-modal{max-width:960px;width:94%;height:90vh;display:flex;flex-direction:column;}
+.preview-modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+.preview-modal-title{font-size:18px;font-weight:900;color:var(--accent);}
+.preview-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.preview-actions button{border:none;border-radius:10px;padding:9px 13px;font-size:12px;font-weight:900;cursor:pointer;}
+.preview-refresh{background:#e0e7ff;color:#3730a3;}
+.preview-open{background:#16a34a;color:#fff;}
+.preview-close{background:#e5e7eb;color:#374151;}
+.preview-frame-wrap{flex:1;border:1.5px solid var(--border);border-radius:14px;overflow:hidden;background:#fff;}
+#parentPreviewFrame{width:100%;height:100%;border:none;background:#fff;}
+.preview-note{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:9px 11px;}
+
+
+.key-field input[data-secure="true"]{letter-spacing:1.5px;font-family:monospace;}
+
+
+
+
+/* 클릭 안정화 패치 */
+.modal-overlay{pointer-events:none;}
+.modal-overlay.show{pointer-events:auto;}
+.modal{pointer-events:auto;}
+.modal button,.modal input,.modal select,.modal textarea{pointer-events:auto;}
+button:disabled{opacity:.55;cursor:not-allowed;}
+.key-field input{position:relative;z-index:2;}
+.quick-links a, .btns button, .msg-copy-btn, .db-upload-btn{pointer-events:auto;}
+
+
+/* 모드 전환 색상 명확화 패치 */
+.mode-toggle-wrap{
+  overflow:hidden;
+  background:#ffffff;
+  border:1.5px solid #dbe3f2;
+}
+.mode-toggle-wrap label{
+  position:relative;
+  z-index:3;
+  color:#64748b;
+}
+.mode-toggle-wrap label span{
+  position:relative;
+  z-index:4;
+  display:block;
+  color:#475569;
+  text-shadow:none;
+}
+.mode-toggle-wrap .slider{
+  background:linear-gradient(135deg,#16417C,#2a5b9e);
+  box-shadow:0 8px 20px rgba(22,65,124,.22);
+}
+.mode-toggle-wrap.report-active label:first-child span,
+.mode-toggle-wrap:not(.cs-active) label:first-child span{
+  color:#ffffff !important;
+}
+.mode-toggle-wrap.cs-active label:nth-child(2) span{
+  color:#ffffff !important;
+}
+.mode-toggle-wrap.cs-active label:first-child span{
+  color:#64748b !important;
+}
+.mode-toggle-wrap.cs-active .slider{
+  transform:translateX(100%);
+  background:linear-gradient(135deg,#f59e0b,#d97706);
+  box-shadow:0 8px 20px rgba(217,119,6,.25);
+}
+.mode-toggle-wrap.cs-active{
+  border-color:#fcd34d;
+}
+.mode-toggle-wrap.report-active{
+  border-color:#9bb7ff;
+}
+.header.cs-mode{
+  background:linear-gradient(135deg,#f59e0b,#d97706) !important;
+}
+.header.cs-mode .hd-tag.active{
+  color:#b45309 !important;
+}
+.header:not(.cs-mode){
+  background:linear-gradient(135deg,#16417C,#2a5b9e) !important;
+}
+
+</style></head><body><div class="web-wrap"><div class="web-header"><div class="hd-l"><h1>지필드 영재교육 학습 리포트</h1><p>G-Field Gifted Education</p><div class="badge">수업안내</div></div><div class="hd-r"><div class="s-name">학생 학생</div><div class="date">2026.05.13</div></div></div><div style="text-align:center;margin:36px 0;font-size:11px;color:#94a3b8;">© G-Field Gifted Education</div></div></body></html>
