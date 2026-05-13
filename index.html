@@ -1383,42 +1383,81 @@ document.addEventListener('change', function(e){
   if(e.target && e.target.id === 'dbSchool') rememberSchoolOption(e.target.value);
 });
 
+
+window.__gfieldSearchFilling = false;
+window.__searchStudentRunning = false;
 function searchStudent() {
-  const query = document.getElementById('nameInput').value.trim();
-  if(!query) { showToast('이름이나 연락처 4자리를 입력하세요.'); return; }
-  const sUrl = getKey('script'); if(!sUrl) { openKeyModal(); return; }
-  showToast('데이터 조회 중...');
-  fetch(sUrl, { method: 'POST', body: JSON.stringify({ action: 'search_student', query: query, sheetId: getKey('sheetId')||DEFAULT_SHEET })})
-  .then(r=>r.json()).then(d => {
-    if(d.found && d.info) {
-      document.getElementById('nameInput').value = d.info.name || query; 
-      document.getElementById('dbSchool').value = d.info.school || '';
-      setDbGradeValue(d.info.grade || '');
-      document.getElementById('dbPhone').value = d.info.phone || '';
-      setDbStatusValue(d.info.status || '재원생');
-      
-      const hView = document.getElementById('historyView'); hView.innerHTML = '';
-      if(!d.info.history || d.info.history.length === 0) {
-        hView.innerHTML = '<span style="color:#999; font-size:12px;">이력이 없습니다.</span>';
-      } else {
-        d.info.history.forEach(item => {
-           const card = document.createElement('div'); card.className = 'history-card'; 
-           card.innerHTML = `<b>[${item.date}]</b>\n과정: ${item.course || '-'}\n내용: <span style="color:#16417C;">${item.content || '-'}</span>`;
-           hView.appendChild(card);
-        });
-      }
-      showToast('학생 정보를 불러왔습니다.');
-    } else {
-      showToast('신규 학생입니다. (비재원으로 설정됨)');
-      document.getElementById('dbSchool').value = ''; setDbGradeValue('');
-      document.getElementById('dbPhone').value = ''; setDbStatusValue('비재원');
-      document.getElementById('historyView').innerHTML = '<div style="color:#666; font-size:12px;">이력이 없습니다.</div>';
+  if(window.__searchStudentRunning) return;
+  window.__searchStudentRunning = true;
+
+  (async function(){
+    const query = document.getElementById('nameInput').value.trim();
+    if(!query) { showToast('이름이나 연락처 4자리를 입력하세요.'); return; }
+
+    const sUrl = getKey('script');
+    if(!sUrl) { openKeyModal(); return; }
+
+    showToast('🔍 학생 정보를 검색 중입니다...');
+
+    const res = await fetch(sUrl, {
+      method:'POST',
+      body:JSON.stringify({
+        action:'search_student',
+        keyword:query,
+        query:query,
+        sheetId:getKey('sheetId') || DEFAULT_SHEET
+      })
+    });
+
+    const data = await res.json();
+
+    if(data.result === 'error'){
+      throw new Error(data.error || '학생 검색 실패');
     }
+
+    const student = data.student || data.data || data.resultData || data;
+
+    // 검색 결과는 화면에만 채움. 시트 기록은 절대 하지 않음.
+    window.__gfieldSearchFilling = true;
+    try{
+      if(student){
+        if(student.name || student['이름']) document.getElementById('nameInput').value = student.name || student['이름'];
+        if(document.getElementById('dbSchool')) document.getElementById('dbSchool').value = student.school || student['학교/유치원'] || student.schoolName || '';
+        if(document.getElementById('dbPhone')) document.getElementById('dbPhone').value = student.phone || student['연락처'] || '';
+        if(typeof setDbGradeValue === 'function') setDbGradeValue(student.grade || student['학년/나이'] || '');
+        if(typeof setDbStatusValue === 'function') setDbStatusValue(student.status || student['상태'] || '');
+        if(typeof rememberSchoolOption === 'function') rememberSchoolOption(document.getElementById('dbSchool')?.value || '');
+      }
+    } finally {
+      setTimeout(()=>{ window.__gfieldSearchFilling = false; }, 0);
+    }
+
+    if(data.history && document.getElementById('historyView')){
+      const historyView = document.getElementById('historyView');
+      historyView.innerHTML = '';
+      if(Array.isArray(data.history) && data.history.length){
+        data.history.slice(0,20).forEach(h=>{
+          const div = document.createElement('div');
+          div.className = 'history-card';
+          div.textContent = [h.date || h['수업/상담일'] || '', h.type || h['유형'] || '', h.memo || h['내용'] || h['메모/요약'] || ''].filter(Boolean).join('\n');
+          historyView.appendChild(div);
+        });
+      } else {
+        historyView.innerHTML = '<div style="font-size:12px;color:#999;">검색된 과거 이력이 없습니다.</div>';
+      }
+    }
+
     updateMsgBox();
-  }).catch(e => alert('DB 조회 실패: '+e));
+    showToast('✅ 검색 완료');
+  })().catch(e=>{
+    alert('검색 오류: ' + e.message);
+  }).finally(()=>{
+    window.__searchStudentRunning = false;
+  });
 }
 
 function saveDbData() {
+  if(window.__gfieldSearchFilling) return;
   rememberSchoolOption(document.getElementById('dbSchool')?.value);
   const name = document.getElementById('nameInput').value.trim();
   if(!name) return;
