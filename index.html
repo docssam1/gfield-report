@@ -226,6 +226,63 @@ button:disabled{opacity:.55;cursor:not-allowed;}
 #parentPreviewModal .modal{pointer-events:auto !important;}
 #previewParentBtn{pointer-events:auto !important;position:relative;z-index:2;}
 
+
+/* 과제 확인 표 줄맞춤 패치 */
+.hw-table-head,
+.hw-row{
+  display:grid !important;
+  grid-template-columns:30% 20% 50% !important;
+  gap:0 !important;
+  width:100%;
+}
+.hw-table-head{
+  background:#f7f8fe;
+  border:1.5px solid var(--border);
+  border-radius:10px 10px 0 0;
+  overflow:hidden;
+}
+.hw-table-head > div{
+  padding:9px 12px !important;
+  font-size:11px;
+  font-weight:700;
+  color:var(--muted);
+  border-left:1.5px solid var(--border);
+}
+.hw-table-head > div:first-child{border-left:none;}
+.hw-row{
+  border:1.5px solid var(--border) !important;
+  border-top:none !important;
+  border-radius:0 !important;
+  overflow:hidden;
+  align-items:stretch;
+}
+.hw-c1,.hw-c2,.hw-c3{
+  padding:12px !important;
+  border-right:1.5px solid var(--border);
+  display:flex;
+  align-items:flex-start;
+}
+.hw-c3{border-right:none;}
+.hw-c1 input,
+.hw-c2 select,
+.hw-c3 textarea{
+  width:100% !important;
+  min-height:42px;
+  margin:0 !important;
+  box-sizing:border-box;
+}
+.hw-c3 textarea{
+  resize:none;
+  overflow:hidden;
+  line-height:1.45;
+}
+@media(max-width:599px){
+  .hw-table-head{display:none !important;}
+  .hw-row{display:block !important;border:1.5px solid var(--border) !important;border-radius:10px !important;margin-bottom:8px;}
+  .hw-c1,.hw-c2,.hw-c3{border-right:none !important;border-bottom:1px dashed var(--border);padding:8px 10px !important;}
+  .hw-c3{border-bottom:none !important;}
+}
+
 </style>
 </head>
 <body>
@@ -397,10 +454,10 @@ button:disabled{opacity:.55;cursor:not-allowed;}
 <div id="mainContentSection">
   <div class="sec">
     <div class="sec-hd"><div class="sec-title">✅ 과제 확인</div></div>
-    <div class="hw-head-pc" style="display:grid;grid-template-columns:30% 20% 1fr; gap:12px; background:#f7f8fe;border:1.5px solid var(--border);border-radius:10px 10px 0 0;">
-      <div style="padding:9px 12px;font-size:11px;font-weight:700;color:var(--muted);">과정</div>
-      <div style="padding:9px 12px;font-size:11px;font-weight:700;color:var(--muted);border-left:1.5px solid var(--border);">수행</div>
-      <div style="padding:9px 12px;font-size:11px;font-weight:700;color:var(--muted);border-left:1.5px solid var(--border);">코멘트</div>
+    <div class="hw-head-pc hw-table-head">
+      <div>과정</div>
+      <div>수행</div>
+      <div>코멘트</div>
     </div>
     <div id="hwList"></div>
     <button style="width:100%;padding:10px;margin-top:10px;border:1.5px dashed #ccc;border-radius:10px;cursor:pointer;background:transparent;" onclick="addHwRow()">+ 과제 항목 추가</button>
@@ -1677,6 +1734,63 @@ button:disabled{opacity:.55;cursor:not-allowed;}
 #parentPreviewModal .modal{pointer-events:auto !important;}
 #previewParentBtn{pointer-events:auto !important;position:relative;z-index:2;}
 
+
+/* 과제 확인 표 줄맞춤 패치 */
+.hw-table-head,
+.hw-row{
+  display:grid !important;
+  grid-template-columns:30% 20% 50% !important;
+  gap:0 !important;
+  width:100%;
+}
+.hw-table-head{
+  background:#f7f8fe;
+  border:1.5px solid var(--border);
+  border-radius:10px 10px 0 0;
+  overflow:hidden;
+}
+.hw-table-head > div{
+  padding:9px 12px !important;
+  font-size:11px;
+  font-weight:700;
+  color:var(--muted);
+  border-left:1.5px solid var(--border);
+}
+.hw-table-head > div:first-child{border-left:none;}
+.hw-row{
+  border:1.5px solid var(--border) !important;
+  border-top:none !important;
+  border-radius:0 !important;
+  overflow:hidden;
+  align-items:stretch;
+}
+.hw-c1,.hw-c2,.hw-c3{
+  padding:12px !important;
+  border-right:1.5px solid var(--border);
+  display:flex;
+  align-items:flex-start;
+}
+.hw-c3{border-right:none;}
+.hw-c1 input,
+.hw-c2 select,
+.hw-c3 textarea{
+  width:100% !important;
+  min-height:42px;
+  margin:0 !important;
+  box-sizing:border-box;
+}
+.hw-c3 textarea{
+  resize:none;
+  overflow:hidden;
+  line-height:1.45;
+}
+@media(max-width:599px){
+  .hw-table-head{display:none !important;}
+  .hw-row{display:block !important;border:1.5px solid var(--border) !important;border-radius:10px !important;margin-bottom:8px;}
+  .hw-c1,.hw-c2,.hw-c3{border-right:none !important;border-bottom:1px dashed var(--border);padding:8px 10px !important;}
+  .hw-c3{border-bottom:none !important;}
+}
+
 </style></head><body><div class="wrap"><div class="card"><div class="badge">${badgeText}</div><h1>${titleText}</h1><div style="color:#64748b;font-size:13px;margin-bottom:20px;">${d}</div><div class="info-row"><span class="info-label">${dateLabel}</span><span class="info-val">${d}</span></div>${r&&reasonType!=='free'?`<div class="info-row"><span class="info-label">${rLab}</span><span class="info-val">${esc(r)}</span></div>`:''}<div class="info-row"><span class="info-label">보강/보충 일정</span><span class="info-val">${mStr}</span></div></div>${nt?`<div class="card"><div style="font-weight:800;color:#16417C;margin-bottom:12px;">📢 추가 전달 사항 및 공지</div><div class="notice-box">${esc(nt)}</div></div>`:''}${sr('동영상 강의','🎬',vidH)}${sr('추가 자료','🔗',resH)}<div style="text-align:center;color:#94a3b8;font-size:11px;margin-top:30px;">© G-Field Gifted Education</div></div></body></html>`;
 }
 
@@ -1796,6 +1910,63 @@ button:disabled{opacity:.55;cursor:not-allowed;}
 #parentPreviewModal.show{display:flex !important;pointer-events:auto !important;}
 #parentPreviewModal .modal{pointer-events:auto !important;}
 #previewParentBtn{pointer-events:auto !important;position:relative;z-index:2;}
+
+
+/* 과제 확인 표 줄맞춤 패치 */
+.hw-table-head,
+.hw-row{
+  display:grid !important;
+  grid-template-columns:30% 20% 50% !important;
+  gap:0 !important;
+  width:100%;
+}
+.hw-table-head{
+  background:#f7f8fe;
+  border:1.5px solid var(--border);
+  border-radius:10px 10px 0 0;
+  overflow:hidden;
+}
+.hw-table-head > div{
+  padding:9px 12px !important;
+  font-size:11px;
+  font-weight:700;
+  color:var(--muted);
+  border-left:1.5px solid var(--border);
+}
+.hw-table-head > div:first-child{border-left:none;}
+.hw-row{
+  border:1.5px solid var(--border) !important;
+  border-top:none !important;
+  border-radius:0 !important;
+  overflow:hidden;
+  align-items:stretch;
+}
+.hw-c1,.hw-c2,.hw-c3{
+  padding:12px !important;
+  border-right:1.5px solid var(--border);
+  display:flex;
+  align-items:flex-start;
+}
+.hw-c3{border-right:none;}
+.hw-c1 input,
+.hw-c2 select,
+.hw-c3 textarea{
+  width:100% !important;
+  min-height:42px;
+  margin:0 !important;
+  box-sizing:border-box;
+}
+.hw-c3 textarea{
+  resize:none;
+  overflow:hidden;
+  line-height:1.45;
+}
+@media(max-width:599px){
+  .hw-table-head{display:none !important;}
+  .hw-row{display:block !important;border:1.5px solid var(--border) !important;border-radius:10px !important;margin-bottom:8px;}
+  .hw-c1,.hw-c2,.hw-c3{border-right:none !important;border-bottom:1px dashed var(--border);padding:8px 10px !important;}
+  .hw-c3{border-bottom:none !important;}
+}
 
 </style></head><body><div class="web-wrap"><div class="web-header"><div class="hd-l"><h1>지필드 영재교육 학습 리포트</h1><p>G-Field Gifted Education</p><div class="badge">${classType}</div></div><div class="hd-r"><div class="s-name">${esc(n)} 학생</div><div class="date">${d}${crs?' · '+esc(crs):''}</div></div></div>${nt?`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:16px;padding:16px;margin-bottom:16px;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#451a03;">📢 ${esc(nt)}</div>`:''}${sr('과제 확인','✅',hwR+hwPH)}${sr('학습 요약','📖',subH)}${sr('수업 사진','📸',pRen(classPhotos))}${sr('동영상 강의','🎬',vidH)}${sr('추가 자료','🔗',resH)}${sr('오늘의 과제','✏️',tHwH)}<div style="text-align:center;margin:36px 0;font-size:11px;color:#94a3b8;">© G-Field Gifted Education</div>${hideD}</div></body></html>`;
 }
@@ -2151,6 +2322,63 @@ button:disabled{opacity:.55;cursor:not-allowed;}
 #parentPreviewModal.show{display:flex !important;pointer-events:auto !important;}
 #parentPreviewModal .modal{pointer-events:auto !important;}
 #previewParentBtn{pointer-events:auto !important;position:relative;z-index:2;}
+
+
+/* 과제 확인 표 줄맞춤 패치 */
+.hw-table-head,
+.hw-row{
+  display:grid !important;
+  grid-template-columns:30% 20% 50% !important;
+  gap:0 !important;
+  width:100%;
+}
+.hw-table-head{
+  background:#f7f8fe;
+  border:1.5px solid var(--border);
+  border-radius:10px 10px 0 0;
+  overflow:hidden;
+}
+.hw-table-head > div{
+  padding:9px 12px !important;
+  font-size:11px;
+  font-weight:700;
+  color:var(--muted);
+  border-left:1.5px solid var(--border);
+}
+.hw-table-head > div:first-child{border-left:none;}
+.hw-row{
+  border:1.5px solid var(--border) !important;
+  border-top:none !important;
+  border-radius:0 !important;
+  overflow:hidden;
+  align-items:stretch;
+}
+.hw-c1,.hw-c2,.hw-c3{
+  padding:12px !important;
+  border-right:1.5px solid var(--border);
+  display:flex;
+  align-items:flex-start;
+}
+.hw-c3{border-right:none;}
+.hw-c1 input,
+.hw-c2 select,
+.hw-c3 textarea{
+  width:100% !important;
+  min-height:42px;
+  margin:0 !important;
+  box-sizing:border-box;
+}
+.hw-c3 textarea{
+  resize:none;
+  overflow:hidden;
+  line-height:1.45;
+}
+@media(max-width:599px){
+  .hw-table-head{display:none !important;}
+  .hw-row{display:block !important;border:1.5px solid var(--border) !important;border-radius:10px !important;margin-bottom:8px;}
+  .hw-c1,.hw-c2,.hw-c3{border-right:none !important;border-bottom:1px dashed var(--border);padding:8px 10px !important;}
+  .hw-c3{border-bottom:none !important;}
+}
 
 </style>
 </head>
