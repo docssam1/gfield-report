@@ -219,6 +219,13 @@ button:disabled{opacity:.55;cursor:not-allowed;}
   background:linear-gradient(135deg,#16417C,#2a5b9e) !important;
 }
 
+
+/* 학부모 미리보기 클릭 안정화 */
+#parentPreviewModal{z-index:12000;}
+#parentPreviewModal.show{display:flex !important;pointer-events:auto !important;}
+#parentPreviewModal .modal{pointer-events:auto !important;}
+#previewParentBtn{pointer-events:auto !important;position:relative;z-index:2;}
+
 </style>
 </head>
 <body>
@@ -462,7 +469,7 @@ button:disabled{opacity:.55;cursor:not-allowed;}
 
 <!-- 하단 버튼들 -->
 <div class="btns">
-  <button class="kakao-btn" id="previewParentBtn" onclick="openParentPreview()">👨‍👩‍👧 학부모 HTML 템플릿 미리보기</button>
+  <button type="button" class="kakao-btn" id="previewParentBtn" onclick="openParentPreview(event)">👨‍👩‍👧 학부모 HTML 템플릿 미리보기</button>
   <button class="btn-dl" id="saveDriveBtn" onclick="saveToDrive()">💾 1단계: 드라이브 저장 및 시트 기록</button>
   <button class="btn-gh" id="ghBtn" onclick="deployToGitHubPages()">🔗 2단계: 웹 링크 생성 (배포)</button>
   <button class="notion-btn" id="notionBtn" onclick="saveToNotion()">📅 3단계: 캘린더 전송</button>
@@ -501,9 +508,9 @@ button:disabled{opacity:.55;cursor:not-allowed;}
     <div class="preview-modal-head">
       <div class="preview-modal-title">👨‍👩‍👧 학부모 전송 HTML 템플릿 미리보기</div>
       <div class="preview-actions">
-        <button class="preview-refresh" onclick="refreshParentPreview()">새로고침</button>
-        <button class="preview-open" onclick="openParentPreviewNewTab()">새 탭으로 보기</button>
-        <button class="preview-close" onclick="closeParentPreview()">닫기</button>
+        <button type="button" class="preview-refresh" onclick="refreshParentPreview()">새로고침</button>
+        <button type="button" class="preview-open" onclick="openParentPreviewNewTab()">새 탭으로 보기</button>
+        <button type="button" class="preview-close" onclick="closeParentPreview()">닫기</button>
       </div>
     </div>
     <div class="preview-note">
@@ -673,6 +680,7 @@ function closeKeyModal(){
   if(modal) modal.classList.remove('show');
 }
 
+
 let __savingKeys = false;
 async function saveKeys(){
   if(__savingKeys) return;
@@ -708,37 +716,53 @@ async function saveKeys(){
 
     const sUrl = getKey('script');
     if(sUrl){
-      await fetch(sUrl, {
-        method:'POST',
-        body:JSON.stringify({
-          action:'update_keys',
-          github_token:safeGetEl_('k_gh')?.value || '',
-          kakao_key:safeGetEl_('k_kakao')?.value || '',
-          notion_key:safeGetEl_('k_notion_key')?.value || '',
-          notion_db:safeGetEl_('k_notion_db')?.value || '',
-          github_user:safeGetEl_('k_ghuser')?.value || 'docssam1',
-          github_repo:safeGetEl_('k_ghrepo')?.value || 'gfield-report',
-          sheet_id:safeGetEl_('k_sheet_id')?.value || DEFAULT_SHEET,
-          aligo_id:safeGetEl_('k_aligo_id')?.value || '',
-          aligo_key:safeGetEl_('k_aligo_key')?.value || ''
-        })
-      }).catch(e=>console.warn('Apps Script 키 저장 실패:', e));
+      const payload = {
+        action:'update_keys',
+
+        // URL / 기본 연결값
+        google_apps_script_url:safeGetEl_('k_script')?.value || '',
+        app_script_url:safeGetEl_('k_script')?.value || '',
+        script_url:safeGetEl_('k_script')?.value || '',
+        apps_script_editor_url:safeGetEl_('k_script_edit_url')?.value || '',
+        script_edit_url:safeGetEl_('k_script_edit_url')?.value || '',
+
+        // GitHub
+        github_token:safeGetEl_('k_gh')?.value || '',
+        github_user:safeGetEl_('k_ghuser')?.value || 'docssam1',
+        github_repo:safeGetEl_('k_ghrepo')?.value || 'gfield-report',
+
+        // Kakao
+        kakao_key:safeGetEl_('k_kakao')?.value || '',
+
+        // Notion
+        notion_key:safeGetEl_('k_notion_key')?.value || '',
+        notion_db:safeGetEl_('k_notion_db')?.value || '',
+
+        // Aligo
+        aligo_id:safeGetEl_('k_aligo_id')?.value || '',
+        aligo_key:safeGetEl_('k_aligo_key')?.value || '',
+        aligo_sender:'01020837265',
+
+        // Sheet / Drive
+        sheet_id:safeGetEl_('k_sheet_id')?.value || DEFAULT_SHEET,
+        drive_folder_id:'1ydIsZGns3_yq--hRaYEvORViWiCUrgy6'
+      };
+
+      const res = await fetch(sUrl, { method:'POST', body:JSON.stringify(payload) });
+      const data = await res.json().catch(()=>({result:'success'}));
+      if(data.result === 'error') throw new Error(data.error || 'Apps Script 키 저장 실패');
     }
 
     closeKeyModal();
     if(typeof initKakao === 'function') initKakao();
-    if(typeof showToast === 'function') showToast('✅ 설정 저장 완료!');
+    if(typeof updateAppsScriptEditorLink === 'function') updateAppsScriptEditorLink();
+    if(typeof showToast === 'function') showToast('✅ 설정이 Apps Script에 저장되었습니다.');
   }catch(e){
     alert('설정 저장 오류: ' + e.message);
   }finally{
     __savingKeys = false;
     if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = oldText || '💾 저장하고 닫기'; }
   }
-}
-
-function openAppsScriptEditor(){
-  const url = getKey('scriptEditUrl') || 'https://script.google.com/home';
-  window.open(url, '_blank');
 }
 
 function initKakao(){const key=getKey('kakao');if(!key||!window.Kakao)return;try{if(!Kakao.isInitialized()) Kakao.init(key);}catch(e){}}
@@ -1646,6 +1670,13 @@ button:disabled{opacity:.55;cursor:not-allowed;}
   background:linear-gradient(135deg,#16417C,#2a5b9e) !important;
 }
 
+
+/* 학부모 미리보기 클릭 안정화 */
+#parentPreviewModal{z-index:12000;}
+#parentPreviewModal.show{display:flex !important;pointer-events:auto !important;}
+#parentPreviewModal .modal{pointer-events:auto !important;}
+#previewParentBtn{pointer-events:auto !important;position:relative;z-index:2;}
+
 </style></head><body><div class="wrap"><div class="card"><div class="badge">${badgeText}</div><h1>${titleText}</h1><div style="color:#64748b;font-size:13px;margin-bottom:20px;">${d}</div><div class="info-row"><span class="info-label">${dateLabel}</span><span class="info-val">${d}</span></div>${r&&reasonType!=='free'?`<div class="info-row"><span class="info-label">${rLab}</span><span class="info-val">${esc(r)}</span></div>`:''}<div class="info-row"><span class="info-label">보강/보충 일정</span><span class="info-val">${mStr}</span></div></div>${nt?`<div class="card"><div style="font-weight:800;color:#16417C;margin-bottom:12px;">📢 추가 전달 사항 및 공지</div><div class="notice-box">${esc(nt)}</div></div>`:''}${sr('동영상 강의','🎬',vidH)}${sr('추가 자료','🔗',resH)}<div style="text-align:center;color:#94a3b8;font-size:11px;margin-top:30px;">© G-Field Gifted Education</div></div></body></html>`;
 }
 
@@ -1758,6 +1789,13 @@ button:disabled{opacity:.55;cursor:not-allowed;}
 .header:not(.cs-mode){
   background:linear-gradient(135deg,#16417C,#2a5b9e) !important;
 }
+
+
+/* 학부모 미리보기 클릭 안정화 */
+#parentPreviewModal{z-index:12000;}
+#parentPreviewModal.show{display:flex !important;pointer-events:auto !important;}
+#parentPreviewModal .modal{pointer-events:auto !important;}
+#previewParentBtn{pointer-events:auto !important;position:relative;z-index:2;}
 
 </style></head><body><div class="web-wrap"><div class="web-header"><div class="hd-l"><h1>지필드 영재교육 학습 리포트</h1><p>G-Field Gifted Education</p><div class="badge">${classType}</div></div><div class="hd-r"><div class="s-name">${esc(n)} 학생</div><div class="date">${d}${crs?' · '+esc(crs):''}</div></div></div>${nt?`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:16px;padding:16px;margin-bottom:16px;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#451a03;">📢 ${esc(nt)}</div>`:''}${sr('과제 확인','✅',hwR+hwPH)}${sr('학습 요약','📖',subH)}${sr('수업 사진','📸',pRen(classPhotos))}${sr('동영상 강의','🎬',vidH)}${sr('추가 자료','🔗',resH)}${sr('오늘의 과제','✏️',tHwH)}<div style="text-align:center;margin:36px 0;font-size:11px;color:#94a3b8;">© G-Field Gifted Education</div>${hideD}</div></body></html>`;
 }
@@ -1897,28 +1935,49 @@ function shareKakao(){
   Kakao.Share.sendDefault({ objectType: 'feed', content: { title: `지필드 영재교육 안내`, description: document.getElementById('msgText').value.substring(0,150), imageUrl: `https://docssam1.github.io/gfield-report/og-cover.png`, link: { mobileWebUrl: url, webUrl: url } } });
 }
 
+
 /* =========================================================
  * 학부모 전송 HTML 템플릿 미리보기
- * - buildSnapshot()이 있으면 실제 배포 HTML을 그대로 사용
- * - 없거나 오류가 나면 현재 입력값 기반의 안전 미리보기를 생성
+ * - 버튼 클릭 안정화
+ * - buildSnapshot() 오류 시에도 안전 미리보기 표시
  * ========================================================= */
 let __parentPreviewBlobUrl = '';
 
-function openParentPreview(){
+function openParentPreview(e){
+  if(e && e.preventDefault) e.preventDefault();
+  const modal = document.getElementById('parentPreviewModal');
+  if(!modal){
+    alert('학부모 미리보기 창을 찾을 수 없습니다.');
+    return;
+  }
   refreshParentPreview();
-  document.getElementById('parentPreviewModal').classList.add('show');
+  modal.classList.add('show');
+  modal.style.display = 'flex';
 }
 
 function closeParentPreview(){
-  document.getElementById('parentPreviewModal').classList.remove('show');
+  const modal = document.getElementById('parentPreviewModal');
+  if(!modal) return;
+  modal.classList.remove('show');
+  modal.style.display = 'none';
 }
 
 function refreshParentPreview(){
-  const html = buildParentPreviewHtml();
   const frame = document.getElementById('parentPreviewFrame');
-  if(!frame) return;
+  if(!frame){
+    alert('학부모 미리보기 프레임을 찾을 수 없습니다.');
+    return;
+  }
 
-  // iframe srcdoc 우선 사용: GitHub Pages에서도 별도 서버 비용 없음
+  let html = '';
+  try {
+    html = buildParentPreviewHtml();
+  } catch(e) {
+    console.warn('미리보기 생성 오류:', e);
+    html = buildParentPreviewFallbackHtml();
+  }
+
+  frame.removeAttribute('src');
   frame.srcdoc = html;
 
   if(__parentPreviewBlobUrl) URL.revokeObjectURL(__parentPreviewBlobUrl);
@@ -1926,7 +1985,12 @@ function refreshParentPreview(){
 }
 
 function openParentPreviewNewTab(){
-  const html = buildParentPreviewHtml();
+  let html = '';
+  try {
+    html = buildParentPreviewHtml();
+  } catch(e) {
+    html = buildParentPreviewFallbackHtml();
+  }
   const blobUrl = URL.createObjectURL(new Blob([html], {type:'text/html;charset=utf-8'}));
   window.open(blobUrl, '_blank');
 }
@@ -1942,6 +2006,13 @@ function buildParentPreviewHtml(){
   }
   return buildParentPreviewFallbackHtml();
 }
+
+document.addEventListener('DOMContentLoaded', function(){
+  const btn = document.getElementById('previewParentBtn');
+  if(btn){
+    btn.addEventListener('click', openParentPreview);
+  }
+});
 
 function buildParentPreviewFallbackHtml(){
   const name = document.getElementById('nameInput')?.value.trim() || '학생';
@@ -2073,6 +2144,13 @@ button:disabled{opacity:.55;cursor:not-allowed;}
 .header:not(.cs-mode){
   background:linear-gradient(135deg,#16417C,#2a5b9e) !important;
 }
+
+
+/* 학부모 미리보기 클릭 안정화 */
+#parentPreviewModal{z-index:12000;}
+#parentPreviewModal.show{display:flex !important;pointer-events:auto !important;}
+#parentPreviewModal .modal{pointer-events:auto !important;}
+#previewParentBtn{pointer-events:auto !important;position:relative;z-index:2;}
 
 </style>
 </head>
