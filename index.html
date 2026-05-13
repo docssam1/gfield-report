@@ -510,6 +510,100 @@ textarea.auto-grow{
 #parentPreviewModal.show{display:flex !important;pointer-events:auto !important;}
 #parentPreviewModal .modal,#parentPreviewModal button,#parentPreviewModal iframe{pointer-events:auto !important;}
 
+
+/* 모든 버튼 클릭감 / 중복 클릭 방지 표시 */
+button{
+  transition:transform .08s ease, filter .12s ease, opacity .12s ease !important;
+}
+button:active,
+button.is-pressing{
+  transform:scale(.975) translateY(1px) !important;
+  filter:brightness(.94) !important;
+}
+button:disabled,
+button.btn-busy{
+  opacity:.62 !important;
+  cursor:not-allowed !important;
+  pointer-events:none !important;
+}
+
+
+.logo-wrap{position:absolute;right:26px;top:26px;width:72px;height:72px;border-radius:20px;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(15,23,42,.16);z-index:2;}
+.logo-wrap img{max-width:58px;max-height:58px;object-fit:contain;}
+
+
+
+/* =========================================================
+ * 학부모 리포트 버튼 최종 레이아웃
+ * - 텍스트 넘침 방지
+ * - 모바일 엄지 터치 최적화
+ * - 용도별 버튼 색상 고정
+ * ========================================================= */
+.action-grid{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:12px !important;
+  margin-top:16px !important;
+}
+.action-grid a,
+.action-grid button{
+  width:100% !important;
+  min-width:0 !important;
+  min-height:58px !important;
+  padding:12px 14px !important;
+  border:none !important;
+  border-radius:16px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  white-space:normal !important;
+  word-break:keep-all !important;
+  overflow-wrap:break-word !important;
+  line-height:1.25 !important;
+  font-size:14.5px !important;
+  font-weight:900 !important;
+  letter-spacing:-.35px !important;
+  text-decoration:none !important;
+  font-family:inherit !important;
+  box-shadow:0 7px 16px rgba(15,23,42,.13) !important;
+  cursor:pointer !important;
+  box-sizing:border-box !important;
+}
+.action-grid a:active,
+.action-grid button:active{
+  transform:scale(.98);
+  filter:brightness(.95);
+}
+.action-copy{background:#047857!important;color:#fff!important;}
+.action-pay{background:#2563EB!important;color:#fff!important;}
+.action-zero{background:#00A651!important;color:#fff!important;}
+.action-teacher{background:#4F46E5!important;color:#fff!important;}
+.action-confirm{background:#0F766E!important;color:#fff!important;}
+.action-kakao{background:#FEE500!important;color:#3B1E1E!important;}
+.action-call{background:#DC2626!important;color:#fff!important;}
+.action-map{background:#2DBE5E!important;color:#fff!important;}
+.action-grid-payment .action-map{
+  grid-column:1 / -1 !important;
+  min-height:60px !important;
+  font-size:15.5px !important;
+}
+@media(max-width:640px){
+  .action-grid{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+  .action-grid a,
+  .action-grid button{
+    min-height:56px !important;
+    font-size:15px !important;
+    padding:12px 16px !important;
+  }
+  .action-grid-payment .action-map{
+    grid-column:auto !important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -949,30 +1043,30 @@ window.addEventListener('load', ()=>{
 
 
 function openKeyModal(){
-  document.getElementById('k_gh').value=getKey('gh');
-  document.getElementById('k_script').value=getKey('script');
-  document.getElementById('k_kakao').value=getKey('kakao');
-  document.getElementById('k_notion_key').value=getKey('notionKey');
-  document.getElementById('k_notion_db').value=getKey('notionDb');
-  document.getElementById('k_ghuser').value=getKey('ghUser')||'docssam1';
-  document.getElementById('k_ghrepo').value=getKey('ghRepo')||'gfield-report';
-  document.getElementById('k_sheet_id').value=getKey('sheetId')||DEFAULT_SHEET;
-  if(document.getElementById('k_aligo_id')) document.getElementById('k_aligo_id').value=getKey('aligoId')||'';
-  if(document.getElementById('k_aligo_key')) document.getElementById('k_aligo_key').value=getKey('aligoKey')||'';
-  if(document.getElementById('k_script_edit_url')) document.getElementById('k_script_edit_url').value=getKey('scriptEditUrl')||'';
+  if(qs('k_gh')) qs('k_gh').value = getKey('gh');
+  if(qs('k_script')) qs('k_script').value = getKey('script');
+  if(qs('k_kakao')) qs('k_kakao').value = getKey('kakao');
+  if(qs('k_notion_key')) qs('k_notion_key').value = getKey('notionKey');
+  if(qs('k_notion_db')) qs('k_notion_db').value = getKey('notionDb');
+  if(qs('k_ghuser')) qs('k_ghuser').value = getKey('ghUser')||'docssam1';
+  if(qs('k_ghrepo')) qs('k_ghrepo').value = getKey('ghRepo')||'gfield-report';
+  if(qs('k_sheet_id')) qs('k_sheet_id').value = getKey('sheetId')||DEFAULT_SHEET;
+  if(document.getElementById('k_aligo_id')) if(qs('k_aligo_id')) qs('k_aligo_id').value = getKey('aligoId')||'';
+  if(document.getElementById('k_aligo_key')) if(qs('k_aligo_key')) qs('k_aligo_key').value = getKey('aligoKey')||'';
+  if(document.getElementById('k_script_edit_url')) if(qs('k_script_edit_url')) qs('k_script_edit_url').value = getKey('scriptEditUrl')||'';
   document.getElementById('keyModal').classList.add('show');
 }
 function closeKeyModal(){document.getElementById('keyModal').classList.remove('show');}
 async function saveKeys(){
   ['gh','script','kakao'].forEach(k=>setKey(k,document.getElementById('k_'+k).value));
-  setKey('notionKey',document.getElementById('k_notion_key').value);
-  setKey('notionDb',document.getElementById('k_notion_db').value);
-  setKey('ghUser',document.getElementById('k_ghuser').value||'docssam1');
-  setKey('ghRepo',document.getElementById('k_ghrepo').value||'gfield-report');
-  setKey('sheetId',document.getElementById('k_sheet_id').value||DEFAULT_SHEET);
-  if(document.getElementById('k_aligo_id')) setKey('aligoId',document.getElementById('k_aligo_id').value);
-  if(document.getElementById('k_aligo_key')) setKey('aligoKey',document.getElementById('k_aligo_key').value);
-  if(document.getElementById('k_script_edit_url')) setKey('scriptEditUrl',document.getElementById('k_script_edit_url').value);
+  setKey('notionKey',val('k_notion_key'));
+  setKey('notionDb',val('k_notion_db'));
+  setKey('ghUser',val('k_ghuser')||'docssam1');
+  setKey('ghRepo',val('k_ghrepo')||'gfield-report');
+  setKey('sheetId',val('k_sheet_id')||DEFAULT_SHEET);
+  if(document.getElementById('k_aligo_id')) setKey('aligoId',val('k_aligo_id'));
+  if(document.getElementById('k_aligo_key')) setKey('aligoKey',val('k_aligo_key'));
+  if(document.getElementById('k_script_edit_url')) setKey('scriptEditUrl',val('k_script_edit_url'));
   const sUrl=getKey('script');
   if(sUrl){
     try{
@@ -1147,7 +1241,7 @@ function updateWeekday(){
 window.addEventListener('DOMContentLoaded',()=>{ 
   document.querySelector('.mode-toggle-wrap')?.classList.add('report-active');
   initKakao(); 
-  document.getElementById('dateInput').value=new Date().toISOString().split('T')[0]; updateWeekday(); 
+  if(qs('dateInput')) qs('dateInput').value = new Date().toISOString().split('T')[0]; updateWeekday(); 
   addHwRow(); addSubjRow(); addTodayHwRow(); loadTodos(); updateAppsScriptEditorLink(); applyAutoGrow(document);
 });
 
@@ -1290,7 +1384,7 @@ function updateAbsentUI() {
 }
 
 function toggleMakeupDate() {
-  const type = document.getElementById('absentMakeupType').value;
+  const type = val('absentMakeupType');
   const dateField = document.getElementById('makeupDateField');
   const dateLabel = document.getElementById('makeupDateLabel');
   const reasonLabel = document.getElementById('absentReasonLabel');
@@ -1404,7 +1498,7 @@ function searchStudent() {
   window.__searchStudentRunning = true;
 
   (async function(){
-    const query = document.getElementById('nameInput').value.trim();
+    const query = val('nameInput').trim();
     if(!query) { showToast('이름이나 연락처 4자리를 입력하세요.'); return; }
 
     const sUrl = getKey('script');
@@ -1434,9 +1528,9 @@ function searchStudent() {
     window.__gfieldSearchFilling = true;
     try{
       if(student){
-        if(student.name || student['이름']) document.getElementById('nameInput').value = student.name || student['이름'];
-        if(document.getElementById('dbSchool')) document.getElementById('dbSchool').value = student.school || student['학교/유치원'] || student.schoolName || '';
-        if(document.getElementById('dbPhone')) document.getElementById('dbPhone').value = student.phone || student['연락처'] || '';
+        if(student.name || student['이름']) if(qs('nameInput')) qs('nameInput').value = student.name || student['이름'];
+        if(document.getElementById('dbSchool')) if(qs('dbSchool')) qs('dbSchool').value = student.school || student['학교/유치원'] || student.schoolName || '';
+        if(document.getElementById('dbPhone')) if(qs('dbPhone')) qs('dbPhone').value = student.phone || student['연락처'] || '';
         if(typeof setDbGradeValue === 'function') setDbGradeValue(student.grade || student['학년/나이'] || '');
         if(typeof setDbStatusValue === 'function') setDbStatusValue(student.status || student['상태'] || '');
         if(typeof rememberSchoolOption === 'function') rememberSchoolOption(document.getElementById('dbSchool')?.value || '');
@@ -1470,19 +1564,21 @@ function searchStudent() {
 }
 
 function saveDbData() {
+  if(!window.__gfieldSheetSaveRequested) return;
+  window.__gfieldSheetSaveRequested = false;
   if(window.__gfieldSearchFilling) return;
   rememberSchoolOption(document.getElementById('dbSchool')?.value);
-  const name = document.getElementById('nameInput').value.trim();
+  const name = val('nameInput').trim();
   if(!name) return;
   const sUrl = getKey('script'); if(!sUrl) return;
-  const innerContent = document.getElementById('csInnerMemo') ? document.getElementById('csInnerMemo').value.trim() : '';
+  const innerContent = document.getElementById('csInnerMemo') ? val('csInnerMemo').trim() : '';
   const logStr = (currentMode === '상담' ? classType : '학습 리포트 발행');
-  const selectedDate = document.getElementById('dateInput').value; // 프론트 선택 날짜
+  const selectedDate = val('dateInput'); // 프론트 선택 날짜
   
   fetch(sUrl, { method: 'POST', body: JSON.stringify({ 
-    action: 'update_student', name: name, school: document.getElementById('dbSchool').value, grade: document.getElementById('dbGrade').value, 
-    phone: document.getElementById('dbPhone').value, status: document.getElementById('dbStatus').value, log: logStr, 
-    content: innerContent, course: document.getElementById('courseInput').value, date: selectedDate, sheetId: getKey('sheetId')||DEFAULT_SHEET 
+    action: 'update_student', name: name, school: val('dbSchool'), grade: val('dbGrade'), 
+    phone: val('dbPhone'), status: val('dbStatus'), log: logStr, 
+    content: innerContent, course: val('courseInput'), date: selectedDate, sheetId: getKey('sheetId')||DEFAULT_SHEET 
   })});
 }
 
@@ -1826,15 +1922,15 @@ function refreshTodosManually(){
 }
 
 function autoAddTodoForSchedule() {
-  const n = document.getElementById('nameInput').value.trim();
+  const n = val('nameInput').trim();
   const school = document.getElementById('dbSchool')?.value.trim() || '';
   const grade = document.getElementById('dbGrade')?.value.trim() || '';
   if(!n) return;
 
   let todoText = "";
-  const dDate = document.getElementById('dateInput').value;
-  const dStart = document.getElementById('startTimeInput').value;
-  const dEnd = document.getElementById('endTimeInput').value;
+  const dDate = val('dateInput');
+  const dStart = val('startTimeInput');
+  const dEnd = val('endTimeInput');
   let dTimeStr = dDate;
   if(dStart) dTimeStr += ` ${dStart}`;
   if(dEnd) dTimeStr += `~${dEnd}`;
@@ -1844,9 +1940,9 @@ function autoAddTodoForSchedule() {
     else if (classType === '재원생상담') todoText = `[상담] ${n} - ${dTimeStr}`;
   } else if (currentMode === '리포트') {
     if (classType === '결석') {
-      const mdDate = document.getElementById('absentMakeupDate').value;
-      const mdStart = document.getElementById('absentMakeupStartTime').value;
-      const mdEnd = document.getElementById('absentMakeupEndTime').value;
+      const mdDate = val('absentMakeupDate');
+      const mdStart = val('absentMakeupStartTime');
+      const mdEnd = val('absentMakeupEndTime');
       const reasonType = document.querySelector('input[name="absentReasonType"]:checked').value;
       const mt = document.getElementById('absentMakeupType').options[document.getElementById('absentMakeupType').selectedIndex].text;
 
@@ -1895,10 +1991,10 @@ function getDayName(dateStr) {const days=['일','월','화','수','목','금','�
 function getGreeting(){const h=new Date().getHours(),d=new Date().getDay();if(d===0||d===6)return '즐거운 주말 되세요 😊';if(h>=6&&h<12)return '좋은 아침 되세요 🌅';if(h>=12&&h<20)return '즐거운 오후 되세요 ☀️';return '평안한 밤 되세요 🌙';}
 
 function updateMsgBox(forcedUrl) {
-  const name = document.getElementById('nameInput').value.trim() || '학생';
-  const dIn = document.getElementById('dateInput').value || new Date().toISOString().split('T')[0];
-  const startTime = document.getElementById('startTimeInput').value;
-  const endTime = document.getElementById('endTimeInput').value;
+  const name = val('nameInput').trim() || '학생';
+  const dIn = val('dateInput') || new Date().toISOString().split('T')[0];
+  const startTime = val('startTimeInput');
+  const endTime = val('endTimeInput');
 
   const dObj = new Date(dIn + 'T00:00:00');
   const dFmt = `${String(dObj.getFullYear()).slice(2)}년 ${dObj.getMonth()+1}월 ${dObj.getDate()}일`;
@@ -1926,8 +2022,8 @@ function updateMsgBox(forcedUrl) {
     } 
     else if (classType === '테스트진행' || classType === '대면상담') {
       msgBox.readOnly = true;
-      const tTime = document.getElementById('testTime').value || "50";
-      const tFee = document.getElementById('testFee').value || "5만원";
+      const tTime = val('testTime') || "50";
+      const tFee = val('testFee') || "5만원";
       msg += `${name} 학생의 상담일정 안내드립니다.\n\n- 일시: ${fDate} 약 ${tTime}분 소요\n`;
       if(classType === '테스트진행') {
          msg += `- 비용 : ${tFee}\n(진단+분석+대면 상담 포함)\n\n(${acc})_ 이체 후 문자 부탁드립니다.\n\n- 상담 일정은 테스트 후 시간을 협의하여 진행합니다.\n* 테스트 요일 변경을 원할 경우 꼭 전화 부탁드립니다.\n① 시험 중 부모님은 외부에서 대기하여야 합니다. \n② 시험 종료 5분전 연락드립니다.\n\n`;
@@ -1949,7 +2045,7 @@ function updateMsgBox(forcedUrl) {
           classInfos += `\n[수업안내]\n- 수업 시작일: ${cd}\n- 과정: ${cn}\n- 교재: ${cbk}\n------------------------------\n* 교재 구매 링크\n${clk}\n* 수업료\n${cf}\n------------------------------\n`;
         }
       });
-      const tFee = document.getElementById('totalFee').value;
+      const tFee = val('totalFee');
       msg += `${name} 학생의 첫 수업 및 등록 안내입니다.\n${classInfos}${tFee ? '\n총 ' + tFee + '\n' : ''}\n* 매월 10일경 다음달 수강료 문자가 발송됩니다.\n* (${acc}) 입금 또는 결제선생/카드로 결제하면 최종 확정됩니다.\n* 주차장이 협소하여 잠시 주차만 가능합니다.\n* 1층 출입문 비밀번호: <종 모양 버튼 누르신 후 0852>\n- 문의: 02)3453-7772\n- 위치: 강남구 역삼로 460-2, 뉴원빌딩 4층\n${memo? '\n* 특이사항: '+memo : ''}`;
     }
   } 
@@ -1959,13 +2055,13 @@ function updateMsgBox(forcedUrl) {
     if (!curUrl || curUrl === '#' || curUrl === window.location.href) curUrl = "https://docssam1.github.io/gfield-report/#";
     
     if (classType === '결석') {
-      const mType = document.getElementById('absentMakeupType').value;
-      const mDateRaw = document.getElementById('absentMakeupDate').value;
-      const mStart = document.getElementById('absentMakeupStartTime').value;
-      const mEnd = document.getElementById('absentMakeupEndTime').value;
+      const mType = val('absentMakeupType');
+      const mDateRaw = val('absentMakeupDate');
+      const mStart = val('absentMakeupStartTime');
+      const mEnd = val('absentMakeupEndTime');
       const reasonType = document.querySelector('input[name="absentReasonType"]:checked').value;
-      const abReason = document.getElementById('absentReason').value.trim();
-      const notice = document.getElementById('noticeArea').value.trim();
+      const abReason = val('absentReason').trim();
+      const notice = val('noticeArea').trim();
 
       if(reasonType === 'free') msg += `${name} 학생 보강/보충 일정 안내입니다.\n`;
       else if(reasonType === 'cancelled') msg += `${dFmt} 수업 휴강에 대한 ${name} 학생 보강 공지입니다.\n`;
@@ -1994,7 +2090,7 @@ function updateMsgBox(forcedUrl) {
       msg += `\n${dFmt} ${name} 학생의 학습 리포트입니다.\n\n${curUrl}\n\n${getGreeting()}`;
     }
   }
-  document.getElementById('msgText').value = msg;
+  if(qs('msgText')) qs('msgText').value = msg;
 }
 
 
@@ -2004,7 +2100,7 @@ function updateMsgBox(forcedUrl) {
 
 
 function addResourceRow(name='',link=''){ const d=document.createElement('div');d.style='display:flex;gap:5px;margin-bottom:5px;align-items:center;';d.innerHTML=`<input type="text" class="v-name" value="${name}" placeholder="자료명" style="flex:1;border:1px solid var(--border);border-radius:8px;padding:8px;outline:none;"><input type="url" class="v-link" value="${link}" placeholder="링크" style="flex:2;border:1px solid var(--border);border-radius:8px;padding:8px;outline:none;"><button style="border:none;background:none;font-size:16px;cursor:pointer;color:red;" onclick="this.parentElement.remove(); updateMsgBox();">✕</button>`;document.getElementById('resourceList').appendChild(d); updateMsgBox(); }
-function addVideo(){ const url=document.getElementById('videoUrlInput').value.trim(); if(!url){window.open('https://studio.youtube.com/','_blank');return;} const m=url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i); if(!m)return showToast('유튜브 링크 확인 필요'); const d=document.createElement('div');d.style='width:150px;position:relative;';d.innerHTML=`<img src="https://img.youtube.com/vi/${m[1]}/hqdefault.jpg" style="width:100%;border-radius:8px;" data-url="${url}"><input type="text" class="v-cmt" placeholder="코멘트" style="width:100%;border:1px solid var(--border);font-size:11px;margin-top:4px;border-radius:6px;padding:4px;outline:none;"><button style="position:absolute;top:-5px;right:-5px;background:red;color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;" onclick="this.parentElement.remove(); updateMsgBox();">✕</button>`;document.getElementById('videoList').appendChild(d);document.getElementById('videoUrlInput').value=''; updateMsgBox(); }
+function addVideo(){ const url=val('videoUrlInput').trim(); if(!url){window.open('https://studio.youtube.com/','_blank');return;} const m=url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i); if(!m)return showToast('유튜브 링크 확인 필요'); const d=document.createElement('div');d.style='width:150px;position:relative;';d.innerHTML=`<img src="https://img.youtube.com/vi/${m[1]}/hqdefault.jpg" style="width:100%;border-radius:8px;" data-url="${url}"><input type="text" class="v-cmt" placeholder="코멘트" style="width:100%;border:1px solid var(--border);font-size:11px;margin-top:4px;border-radius:6px;padding:4px;outline:none;"><button style="position:absolute;top:-5px;right:-5px;background:red;color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;" onclick="this.parentElement.remove(); updateMsgBox();">✕</button>`;document.getElementById('videoList').appendChild(d);if(qs('videoUrlInput')) qs('videoUrlInput').value = ''; updateMsgBox(); }
 
 let hwPhotos=[], classPhotos=[];
 function extractDriveFileId(url){
@@ -2041,10 +2137,10 @@ function removePhoto(pid,cid){
 }
 
 function buildAbsentSnapshot(){
-  const n=document.getElementById('nameInput').value||'학생', d=document.getElementById('dateInput').value.replace(/-/g,'.');
-  const mt=document.getElementById('absentMakeupType').value, mdDate=document.getElementById('absentMakeupDate').value;
-  const mdStart=document.getElementById('absentMakeupStartTime').value, mdEnd=document.getElementById('absentMakeupEndTime').value;
-  const r=document.getElementById('absentReason').value, nt=document.getElementById('noticeArea').value;
+  const n=val('nameInput')||'학생', d=val('dateInput').replace(/-/g,'.');
+  const mt=val('absentMakeupType'), mdDate=val('absentMakeupDate');
+  const mdStart=val('absentMakeupStartTime'), mdEnd=val('absentMakeupEndTime');
+  const r=val('absentReason'), nt=val('noticeArea');
   const reasonType = document.querySelector('input[name="absentReasonType"]:checked').value;
   
   let mStr="추후 결정", rLab = reasonType === 'free' ? "사유/내용" : (reasonType === 'cancelled' ? '휴강 사유' : "결석 사유");
@@ -2449,12 +2545,106 @@ textarea.auto-grow{
 #parentPreviewModal.show{display:flex !important;pointer-events:auto !important;}
 #parentPreviewModal .modal,#parentPreviewModal button,#parentPreviewModal iframe{pointer-events:auto !important;}
 
+
+/* 모든 버튼 클릭감 / 중복 클릭 방지 표시 */
+button{
+  transition:transform .08s ease, filter .12s ease, opacity .12s ease !important;
+}
+button:active,
+button.is-pressing{
+  transform:scale(.975) translateY(1px) !important;
+  filter:brightness(.94) !important;
+}
+button:disabled,
+button.btn-busy{
+  opacity:.62 !important;
+  cursor:not-allowed !important;
+  pointer-events:none !important;
+}
+
+
+.logo-wrap{position:absolute;right:26px;top:26px;width:72px;height:72px;border-radius:20px;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(15,23,42,.16);z-index:2;}
+.logo-wrap img{max-width:58px;max-height:58px;object-fit:contain;}
+
+
+
+/* =========================================================
+ * 학부모 리포트 버튼 최종 레이아웃
+ * - 텍스트 넘침 방지
+ * - 모바일 엄지 터치 최적화
+ * - 용도별 버튼 색상 고정
+ * ========================================================= */
+.action-grid{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:12px !important;
+  margin-top:16px !important;
+}
+.action-grid a,
+.action-grid button{
+  width:100% !important;
+  min-width:0 !important;
+  min-height:58px !important;
+  padding:12px 14px !important;
+  border:none !important;
+  border-radius:16px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  white-space:normal !important;
+  word-break:keep-all !important;
+  overflow-wrap:break-word !important;
+  line-height:1.25 !important;
+  font-size:14.5px !important;
+  font-weight:900 !important;
+  letter-spacing:-.35px !important;
+  text-decoration:none !important;
+  font-family:inherit !important;
+  box-shadow:0 7px 16px rgba(15,23,42,.13) !important;
+  cursor:pointer !important;
+  box-sizing:border-box !important;
+}
+.action-grid a:active,
+.action-grid button:active{
+  transform:scale(.98);
+  filter:brightness(.95);
+}
+.action-copy{background:#047857!important;color:#fff!important;}
+.action-pay{background:#2563EB!important;color:#fff!important;}
+.action-zero{background:#00A651!important;color:#fff!important;}
+.action-teacher{background:#4F46E5!important;color:#fff!important;}
+.action-confirm{background:#0F766E!important;color:#fff!important;}
+.action-kakao{background:#FEE500!important;color:#3B1E1E!important;}
+.action-call{background:#DC2626!important;color:#fff!important;}
+.action-map{background:#2DBE5E!important;color:#fff!important;}
+.action-grid-payment .action-map{
+  grid-column:1 / -1 !important;
+  min-height:60px !important;
+  font-size:15.5px !important;
+}
+@media(max-width:640px){
+  .action-grid{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+  .action-grid a,
+  .action-grid button{
+    min-height:56px !important;
+    font-size:15px !important;
+    padding:12px 16px !important;
+  }
+  .action-grid-payment .action-map{
+    grid-column:auto !important;
+  }
+}
+
 </style></head><body><div class="wrap"><div class="card"><div class="badge">${badgeText}</div><h1>${titleText}</h1><div style="color:#64748b;font-size:13px;margin-bottom:20px;">${d}</div><div class="info-row"><span class="info-label">${dateLabel}</span><span class="info-val">${d}</span></div>${r&&reasonType!=='free'?`<div class="info-row"><span class="info-label">${rLab}</span><span class="info-val">${esc(r)}</span></div>`:''}<div class="info-row"><span class="info-label">보강/보충 일정</span><span class="info-val">${mStr}</span></div></div>${nt?`<div class="card"><div style="font-weight:800;color:#16417C;margin-bottom:12px;">📢 추가 전달 사항 및 공지</div><div class="notice-box">${esc(nt)}</div></div>`:''}${sr('동영상 강의','🎬',vidH)}${sr('추가 자료','🔗',resH)}<div style="text-align:center;color:#94a3b8;font-size:11px;margin-top:30px;">© G-Field Gifted Education</div></div></body></html>`;
 }
 
 function buildSnapshot(){
   if(classType === '결석') return buildAbsentSnapshot();
-  const n=document.getElementById('nameInput').value||'학생',d=document.getElementById('dateInput').value.replace(/-/g,'.'),crs=document.getElementById('courseInput').value||'',nt=document.getElementById('noticeArea').value;
+  const n=val('nameInput')||'학생',d=val('dateInput').replace(/-/g,'.'),crs=val('courseInput')||'',nt=val('noticeArea');
   let hwR='',subH='',vidH='',resH='',tHwH='',hideD='';
   
   document.querySelectorAll('#hwList .hw-row').forEach(r=>{const c=r.querySelector('.v-course').value,p=r.querySelector('.v-perf').value,t=r.querySelector('.v-content').value;if(c||p||t){const pL=p==='done'?'✅ 수행':p==='partial'?'🔶 부분 수행':p==='miss'?'❌ 미수행':'';const pB=p==='done'?'#dcfce7':p==='partial'?'#fef9c3':p==='miss'?'#fee2e2':'transparent';hwR+=`<div style="display:grid;grid-template-columns:30% 22% 1fr;border-bottom:1px solid #eee;padding:10px 0;gap:8px;align-items:start;"><div style="font-weight:700;color:#16417C;font-size:13px;">${esc(c)}</div><div>${pL?`<span style="background:${pB};border-radius:6px;padding:3px 8px;font-size:12px;font-weight:700;">${pL}</span>`:''}</div><div style="font-size:13px;white-space:pre-wrap;line-height:1.6;">${esc(t)}</div></div>`;hideD+=`<div class="data-today-hw" data-course="${esc(c)}" data-perf="${esc(p)}" data-content="${esc(t)}" style="display:none;"></div>`;}});
@@ -2853,6 +3043,100 @@ textarea.auto-grow{
 #parentPreviewModal.show{display:flex !important;pointer-events:auto !important;}
 #parentPreviewModal .modal,#parentPreviewModal button,#parentPreviewModal iframe{pointer-events:auto !important;}
 
+
+/* 모든 버튼 클릭감 / 중복 클릭 방지 표시 */
+button{
+  transition:transform .08s ease, filter .12s ease, opacity .12s ease !important;
+}
+button:active,
+button.is-pressing{
+  transform:scale(.975) translateY(1px) !important;
+  filter:brightness(.94) !important;
+}
+button:disabled,
+button.btn-busy{
+  opacity:.62 !important;
+  cursor:not-allowed !important;
+  pointer-events:none !important;
+}
+
+
+.logo-wrap{position:absolute;right:26px;top:26px;width:72px;height:72px;border-radius:20px;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(15,23,42,.16);z-index:2;}
+.logo-wrap img{max-width:58px;max-height:58px;object-fit:contain;}
+
+
+
+/* =========================================================
+ * 학부모 리포트 버튼 최종 레이아웃
+ * - 텍스트 넘침 방지
+ * - 모바일 엄지 터치 최적화
+ * - 용도별 버튼 색상 고정
+ * ========================================================= */
+.action-grid{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:12px !important;
+  margin-top:16px !important;
+}
+.action-grid a,
+.action-grid button{
+  width:100% !important;
+  min-width:0 !important;
+  min-height:58px !important;
+  padding:12px 14px !important;
+  border:none !important;
+  border-radius:16px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  white-space:normal !important;
+  word-break:keep-all !important;
+  overflow-wrap:break-word !important;
+  line-height:1.25 !important;
+  font-size:14.5px !important;
+  font-weight:900 !important;
+  letter-spacing:-.35px !important;
+  text-decoration:none !important;
+  font-family:inherit !important;
+  box-shadow:0 7px 16px rgba(15,23,42,.13) !important;
+  cursor:pointer !important;
+  box-sizing:border-box !important;
+}
+.action-grid a:active,
+.action-grid button:active{
+  transform:scale(.98);
+  filter:brightness(.95);
+}
+.action-copy{background:#047857!important;color:#fff!important;}
+.action-pay{background:#2563EB!important;color:#fff!important;}
+.action-zero{background:#00A651!important;color:#fff!important;}
+.action-teacher{background:#4F46E5!important;color:#fff!important;}
+.action-confirm{background:#0F766E!important;color:#fff!important;}
+.action-kakao{background:#FEE500!important;color:#3B1E1E!important;}
+.action-call{background:#DC2626!important;color:#fff!important;}
+.action-map{background:#2DBE5E!important;color:#fff!important;}
+.action-grid-payment .action-map{
+  grid-column:1 / -1 !important;
+  min-height:60px !important;
+  font-size:15.5px !important;
+}
+@media(max-width:640px){
+  .action-grid{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+  .action-grid a,
+  .action-grid button{
+    min-height:56px !important;
+    font-size:15px !important;
+    padding:12px 16px !important;
+  }
+  .action-grid-payment .action-map{
+    grid-column:auto !important;
+  }
+}
+
 </style></head><body><div class="web-wrap"><div class="web-header"><div class="hd-l"><h1>지필드 영재교육 학습 리포트</h1><p>G-Field Gifted Education</p><div class="badge">${classType}</div></div><div class="hd-r"><div class="s-name">${esc(n)} 학생</div><div class="date">${d}${crs?' · '+esc(crs):''}</div></div></div>${nt?`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:16px;padding:16px;margin-bottom:16px;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#451a03;">📢 ${esc(nt)}</div>`:''}${sr('과제 확인','✅',hwR+hwPH)}${sr('학습 요약','📖',subH)}${sr('수업 사진','📸',pRen(classPhotos))}${sr('동영상 강의','🎬',vidH)}${sr('추가 자료','🔗',resH)}${sr('오늘의 과제','✏️',tHwH)}<div style="text-align:center;margin:36px 0;font-size:11px;color:#94a3b8;">© G-Field Gifted Education</div>${hideD}</div></body></html>`;
 }
 
@@ -2881,11 +3165,69 @@ function getCSRecordSummary(){
   };
 }
 
+async 
+/* =========================================================
+ * 저장 명령 명확화 / 중복 클릭 방지 / 버튼 동작감 / null 안전
+ * ========================================================= */
+window.__gfieldSheetSaveRequested = false;
+window.__gfieldActionLocks = window.__gfieldActionLocks || {};
+
+function qs(id){ return document.getElementById(id); }
+function val(id, fallback=''){
+  const el = qs(id);
+  return el ? (el.value ?? fallback) : fallback;
+}
+function txt(id, fallback=''){
+  const el = qs(id);
+  return el ? (el.textContent ?? fallback) : fallback;
+}
+
+function lockAction(name, ms=1800){
+  const now = Date.now();
+  if(window.__gfieldActionLocks[name] && now - window.__gfieldActionLocks[name] < ms) return true;
+  window.__gfieldActionLocks[name] = now;
+  return false;
+}
+
+function setButtonBusy(btn, busyText){
+  if(!btn) return function(){};
+  const oldText = btn.textContent;
+  btn.classList.add('btn-busy');
+  btn.disabled = true;
+  if(busyText) btn.textContent = busyText;
+  return function(){
+    btn.classList.remove('btn-busy');
+    btn.disabled = false;
+    btn.textContent = oldText;
+  };
+}
+
+function bindPressEffect(){
+  document.querySelectorAll('button').forEach(btn=>{
+    if(btn.dataset.pressBound === '1') return;
+    btn.dataset.pressBound = '1';
+    btn.addEventListener('pointerdown', ()=>btn.classList.add('is-pressing'));
+    ['pointerup','pointerleave','pointercancel','blur'].forEach(ev=>{
+      btn.addEventListener(ev, ()=>btn.classList.remove('is-pressing'));
+    });
+  });
+}
+document.addEventListener('DOMContentLoaded', bindPressEffect);
+window.addEventListener('load', bindPressEffect);
+
+function explicitSheetSaveOnly(){
+  window.__gfieldSheetSaveRequested = true;
+}
+
 async function saveToDrive(e){
+  if(e&&e.preventDefault)e.preventDefault();
+  if(lockAction('saveToDrive', 2500)) return false;
+  const __restoreBtn = setButtonBusy(e?.currentTarget || qs('saveDriveBtn'), '저장 중...');
+  explicitSheetSaveOnly();
   if(e&&e.preventDefault)e.preventDefault();
   const csRec = getCSRecordSummary();
   const sUrl=getKey('script');if(!sUrl){openKeyModal();return;}
-  const n=document.getElementById('nameInput').value.trim();if(!n){showToast('이름 입력 필요!');return;}
+  const n=val('nameInput').trim();if(!n){showToast('이름 입력 필요!');return;}
   
   let backendType = classType;
   if(classType === '결석') {
@@ -2893,7 +3235,7 @@ async function saveToDrive(e){
     backendType = reasonType === 'free' ? '보강' : '결석';
   }
   
-  const fName=`지필드_${document.getElementById('dateInput').value.replace(/-/g,'')}_${n}_${backendType}_리포트.html`;
+  const fName=`지필드_${val('dateInput').replace(/-/g,'')}_${n}_${backendType}_리포트.html`;
   const subjects = Array.from(document.querySelectorAll('#subjectList .subj-row-wrap')).map(row => {
     const title = row.querySelector('.v-subj').value.trim(); const content = row.querySelector('.v-content').value.trim(); return title ? `${title}(${content})` : '';
   }).filter(v => v).slice(0, 3).join(', ');
@@ -2903,22 +3245,25 @@ async function saveToDrive(e){
   try{
     const res=await fetch(sUrl,{method:'POST',body:JSON.stringify({
       action:'save_drive', mode:currentMode, csRecord:csRec, studentName:n, name:csRec.name||n, type:backendType, school:csRec.school, grade:csRec.grade, phone:csRec.phone, course:csRec.course, content:currentMode==='상담'?csRec.content:undefined, fileName:fName, htmlContent:buildSnapshot(),
-      sheetId:getKey('sheetId')||DEFAULT_SHEET, attendance:{date:document.getElementById('dateInput').value, type:backendType, course:document.getElementById('courseInput').value.trim(), subjects_merged:subjects}
+      sheetId:getKey('sheetId')||DEFAULT_SHEET, attendance:{date:val('dateInput'), type:backendType, course:val('courseInput').trim(), subjects_merged:subjects}
     })});
     const r=await res.json(); if(r.result==='success'){window.setLink(r.url);showToast('✅ 구글 드라이브/시트 기록 완료!');}else throw new Error(r.error || "응답 오류");
   }catch(e){alert('❌ 저장 실패: '+e.message);}finally{ if(typeof updateActionButtonLabels==='function') updateActionButtonLabels(); else btn.textContent='💾 1단계: 드라이브 저장 및 시트 기록'; btn.disabled = false;}
+
+  setTimeout(__restoreBtn, 400);
+  return false;
 }
 
 async function deployToGitHubPages(){
   const sUrl=getKey('script'); if(!sUrl){openKeyModal();return;}
   const ghU=getKey('ghUser')||'docssam1', ghR=getKey('ghRepo')||'gfield-report';
-  const n=document.getElementById('nameInput').value.trim()||'학생';
+  const n=val('nameInput').trim()||'학생';
   if(!n){showToast('이름 입력 필요!');return;}
   let backendType = classType;
   if(classType === '결석') { const reasonType = document.querySelector('input[name=\"absentReasonType\"]:checked').value; backendType = reasonType === 'free' ? '보강' : '결석'; }
   const btn = document.getElementById('ghBtn'); btn.textContent='⏳ 배포 중...'; btn.disabled = true;
   try{
-    const fName=`지필드_${document.getElementById('dateInput').value.replace(/-/g,'')}_${n}_${backendType}_리포트.html`;
+    const fName=`지필드_${val('dateInput').replace(/-/g,'')}_${n}_${backendType}_리포트.html`;
     const path=`${n}/${fName}`;
     const res=await fetch(sUrl,{method:'POST',body:JSON.stringify({
       action:'deploy_github', repo:`${ghU}/${ghR}`, path:path, htmlContent:buildSnapshot(), message:`[자동배포] ${n} ${backendType} 리포트`, sheetId:getKey('sheetId')||DEFAULT_SHEET
@@ -2932,7 +3277,7 @@ async function deployToGitHubPages(){
 async function saveToNotion(){
   const sUrl=getKey('script'); if(!sUrl){openKeyModal();return;}
   const btn = document.getElementById('notionBtn');
-  const n=document.getElementById('nameInput').value.trim()||'학생';
+  const n=val('nameInput').trim()||'학생';
   if(!n){showToast('이름 입력 필요!');return;}
   
   const mdDate = document.getElementById('absentMakeupDate')?.value || '';
@@ -2955,9 +3300,9 @@ async function saveToNotion(){
   if(docType==='상담'){
     payload.cType=document.querySelector('input[name="c_type"]')?.value || classType; 
     payload.testDate=document.getElementById('testTime')?.value || ''; 
-    payload.school=document.getElementById('dbSchool').value; payload.grade=document.getElementById('dbGrade').value; payload.phone=document.getElementById('dbPhone').value; payload.content=document.getElementById('csMemo').value;
+    payload.school=val('dbSchool'); payload.grade=val('dbGrade'); payload.phone=val('dbPhone'); payload.content=val('csMemo');
   }else{
-    payload.date=document.getElementById('dateInput').value; payload.course=document.getElementById('courseInput').value.trim(); payload.type=backendType; payload.makeupType=document.getElementById('absentMakeupType')?.value || ''; payload.makeupDate=mdDate;
+    payload.date=val('dateInput'); payload.course=val('courseInput').trim(); payload.type=backendType; payload.makeupType=document.getElementById('absentMakeupType')?.value || ''; payload.makeupDate=mdDate;
   }
   try{
     const res=await fetch(sUrl,{method:'POST',body:JSON.stringify(payload)}); const r=await res.json();
@@ -2970,9 +3315,9 @@ async function saveToNotion(){
 }
 
 function sendAligoSms(isScheduled) {
-  const phone = document.getElementById('dbPhone').value || document.getElementById('nameInput').value;
-  const msg = document.getElementById('msgText').value;
-  const targetDate = isScheduled ? document.getElementById('aligoDate').value : "";
+  const phone = val('dbPhone') || val('nameInput');
+  const msg = val('msgText');
+  const targetDate = isScheduled ? val('aligoDate') : "";
   const sUrl = getKey('script'); if(!sUrl) return openKeyModal();
   if(!phone || !msg) return alert("전화번호(DB 정보 란에 입력)와 보낼 메시지가 필요합니다.");
   
@@ -3263,6 +3608,100 @@ function buildParentPreviewFallbackHtml(){
 #parentPreviewModal.show{display:flex !important;pointer-events:auto !important;}
 #parentPreviewModal .modal,#parentPreviewModal button,#parentPreviewModal iframe{pointer-events:auto !important;}
 
+
+/* 모든 버튼 클릭감 / 중복 클릭 방지 표시 */
+button{
+  transition:transform .08s ease, filter .12s ease, opacity .12s ease !important;
+}
+button:active,
+button.is-pressing{
+  transform:scale(.975) translateY(1px) !important;
+  filter:brightness(.94) !important;
+}
+button:disabled,
+button.btn-busy{
+  opacity:.62 !important;
+  cursor:not-allowed !important;
+  pointer-events:none !important;
+}
+
+
+.logo-wrap{position:absolute;right:26px;top:26px;width:72px;height:72px;border-radius:20px;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(15,23,42,.16);z-index:2;}
+.logo-wrap img{max-width:58px;max-height:58px;object-fit:contain;}
+
+
+
+/* =========================================================
+ * 학부모 리포트 버튼 최종 레이아웃
+ * - 텍스트 넘침 방지
+ * - 모바일 엄지 터치 최적화
+ * - 용도별 버튼 색상 고정
+ * ========================================================= */
+.action-grid{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:12px !important;
+  margin-top:16px !important;
+}
+.action-grid a,
+.action-grid button{
+  width:100% !important;
+  min-width:0 !important;
+  min-height:58px !important;
+  padding:12px 14px !important;
+  border:none !important;
+  border-radius:16px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  white-space:normal !important;
+  word-break:keep-all !important;
+  overflow-wrap:break-word !important;
+  line-height:1.25 !important;
+  font-size:14.5px !important;
+  font-weight:900 !important;
+  letter-spacing:-.35px !important;
+  text-decoration:none !important;
+  font-family:inherit !important;
+  box-shadow:0 7px 16px rgba(15,23,42,.13) !important;
+  cursor:pointer !important;
+  box-sizing:border-box !important;
+}
+.action-grid a:active,
+.action-grid button:active{
+  transform:scale(.98);
+  filter:brightness(.95);
+}
+.action-copy{background:#047857!important;color:#fff!important;}
+.action-pay{background:#2563EB!important;color:#fff!important;}
+.action-zero{background:#00A651!important;color:#fff!important;}
+.action-teacher{background:#4F46E5!important;color:#fff!important;}
+.action-confirm{background:#0F766E!important;color:#fff!important;}
+.action-kakao{background:#FEE500!important;color:#3B1E1E!important;}
+.action-call{background:#DC2626!important;color:#fff!important;}
+.action-map{background:#2DBE5E!important;color:#fff!important;}
+.action-grid-payment .action-map{
+  grid-column:1 / -1 !important;
+  min-height:60px !important;
+  font-size:15.5px !important;
+}
+@media(max-width:640px){
+  .action-grid{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+  .action-grid a,
+  .action-grid button{
+    min-height:56px !important;
+    font-size:15px !important;
+    padding:12px 16px !important;
+  }
+  .action-grid-payment .action-map{
+    grid-column:auto !important;
+  }
+}
+
 </style></head><body><div class="wrap"><div class="header"><h2>지필드 영재교육</h2><p>${esc(n)} 학생 ${esc(type)} 미리보기</p></div><div class="card">${esc(msg || '현재 입력된 내용으로 미리보기를 표시합니다.')}</div></div></body></html>`;
 }
 
@@ -3363,6 +3802,216 @@ function shareKakao(){
 
 
 
+
+
+/* =========================================================
+ * CS 조건별 HTML 생성 제어
+ * - 재원생 상담 / 수업 문의: 시트 기록만 필요, HTML 생성 비권장
+ * - 테스트 진행 / 대면 상담 / 수업 안내: 상황별 HTML 생성
+ * ========================================================= */
+function getCsType(){
+  const active = document.querySelector('.cs-tab.active, .mode-chip.active, .cs-chip.active, .type-chip.active');
+  const t1 = active ? active.textContent.trim() : '';
+  const t2 = (typeof classType !== 'undefined' ? classType : '') || '';
+  const title = document.querySelector('.cs-title, #csTitle')?.textContent?.trim() || '';
+  const merged = `${t1} ${t2} ${title}`;
+  if(merged.includes('수업 안내') || merged.includes('수업안내')) return '수업 안내';
+  if(merged.includes('테스트')) return '테스트 진행';
+  if(merged.includes('대면')) return '대면 상담';
+  if(merged.includes('수업 문의') || merged.includes('수업문의')) return '수업 문의';
+  if(merged.includes('재원생')) return '재원생 상담';
+  return t2 || t1 || '상담';
+}
+
+function shouldCreateCsHtml(){
+  const type = getCsType();
+  return ['테스트 진행','대면 상담','수업 안내'].includes(type);
+}
+
+function getCsField(id){
+  const el = document.getElementById(id);
+  return el ? (el.value || '').trim() : '';
+}
+
+function getRegisteredCourseSets(){
+  const sets = [];
+  document.querySelectorAll('.course-set, .reg-course-set, .course-card, .set-card').forEach(card=>{
+    const inputs = Array.from(card.querySelectorAll('input, textarea, select')).map(el => (el.value || '').trim()).filter(Boolean);
+    if(inputs.length) sets.push(inputs);
+  });
+  if(!sets.length){
+    const course = getCsField('courseInput') || getCsField('classInput') || getCsField('csCourse') || getCsField('subjectInput');
+    const schedule = getCsField('scheduleInput') || getCsField('csSchedule') || getCsField('dateInput');
+    const book = getCsField('bookInput') || getCsField('materialInput') || getCsField('csBook');
+    const fee = getCsField('feeInput') || getCsField('tuitionInput') || getCsField('csFee');
+    const etc = getCsField('etcInput') || getCsField('memoInput') || getCsField('csMemo');
+    const arr = [course, schedule, book, fee, etc].filter(Boolean);
+    if(arr.length) sets.push(arr);
+  }
+  return sets;
+}
+
+
+
+function buildCsConditionalHtml(){
+  const type = getCsType();
+  const studentName = getCsField('nameInput') || '학생';
+  const school = getCsField('dbSchool') || '';
+  const grade = getCsField('dbGrade') || '';
+  const date = getCsField('dateInput') || '';
+  const weekday = typeof getKoreanWeekday === 'function' ? getKoreanWeekday(date) : '';
+  const startTime = getCsField('startTimeInput') || '';
+  const endTime = getCsField('endTimeInput') || '';
+  const msg = getCsField('msgText') || getCsField('csMemo') || '';
+  const account = document.querySelector('input[name="c_account"]:checked')?.value || '';
+  const totalFee = getCsField('totalFee') || getCsField('feeInput') || getCsField('tuitionInput') || '';
+  const logoUrl = 'https://docssam1.github.io/gfield-report/logo.png';
+  const academyPhone = '01020837265';
+  const locationUrl = 'https://naver.me/xyTRpBHo';
+  const kakaoChannelUrl = 'https://pf.kakao.com/_htxhxmn';
+  const zeroPayUrl = 'https://drive.google.com/open?id=18oDp8YjImIu8fCpYpl35gtXxCTkaMW4J&usp=drive_fs';
+  const paymentTeacherUrl = 'https://pf.kakao.com/_htxhxmn';
+
+  let theme = {color:'#F59E0B', color2:'#D97706', light:'#FFFBEB', border:'#FCD34D', title:'수업 안내', icon:'🌱', badge:'CLASS GUIDE', desc:'성공하는 공부 습관을 만들기 위해 최선의 노력을 다하겠습니다.', noticeTitle:'수업 안내 메시지'};
+  if(type === '테스트 진행') theme = {color:'#7C3AED', color2:'#5B21B6', light:'#F5F3FF', border:'#C4B5FD', title:'테스트 안내', icon:'🧭', badge:'LEVEL TEST', desc:'정확한 학습 진단을 통해 앞으로의 방향을 함께 확인하겠습니다.', noticeTitle:'테스트 안내 메시지'};
+  if(type === '대면 상담') theme = {color:'#16417C', color2:'#2A5B9E', light:'#EFF6FF', border:'#BFDBFE', title:'대면 상담 안내', icon:'💬', badge:'CONSULTING', desc:'아이의 현재 학습 상황과 앞으로의 학습 방향을 차분히 안내드리겠습니다.', noticeTitle:'상담 안내 메시지'};
+
+  const esc2 = (typeof esc === 'function') ? esc : (v)=>String(v||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const scheduleLine = [date ? `${date}${weekday ? ' ('+weekday+')' : ''}` : '', startTime && endTime ? `${startTime}~${endTime}` : (startTime || endTime)].filter(Boolean).join(' · ');
+  const sets = getRegisteredCourseSets();
+  const setHtml = sets.length ? sets.map((arr, idx)=>`<div class="set-card"><div class="set-title">${theme.icon} 수업 세트 ${idx+1}</div>${arr.map(v=>`<div class="set-row">${esc2(v)}</div>`).join('')}</div>`).join('') : '';
+  const copyCode = account.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' ');
+  const confirmSms = `sms:${academyPhone}?body=${encodeURIComponent('안내 확인했습니다. ' + studentName + ' 학생입니다.')}`;
+  const paymentSms = `sms:${academyPhone}?body=${encodeURIComponent('결제 확인 문자 보내기드립니다. ' + studentName + ' 학생입니다.')}`;
+
+  const payButtonHtml = account ? `
+    <div class="action-grid action-grid-payment">
+      <button type="button" class="action-copy" onclick="navigator.clipboard?navigator.clipboard.writeText('${copyCode}').then(()=>alert('계좌 정보가 복사되었습니다.')):alert('${esc2(account)}')">📋 계좌 복사하기</button>
+      <a class="action-pay" href="${paymentSms}">💬 결제 확인 문자 보내기</a>
+      <a class="action-zero" href="${zeroPayUrl}" target="_blank" rel="noopener">🧾 제로페이 요청하기</a>
+      <a class="action-teacher" href="sms:${academyPhone}?body=${encodeURIComponent(studentName + " 학생 결제선생 요청합니다.")}">💳 결제선생 요청하기</a>
+      <a class="action-confirm" href="${confirmSms}">✅ 안내 확인 보내기</a>
+      <a class="action-kakao" href="${kakaoChannelUrl}" target="_blank" rel="noopener">💛 카카오로 문의하기</a>
+      <a class="action-call" href="tel:${academyPhone}">📞 전화 걸기</a>
+      <a class="action-map" href="${locationUrl}" target="_blank" rel="noopener">📍 학원 위치 보기</a>
+    </div>
+  ` : `
+    <div class="action-grid">
+      <a class="action-confirm" href="${confirmSms}">✅ 안내 확인 보내기</a>
+      <a class="action-kakao" href="${kakaoChannelUrl}" target="_blank" rel="noopener">💛 카카오로 문의하기</a>
+      <a class="action-call" href="tel:${academyPhone}">📞 전화 걸기</a>
+      <a class="action-map" href="${locationUrl}" target="_blank" rel="noopener">📍 학원 위치 보기</a>
+    </div>
+  `;
+  const paymentHtml = (totalFee || account) ? `<section class="card pay-card"><div class="section-title">💳 결제 안내</div><div class="pay-grid">${totalFee ? `<div class="pay-box"><b>안내 금액</b><span>${esc2(totalFee)}</span></div>` : ''}${account ? `<div class="pay-box wide"><b>입금 안내</b><span>${esc2(account)}</span></div>` : ''}</div>${payButtonHtml}<div class="small-note">※ 결제 확인 후 수업 준비가 진행됩니다.</div></section>` : `<section class="card"><div class="section-title">📞 문의 및 위치 안내</div>${payButtonHtml}</section>`;
+
+  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta name="color-scheme" content="light"><title>지필드 영재교육 ${esc2(theme.title)} - ${esc2(studentName)}</title><style>
+:root{color-scheme:light}*{box-sizing:border-box;margin:0;padding:0}html,body{background:#f4f5fb!important;color:#0f172a!important;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}.wrap{max-width:840px;margin:0 auto;padding:22px}.hero{position:relative;overflow:hidden;background:linear-gradient(135deg,${theme.color},${theme.color2});color:#fff;border-radius:30px;padding:38px 30px;text-align:left;box-shadow:0 18px 42px rgba(15,23,42,.18)}.logo-wrap{position:absolute;right:26px;top:26px;width:72px;height:72px;border-radius:20px;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(15,23,42,.16);z-index:2}.logo-wrap img{max-width:58px;max-height:58px;object-fit:contain}.badge{display:inline-block;padding:7px 13px;border-radius:999px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.26);font-size:12px;font-weight:900;letter-spacing:.8px;margin-bottom:16px}.hero h1{font-size:36px;line-height:1.25;margin-bottom:12px}.hero p{font-size:17px;line-height:1.65;opacity:.97;max-width:620px}.card{background:#fff;border:1.5px solid #e4e6f5;border-radius:24px;padding:23px;margin-top:16px;box-shadow:0 8px 22px rgba(15,23,42,.05)}.section-title{font-size:20px;font-weight:900;color:${theme.color};margin-bottom:15px}.student-line{display:flex;gap:10px;flex-wrap:wrap}.chip{background:#f8fafc;border:1px solid #e5e7eb;border-radius:999px;padding:9px 13px;font-size:14px;font-weight:800;color:#334155}.schedule,.message{background:${theme.light};border:1.5px solid ${theme.border};border-radius:18px;padding:16px;line-height:1.75;color:#334155;white-space:pre-wrap}.set-card{background:${theme.light};border:1.5px solid ${theme.border};border-radius:18px;padding:16px;margin-top:10px}.set-title{font-weight:900;color:${theme.color};margin-bottom:10px}.set-row{background:#fff;border:1px solid ${theme.border};border-radius:10px;padding:11px 12px;margin-top:8px;line-height:1.55;white-space:pre-wrap}.pay-card{border-color:#86EFAC;background:#F0FDF4}.pay-card .section-title{color:#047857}.pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pay-box{background:#fff;border:1px solid #BBF7D0;border-radius:16px;padding:15px;line-height:1.6}.pay-box.wide{grid-column:1/-1}.pay-box b{display:block;font-size:12px;color:#047857;margin-bottom:5px}.pay-box span{font-size:16px;font-weight:800;color:#111827}.small-note{font-size:12px;color:#047857;margin-top:10px}
+
+
+/* =========================================================
+ * 학부모 리포트 버튼 최종 레이아웃
+ * - 텍스트 넘침 방지
+ * - 모바일 엄지 터치 최적화
+ * - 용도별 버튼 색상 고정
+ * ========================================================= */
+.action-grid{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:12px !important;
+  margin-top:16px !important;
+}
+.action-grid a,
+.action-grid button{
+  width:100% !important;
+  min-width:0 !important;
+  min-height:58px !important;
+  padding:12px 14px !important;
+  border:none !important;
+  border-radius:16px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  white-space:normal !important;
+  word-break:keep-all !important;
+  overflow-wrap:break-word !important;
+  line-height:1.25 !important;
+  font-size:14.5px !important;
+  font-weight:900 !important;
+  letter-spacing:-.35px !important;
+  text-decoration:none !important;
+  font-family:inherit !important;
+  box-shadow:0 7px 16px rgba(15,23,42,.13) !important;
+  cursor:pointer !important;
+  box-sizing:border-box !important;
+}
+.action-grid a:active,
+.action-grid button:active{
+  transform:scale(.98);
+  filter:brightness(.95);
+}
+.action-copy{background:#047857!important;color:#fff!important;}
+.action-pay{background:#2563EB!important;color:#fff!important;}
+.action-zero{background:#00A651!important;color:#fff!important;}
+.action-teacher{background:#4F46E5!important;color:#fff!important;}
+.action-confirm{background:#0F766E!important;color:#fff!important;}
+.action-kakao{background:#FEE500!important;color:#3B1E1E!important;}
+.action-call{background:#DC2626!important;color:#fff!important;}
+.action-map{background:#2DBE5E!important;color:#fff!important;}
+.action-grid-payment .action-map{
+  grid-column:1 / -1 !important;
+  min-height:60px !important;
+  font-size:15.5px !important;
+}
+@media(max-width:640px){
+  .action-grid{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+  .action-grid a,
+  .action-grid button{
+    min-height:56px !important;
+    font-size:15px !important;
+    padding:12px 16px !important;
+  }
+  .action-grid-payment .action-map{
+    grid-column:auto !important;
+  }
+}
+
+</style></head><body><div class="wrap">
+<section class="hero"><div class="logo-wrap"><img src="${logoUrl}" alt="G-FIELD 로고" onerror="this.style.display='none'"></div><div class="badge">${esc2(theme.badge)}</div><h1>${esc2(theme.icon)} ${esc2(theme.title)}</h1><p>${esc2(studentName)} 학생을 위한 지필드 영재교육 안내문입니다.</p></section>
+<section class="card"><div class="section-title">👤 학생 안내</div><div class="student-line"><div class="chip">학생명: ${esc2(studentName)}</div>${school ? `<div class="chip">학교/유치원: ${esc2(school)}</div>` : ''}${grade ? `<div class="chip">학년/나이: ${esc2(grade)}</div>` : ''}</div></section>
+${scheduleLine ? `<section class="card"><div class="section-title">📅 차후 일정</div><div class="schedule">${esc2(scheduleLine)}</div></section>` : ''}
+<section class="card"><div class="section-title">📨 ${esc2(theme.noticeTitle)}</div><div class="message">${esc2(msg || theme.desc)}</div></section>
+${setHtml ? `<section class="card"><div class="section-title">📚 수업 세트 안내</div>${setHtml}</section>` : ''}${paymentHtml}
+<section class="card"><div class="section-title">📍 학원 위치 안내</div><div class="address-box"><b>지필드 영재교육</b><br><span>서울 강남구 대치동 지필드 영재교육</span><br><small>방문 전 정확한 호실 및 입실 안내는 원에서 다시 확인해 주세요.</small></div></section>
+<section class="card"><div class="section-title">✅ 안내 및 주의사항</div><ul class="caution"><li>수업 또는 상담 시간 5분 전 도착을 권장드립니다.</li><li>일정 변경이 필요한 경우 가능한 한 미리 연락 부탁드립니다.</li><li>교재, 필기도구 등 필요한 준비물은 안내 내용에 따라 준비해 주세요.</li><li>본 안내문은 학부모 확인용이며, 내부 상담 기록은 포함하지 않습니다.</li></ul></section>
+<section class="footer">${esc2(theme.desc)}</section></div></body></html>`;
+}
+
+// 기존 buildSnapshot 보존 후 CS 조건에서만 상황별 HTML 사용
+if(typeof window.__gfieldOriginalBuildSnapshot === 'undefined' && typeof buildSnapshot === 'function'){
+  window.__gfieldOriginalBuildSnapshot = buildSnapshot;
+}
+if(typeof buildSnapshot === 'function'){
+  buildSnapshot = function(){
+    if(typeof currentMode !== 'undefined' && currentMode === '상담' && shouldCreateCsHtml()){
+      return buildCsConditionalHtml();
+    }
+    return window.__gfieldOriginalBuildSnapshot();
+  };
+}
+
+
+function warnIfCsHtmlNotNeeded(){
+  if(typeof currentMode !== 'undefined' && currentMode === '상담' && !shouldCreateCsHtml()){
+    alert('재원생 상담 / 수업 문의는 시트 기록만 필요합니다. HTML 링크 생성 없이 시트 기록만 진행하세요.');
+    return true;
+  }
+  return false;
+}
 
 </script>
 </body>
