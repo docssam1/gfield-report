@@ -802,13 +802,13 @@ textarea.auto-grow{
     <div style="background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.55;margin-bottom:14px;">
       🔐 보안값은 화면에서 ●●●●로 표시됩니다. GitHub Token, Notion API Key, Aligo API Key는 외부에 공유하지 마세요.
     </div>
-    <div class="key-field"><label>🐱 GITHUB TOKEN</label><input type="password" id="k_gh" autocomplete="off" autocapitalize="off" spellcheck="false" data-secure="true"></div>
+    <div class="key-field"><label>🐱 GITHUB TOKEN</label><input type="password" id="k_gh" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" data-secure="true" data-lpignore="true" data-1p-ignore="true"></div>
     <div class="key-field"><label>📦 GOOGLE APPS SCRIPT URL</label><input type="text" id="k_script"></div>
     <div class="key-field"><label>💬 KAKAO JAVASCRIPT KEY</label><input type="text" id="k_kakao"></div>
     <div class="key-field"><label>📨 ALIGO USER ID</label><input type="text" id="k_aligo_id" placeholder="알리고 아이디" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
-    <div class="key-field"><label>📨 ALIGO API KEY</label><input type="password" id="k_aligo_key" placeholder="알리고 API KEY" autocomplete="off" autocapitalize="off" spellcheck="false" data-secure="true"></div>
+    <div class="key-field"><label>📨 ALIGO API KEY</label><input type="password" id="k_aligo_key" placeholder="미입력" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" data-secure="true" data-lpignore="true" data-1p-ignore="true"></div>
     <div class="key-field"><label>🛠 APPS SCRIPT 편집기 URL</label><input type="text" id="k_script_edit_url" placeholder="https://script.google.com/home/projects/.../edit"></div>
-    <div class="key-field"><label>📓 NOTION API KEY</label><input type="password" id="k_notion_key" autocomplete="off" autocapitalize="off" spellcheck="false" data-secure="true"></div>
+    <div class="key-field"><label>📓 NOTION API KEY</label><input type="password" id="k_notion_key" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" data-secure="true" data-lpignore="true" data-1p-ignore="true"></div>
     <div class="key-field"><label>📓 NOTION DATABASE ID</label><input type="text" id="k_notion_db"></div>
     <div class="key-field"><label>🐱 GITHUB 사용자명</label><input type="text" id="k_ghuser"></div>
     <div class="key-field"><label>🐱 GITHUB 저장소명</label><input type="text" id="k_ghrepo"></div>
@@ -858,6 +858,67 @@ function openAppsScriptEditor(){
   const url = getKey('scriptEditUrl') || 'https://script.google.com/home';
   window.open(url, '_blank');
 }
+
+
+/* =========================================================
+ * API 키 빈칸 점표시 방지
+ * - 저장값이 없으면 비밀번호 점(●●●) 표시 없이 빈칸으로 보이게 함
+ * - 값이 있으면 password 타입으로 보호
+ * ========================================================= */
+function syncSecureKeyInputs(){
+  ['k_gh','k_aligo_key','k_notion_key'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+
+    const v = String(el.value || '').trim();
+    if(!v){
+      el.type = 'text';
+      el.value = '';
+      el.placeholder = '미입력';
+    }else{
+      el.type = 'password';
+    }
+
+    el.setAttribute('autocomplete','new-password');
+    el.setAttribute('autocorrect','off');
+    el.setAttribute('autocapitalize','off');
+    el.setAttribute('spellcheck','false');
+    el.setAttribute('data-lpignore','true');
+    el.setAttribute('data-1p-ignore','true');
+  });
+}
+
+function bindSecureKeyInputs(){
+  ['k_gh','k_aligo_key','k_notion_key'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el || el.dataset.secureBound === '1') return;
+    el.dataset.secureBound = '1';
+    el.addEventListener('input', ()=>{
+      if(String(el.value || '').trim()){
+        el.type = 'password';
+      }else{
+        el.type = 'text';
+        el.placeholder = '미입력';
+      }
+    });
+    el.addEventListener('focus', ()=>{
+      if(!String(el.value || '').trim()){
+        el.type = 'text';
+        el.placeholder = '미입력';
+      }
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  bindSecureKeyInputs();
+  setTimeout(syncSecureKeyInputs, 50);
+});
+window.addEventListener('load', ()=>{
+  bindSecureKeyInputs();
+  setTimeout(syncSecureKeyInputs, 100);
+});
+
 
 function openKeyModal(){
   document.getElementById('k_gh').value=getKey('gh');
@@ -943,6 +1004,7 @@ function openKeyModal(){
   if(ghRepo && !ghRepo.value) ghRepo.value='gfield-report';
   if(sheet && !sheet.value) sheet.value=DEFAULT_SHEET;
 
+  if(typeof syncSecureKeyInputs === 'function') syncSecureKeyInputs();
   modal.classList.add('show');
 }
 
