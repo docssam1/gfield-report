@@ -292,6 +292,27 @@ button:disabled{opacity:.55;cursor:not-allowed;}
 #previewParentBtn{pointer-events:auto !important;position:relative;z-index:3;touch-action:manipulation;}
 .preview-actions button{touch-action:manipulation;}
 
+
+/* 학부모 미리보기 버튼 최종 활성화 패치 */
+#previewParentBtn{
+  pointer-events:auto !important;
+  position:relative !important;
+  z-index:30 !important;
+  touch-action:manipulation !important;
+}
+#parentPreviewModal{
+  z-index:12000 !important;
+}
+#parentPreviewModal.show{
+  display:flex !important;
+  pointer-events:auto !important;
+}
+#parentPreviewModal .modal,
+#parentPreviewModal button,
+#parentPreviewModal iframe{
+  pointer-events:auto !important;
+}
+
 </style>
 </head>
 <body>
@@ -535,7 +556,7 @@ button:disabled{opacity:.55;cursor:not-allowed;}
 
 <!-- 하단 버튼들 -->
 <div class="btns">
-  <button type="button" class="kakao-btn" id="previewParentBtn" onclick="openParentPreview(event)">👨‍👩‍👧 학부모 HTML 템플릿 미리보기</button>
+  <button type="button" class="kakao-btn" id="previewParentBtn" onclick="return openParentPreview(event)">👨‍👩‍👧 학부모 HTML 템플릿 미리보기</button>
   <button class="btn-dl" id="saveDriveBtn" onclick="saveToDrive()">💾 1단계: 드라이브 저장 및 시트 기록</button>
   <button class="btn-gh" id="ghBtn" onclick="deployToGitHubPages()">🔗 2단계: 웹 링크 생성 (배포)</button>
   <button class="notion-btn" id="notionBtn" onclick="saveToNotion()">📅 3단계: 캘린더 전송</button>
@@ -1809,6 +1830,27 @@ button:disabled{opacity:.55;cursor:not-allowed;}
 #previewParentBtn{pointer-events:auto !important;position:relative;z-index:3;touch-action:manipulation;}
 .preview-actions button{touch-action:manipulation;}
 
+
+/* 학부모 미리보기 버튼 최종 활성화 패치 */
+#previewParentBtn{
+  pointer-events:auto !important;
+  position:relative !important;
+  z-index:30 !important;
+  touch-action:manipulation !important;
+}
+#parentPreviewModal{
+  z-index:12000 !important;
+}
+#parentPreviewModal.show{
+  display:flex !important;
+  pointer-events:auto !important;
+}
+#parentPreviewModal .modal,
+#parentPreviewModal button,
+#parentPreviewModal iframe{
+  pointer-events:auto !important;
+}
+
 </style></head><body><div class="wrap"><div class="card"><div class="badge">${badgeText}</div><h1>${titleText}</h1><div style="color:#64748b;font-size:13px;margin-bottom:20px;">${d}</div><div class="info-row"><span class="info-label">${dateLabel}</span><span class="info-val">${d}</span></div>${r&&reasonType!=='free'?`<div class="info-row"><span class="info-label">${rLab}</span><span class="info-val">${esc(r)}</span></div>`:''}<div class="info-row"><span class="info-label">보강/보충 일정</span><span class="info-val">${mStr}</span></div></div>${nt?`<div class="card"><div style="font-weight:800;color:#16417C;margin-bottom:12px;">📢 추가 전달 사항 및 공지</div><div class="notice-box">${esc(nt)}</div></div>`:''}${sr('동영상 강의','🎬',vidH)}${sr('추가 자료','🔗',resH)}<div style="text-align:center;color:#94a3b8;font-size:11px;margin-top:30px;">© G-Field Gifted Education</div></div></body></html>`;
 }
 
@@ -1995,6 +2037,27 @@ button:disabled{opacity:.55;cursor:not-allowed;}
 #previewParentBtn{pointer-events:auto !important;position:relative;z-index:3;touch-action:manipulation;}
 .preview-actions button{touch-action:manipulation;}
 
+
+/* 학부모 미리보기 버튼 최종 활성화 패치 */
+#previewParentBtn{
+  pointer-events:auto !important;
+  position:relative !important;
+  z-index:30 !important;
+  touch-action:manipulation !important;
+}
+#parentPreviewModal{
+  z-index:12000 !important;
+}
+#parentPreviewModal.show{
+  display:flex !important;
+  pointer-events:auto !important;
+}
+#parentPreviewModal .modal,
+#parentPreviewModal button,
+#parentPreviewModal iframe{
+  pointer-events:auto !important;
+}
+
 </style></head><body><div class="web-wrap"><div class="web-header"><div class="hd-l"><h1>지필드 영재교육 학습 리포트</h1><p>G-Field Gifted Education</p><div class="badge">${classType}</div></div><div class="hd-r"><div class="s-name">${esc(n)} 학생</div><div class="date">${d}${crs?' · '+esc(crs):''}</div></div></div>${nt?`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:16px;padding:16px;margin-bottom:16px;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#451a03;">📢 ${esc(nt)}</div>`:''}${sr('과제 확인','✅',hwR+hwPH)}${sr('학습 요약','📖',subH)}${sr('수업 사진','📸',pRen(classPhotos))}${sr('동영상 강의','🎬',vidH)}${sr('추가 자료','🔗',resH)}${sr('오늘의 과제','✏️',tHwH)}<div style="text-align:center;margin:36px 0;font-size:11px;color:#94a3b8;">© G-Field Gifted Education</div>${hideD}</div></body></html>`;
 }
 
@@ -2138,6 +2201,179 @@ function sendAligoSms(isScheduled) {
  */
 
 
+
+/* =========================================================
+ * 학부모 전송 HTML 템플릿 미리보기 - 버튼 활성화 단일 안정본
+ * ========================================================= */
+let __parentPreviewBlobUrl = '';
+
+function openParentPreview(e){
+  if(e && e.preventDefault) e.preventDefault();
+
+  const modal = document.getElementById('parentPreviewModal');
+  if(!modal){
+    alert('학부모 미리보기 창을 찾을 수 없습니다.');
+    return false;
+  }
+
+  refreshParentPreview();
+
+  modal.classList.add('show');
+  modal.style.display = 'flex';
+  modal.style.pointerEvents = 'auto';
+
+  return false;
+}
+
+function closeParentPreview(){
+  const modal = document.getElementById('parentPreviewModal');
+  if(!modal) return;
+  modal.classList.remove('show');
+  modal.style.display = 'none';
+}
+
+function refreshParentPreview(){
+  const frame = document.getElementById('parentPreviewFrame');
+  if(!frame){
+    alert('학부모 미리보기 프레임을 찾을 수 없습니다.');
+    return;
+  }
+
+  let previewHtml = '';
+  try {
+    if(typeof buildSnapshot === 'function'){
+      previewHtml = buildSnapshot();
+    }
+  } catch(e) {
+    console.warn('buildSnapshot 미리보기 오류:', e);
+  }
+
+  if(!previewHtml || !String(previewHtml).includes('<html')){
+    previewHtml = buildParentPreviewFallbackHtml();
+  }
+
+  frame.removeAttribute('src');
+  frame.srcdoc = previewHtml;
+
+  if(__parentPreviewBlobUrl){
+    try { URL.revokeObjectURL(__parentPreviewBlobUrl); } catch(e) {}
+  }
+  __parentPreviewBlobUrl = URL.createObjectURL(
+    new Blob([previewHtml], {type:'text/html;charset=utf-8'})
+  );
+}
+
+function openParentPreviewNewTab(){
+  let previewHtml = '';
+  try {
+    if(typeof buildSnapshot === 'function'){
+      previewHtml = buildSnapshot();
+    }
+  } catch(e) {
+    console.warn('새 탭 미리보기 오류:', e);
+  }
+
+  if(!previewHtml || !String(previewHtml).includes('<html')){
+    previewHtml = buildParentPreviewFallbackHtml();
+  }
+
+  const blobUrl = URL.createObjectURL(
+    new Blob([previewHtml], {type:'text/html;charset=utf-8'})
+  );
+  window.open(blobUrl, '_blank');
+}
+
+function buildParentPreviewFallbackHtml(){
+  const n = document.getElementById('nameInput')?.value?.trim() || '학생';
+  const type = classType || '리포트';
+  const msg = document.getElementById('msgText')?.value || '';
+
+  return `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>지필드 학부모 리포트 미리보기</title>
+<style>
+:root{color-scheme:light;}
+html,body{
+  margin:0;
+  background:#f4f5fb !important;
+  color:#0f172a !important;
+  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+}
+.wrap{max-width:760px;margin:0 auto;padding:18px;}
+.header{
+  background:linear-gradient(135deg,#16417C,#2a5b9e);
+  color:#fff;
+  border-radius:24px;
+  padding:28px 22px;
+  text-align:center;
+}
+.card{
+  background:#fff;
+  border:1px solid #e4e6f5;
+  border-radius:18px;
+  padding:18px;
+  margin-top:14px;
+  line-height:1.7;
+  white-space:pre-wrap;
+}
+
+/* 학부모 미리보기 버튼 최종 활성화 패치 */
+#previewParentBtn{
+  pointer-events:auto !important;
+  position:relative !important;
+  z-index:30 !important;
+  touch-action:manipulation !important;
+}
+#parentPreviewModal{
+  z-index:12000 !important;
+}
+#parentPreviewModal.show{
+  display:flex !important;
+  pointer-events:auto !important;
+}
+#parentPreviewModal .modal,
+#parentPreviewModal button,
+#parentPreviewModal iframe{
+  pointer-events:auto !important;
+}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h2>지필드 영재교육</h2>
+    <p>${esc(n)} 학생 ${esc(type)} 미리보기</p>
+  </div>
+  <div class="card">${esc(msg || '현재 입력된 내용으로 학부모용 HTML 미리보기를 표시합니다.')}</div>
+</div>
+</body>
+</html>`;
+}
+
+function bindParentPreviewButton(){
+  const btn = document.getElementById('previewParentBtn');
+  if(!btn || btn.dataset.previewBound === '1') return;
+
+  btn.dataset.previewBound = '1';
+  btn.onclick = openParentPreview;
+
+  btn.addEventListener('click', openParentPreview, false);
+  btn.addEventListener('touchend', function(e){
+    e.preventDefault();
+    openParentPreview(e);
+  }, {passive:false});
+}
+
+document.addEventListener('DOMContentLoaded', bindParentPreviewButton);
+window.addEventListener('load', bindParentPreviewButton);
+
+
 function getKakaoThumbInfo(){
   const studentName = document.getElementById('nameInput')?.value?.trim() || '학생';
   const baseUrl = 'https://docssam1.github.io/gfield-report/assets/kakao/';
@@ -2226,344 +2462,27 @@ function shareKakao(){
 /* =========================================================
  * 학부모 전송 HTML 템플릿 미리보기 - 모바일 안정화
  * ========================================================= */
-let __parentPreviewBlobUrl = '';
 
-function openParentPreview(e){
-  if(e && e.preventDefault) e.preventDefault();
 
-  const modal = document.getElementById('parentPreviewModal');
-  if(!modal){
-    alert('학부모 미리보기 창을 찾을 수 없습니다.');
-    return;
-  }
 
-  refreshParentPreview();
-  modal.classList.add('show');
-  modal.style.display = 'flex';
+
+
+
+
+
+
+
+
+
+
+
+
 }
-
-function closeParentPreview(){
-  const modal = document.getElementById('parentPreviewModal');
-  if(!modal) return;
-  modal.classList.remove('show');
-  modal.style.display = 'none';
-}
-
-function refreshParentPreview(){
-  const frame = document.getElementById('parentPreviewFrame');
-  if(!frame){
-    alert('학부모 미리보기 프레임을 찾을 수 없습니다.');
-    return;
-  }
-
-  let previewHtml = '';
-  try {
-    previewHtml = buildParentPreviewHtml();
-  } catch(e) {
-    console.warn('미리보기 생성 오류:', e);
-    previewHtml = buildParentPreviewFallbackHtml();
-  }
-
-  frame.removeAttribute('src');
-  frame.srcdoc = previewHtml;
-
-  if(__parentPreviewBlobUrl) {
-    try { URL.revokeObjectURL(__parentPreviewBlobUrl); } catch(e) {}
-  }
-  __parentPreviewBlobUrl = URL.createObjectURL(new Blob([previewHtml], {type:'text/html;charset=utf-8'}));
-}
-
-function openParentPreviewNewTab(){
-  let previewHtml = '';
-  try {
-    previewHtml = buildParentPreviewHtml();
-  } catch(e) {
-    console.warn('새 탭 미리보기 생성 오류:', e);
-    previewHtml = buildParentPreviewFallbackHtml();
-  }
-
-  const blobUrl = URL.createObjectURL(new Blob([previewHtml], {type:'text/html;charset=utf-8'}));
-  window.open(blobUrl, '_blank');
-}
-
-function buildParentPreviewHtml(){
-  if(typeof buildSnapshot === 'function'){
-    const html = buildSnapshot();
-    if(html && String(html).includes('<html')) return html;
-  }
-  return buildParentPreviewFallbackHtml();
-}
-
-document.addEventListener('DOMContentLoaded', function(){
-  const btn = document.getElementById('previewParentBtn');
-  if(btn){
-    btn.addEventListener('click', openParentPreview);
-    btn.addEventListener('touchend', function(e){
-      e.preventDefault();
-      openParentPreview(e);
-    }, {passive:false});
-  }
 });
 
-function buildParentPreviewFallbackHtml(){
-  const name = document.getElementById('nameInput')?.value.trim() || '학생';
-  const date = document.getElementById('dateInput')?.value || '';
-  const start = document.getElementById('startTimeInput')?.value || '';
-  const end = document.getElementById('endTimeInput')?.value || '';
-  const course = document.getElementById('courseInput')?.value.trim() || '';
-  const notice = document.getElementById('noticeArea')?.value.trim() || '';
-  const message = document.getElementById('msgText')?.value.trim() || '';
-  const type = classType || '정규수업';
-
-  const hwRows = [...document.querySelectorAll('#hwList .hw-row')].map(row => ({
-    course: row.querySelector('.hw-c1 input')?.value || '',
-    status: row.querySelector('.hw-c2 select')?.value || '',
-    comment: row.querySelector('.hw-c3 textarea')?.value || ''
-  })).filter(r => r.course || r.status || r.comment);
-
-  const subjRows = [...document.querySelectorAll('#subjectList textarea, #subjectList input')].map(el => el.value?.trim()).filter(Boolean);
-
-  const todayRows = [...document.querySelectorAll('#todayHwList .hw-row')].map(row => ({
-    course: row.querySelector('.hw-c1 input')?.value || '',
-    status: row.querySelector('.hw-c2 select')?.value || '',
-    content: row.querySelector('.hw-c3 textarea')?.value || ''
-  })).filter(r => r.course || r.status || r.content);
-
-  const photoCards = [...document.querySelectorAll('.photo-card')].map(card => ({
-    img: card.querySelector('img')?.src || '',
-    link: card.querySelector('a')?.href || card.dataset.driveUrl || '',
-    memo: card.querySelector('textarea, input[type="text"]')?.value || ''
-  })).filter(p => p.img || p.link || p.memo);
-
-  const timeText = [date, start && ` ${start}`, end && `~${end}`].filter(Boolean).join('');
-
-  return `<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>지필드 학부모 리포트 미리보기</title>
-<style>
-  *{box-sizing:border-box}
-  body{margin:0;background:#f4f5fb;color:#172033;font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;line-height:1.7}
-  .page{max-width:760px;margin:0 auto;padding:18px 14px 40px}
-  .hero{background:linear-gradient(135deg,#16417C,#2a5b9e);color:#fff;border-radius:24px;padding:28px 22px;text-align:center;box-shadow:0 12px 30px rgba(22,65,124,.18)}
-  .hero .sub{font-size:13px;opacity:.88;font-weight:700}
-  .hero h1{font-size:25px;margin:6px 0 10px;letter-spacing:-.5px}
-  .badge{display:inline-block;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:6px 13px;font-weight:800;font-size:13px}
-  .card{background:#fff;border:1.5px solid #e4e6f5;border-radius:18px;padding:18px;margin-top:14px;box-shadow:0 8px 20px rgba(17,24,39,.04)}
-  .title{font-size:16px;font-weight:900;color:#16417C;margin-bottom:10px}
-  .meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px}
-  .meta div{background:#f8fafc;border-radius:12px;padding:10px}
-  .line{border-top:1px dashed #d6dbe8;margin:12px 0}
-  table{width:100%;border-collapse:collapse;font-size:13px}
-  th,td{border:1px solid #e5e7eb;padding:9px;vertical-align:top;text-align:left}
-  th{background:#f8fafc;color:#64748b;font-size:12px}
-  .notice{white-space:pre-wrap;background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:13px}
-  .msg{white-space:pre-wrap;background:#eff6ff;border:1px solid #bfdbfe;border-radius:14px;padding:13px}
-  .photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
-  .photo{border:1px solid #e5e7eb;border-radius:14px;padding:9px;background:#fafbff}
-  .photo img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:10px;background:#eef2f7;display:block}
-  .photo .memo{font-size:12px;color:#475569;margin-top:7px;white-space:pre-wrap}
-  .empty{color:#94a3b8;font-size:13px}
-  @media(max-width:520px){.meta{grid-template-columns:1fr}.hero h1{font-size:22px}}
-
-.key-field input[data-secure="true"]{letter-spacing:1.5px;font-family:monospace;}
 
 
-
-
-/* 클릭 안정화 패치 */
-.modal-overlay{pointer-events:none;}
-.modal-overlay.show{pointer-events:auto;}
-.modal{pointer-events:auto;}
-.modal button,.modal input,.modal select,.modal textarea{pointer-events:auto;}
-button:disabled{opacity:.55;cursor:not-allowed;}
-.key-field input{position:relative;z-index:2;}
-.quick-links a, .btns button, .msg-copy-btn, .db-upload-btn{pointer-events:auto;}
-
-
-/* 모드 전환 색상 명확화 패치 */
-.mode-toggle-wrap{
-  overflow:hidden;
-  background:#ffffff;
-  border:1.5px solid #dbe3f2;
-}
-.mode-toggle-wrap label{
-  position:relative;
-  z-index:3;
-  color:#64748b;
-}
-.mode-toggle-wrap label span{
-  position:relative;
-  z-index:4;
-  display:block;
-  color:#475569;
-  text-shadow:none;
-}
-.mode-toggle-wrap .slider{
-  background:linear-gradient(135deg,#16417C,#2a5b9e);
-  box-shadow:0 8px 20px rgba(22,65,124,.22);
-}
-.mode-toggle-wrap.report-active label:first-child span,
-.mode-toggle-wrap:not(.cs-active) label:first-child span{
-  color:#ffffff !important;
-}
-.mode-toggle-wrap.cs-active label:nth-child(2) span{
-  color:#ffffff !important;
-}
-.mode-toggle-wrap.cs-active label:first-child span{
-  color:#64748b !important;
-}
-.mode-toggle-wrap.cs-active .slider{
-  transform:translateX(100%);
-  background:linear-gradient(135deg,#f59e0b,#d97706);
-  box-shadow:0 8px 20px rgba(217,119,6,.25);
-}
-.mode-toggle-wrap.cs-active{
-  border-color:#fcd34d;
-}
-.mode-toggle-wrap.report-active{
-  border-color:#9bb7ff;
-}
-.header.cs-mode{
-  background:linear-gradient(135deg,#f59e0b,#d97706) !important;
-}
-.header.cs-mode .hd-tag.active{
-  color:#b45309 !important;
-}
-.header:not(.cs-mode){
-  background:linear-gradient(135deg,#16417C,#2a5b9e) !important;
-}
-
-
-/* 학부모 미리보기 클릭 안정화 */
-#parentPreviewModal{z-index:12000;}
-#parentPreviewModal.show{display:flex !important;pointer-events:auto !important;}
-#parentPreviewModal .modal{pointer-events:auto !important;}
-#previewParentBtn{pointer-events:auto !important;position:relative;z-index:2;}
-
-
-/* 과제 확인 표 줄맞춤 패치 */
-.hw-table-head,
-.hw-row{
-  display:grid !important;
-  grid-template-columns:30% 20% 50% !important;
-  gap:0 !important;
-  width:100%;
-}
-.hw-table-head{
-  background:#f7f8fe;
-  border:1.5px solid var(--border);
-  border-radius:10px 10px 0 0;
-  overflow:hidden;
-}
-.hw-table-head > div{
-  padding:9px 12px !important;
-  font-size:11px;
-  font-weight:700;
-  color:var(--muted);
-  border-left:1.5px solid var(--border);
-}
-.hw-table-head > div:first-child{border-left:none;}
-.hw-row{
-  border:1.5px solid var(--border) !important;
-  border-top:none !important;
-  border-radius:0 !important;
-  overflow:hidden;
-  align-items:stretch;
-}
-.hw-c1,.hw-c2,.hw-c3{
-  padding:12px !important;
-  border-right:1.5px solid var(--border);
-  display:flex;
-  align-items:flex-start;
-}
-.hw-c3{border-right:none;}
-.hw-c1 input,
-.hw-c2 select,
-.hw-c3 textarea{
-  width:100% !important;
-  min-height:42px;
-  margin:0 !important;
-  box-sizing:border-box;
-}
-.hw-c3 textarea{
-  resize:none;
-  overflow:hidden;
-  line-height:1.45;
-}
-@media(max-width:599px){
-  .hw-table-head{display:none !important;}
-  .hw-row{display:block !important;border:1.5px solid var(--border) !important;border-radius:10px !important;margin-bottom:8px;}
-  .hw-c1,.hw-c2,.hw-c3{border-right:none !important;border-bottom:1px dashed var(--border);padding:8px 10px !important;}
-  .hw-c3{border-bottom:none !important;}
-}
-
-
-/* 학부모 미리보기 모바일 클릭 안정화 */
-#parentPreviewModal{z-index:12000;}
-#parentPreviewModal.show{display:flex !important;pointer-events:auto !important;}
-#parentPreviewModal .modal{pointer-events:auto !important;}
-#parentPreviewModal iframe{pointer-events:auto;}
-#previewParentBtn{pointer-events:auto !important;position:relative;z-index:3;touch-action:manipulation;}
-.preview-actions button{touch-action:manipulation;}
-
-</style>
-</head>
-<body>
-<div class="page">
-  <section class="hero">
-    <div class="sub">성공하는 공부 습관을 만드는</div>
-    <h1>지필드 영재교육 학습 리포트</h1>
-    <div class="badge">${esc(name)} · ${esc(type)}</div>
-  </section>
-
-  <section class="card">
-    <div class="title">기본 정보</div>
-    <div class="meta">
-      <div><b>학생</b><br>${esc(name)}</div>
-      <div><b>일시</b><br>${esc(timeText || '-')}</div>
-      <div><b>과정</b><br>${esc(course || '-')}</div>
-      <div><b>유형</b><br>${esc(type)}</div>
-    </div>
-  </section>
-
-  <section class="card">
-    <div class="title">📢 전달사항</div>
-    <div class="notice">${esc(notice || '입력된 전달사항이 없습니다.')}</div>
-  </section>
-
-  <section class="card">
-    <div class="title">✅ 과제 확인</div>
-    ${hwRows.length ? `<table><thead><tr><th>과정</th><th>수행</th><th>코멘트</th></tr></thead><tbody>${hwRows.map(r=>`<tr><td>${esc(r.course)}</td><td>${esc(r.status)}</td><td>${esc(r.comment)}</td></tr>`).join('')}</tbody></table>` : `<div class="empty">입력된 과제 확인 내용이 없습니다.</div>`}
-  </section>
-
-  <section class="card">
-    <div class="title">📖 학습 내용 요약</div>
-    ${subjRows.length ? subjRows.map(v=>`<div class="notice" style="background:#fff;border-color:#e5e7eb;margin-bottom:8px">${esc(v)}</div>`).join('') : `<div class="empty">입력된 학습 내용이 없습니다.</div>`}
-  </section>
-
-  <section class="card">
-    <div class="title">📸 사진</div>
-    ${photoCards.length ? `<div class="photos">${photoCards.map(p=>`<a class="photo" href="${esc(p.link || p.img)}" target="_blank" rel="noopener"><img src="${esc(p.img)}" alt="수업 사진"><div class="memo">${esc(p.memo || '')}</div></a>`).join('')}</div>` : `<div class="empty">추가된 사진 링크가 없습니다.</div>`}
-  </section>
-
-  <section class="card">
-    <div class="title">✏️ 오늘의 과제</div>
-    ${todayRows.length ? `<table><thead><tr><th>과정</th><th>구분</th><th>내용</th></tr></thead><tbody>${todayRows.map(r=>`<tr><td>${esc(r.course)}</td><td>${esc(r.status)}</td><td>${esc(r.content)}</td></tr>`).join('')}</tbody></table>` : `<div class="empty">입력된 오늘의 과제가 없습니다.</div>`}
-  </section>
-
-  <section class="card">
-    <div class="title">📱 전송 메시지</div>
-    <div class="msg">${esc(message || '메시지 프리뷰가 없습니다.')}</div>
-  </section>
-</div>
-</body>
-</html>`;
-}
 
 </script>
 </body>
 </html>
-
