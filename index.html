@@ -3219,6 +3219,18 @@ function explicitSheetSaveOnly(){
   window.__gfieldSheetSaveRequested = true;
 }
 
+
+/* [REPAIR] 저장/배포 버튼 최종 복구 */
+function getScriptUrlOrAlert(){
+  const sUrl = getKey('script');
+  if(!sUrl){
+    alert('Apps Script 웹앱 URL이 비어 있습니다. API 키 및 환경 설정에서 GOOGLE APPS SCRIPT URL을 저장해 주세요.');
+    openKeyModal();
+    return '';
+  }
+  return sUrl;
+}
+
 async function saveToDrive(e){
   if(e&&e.preventDefault)e.preventDefault();
   if(lockAction && lockAction('saveToDrive', 2500)) return false;
@@ -3228,8 +3240,7 @@ async function saveToDrive(e){
 
   try{
     const csRec = typeof getCSRecordSummary === 'function' ? getCSRecordSummary() : {};
-    const sUrl = getKey('script');
-    if(!sUrl){ openKeyModal(); return false; }
+    const sUrl = getScriptUrlOrAlert(); if(!sUrl) return false;
 
     const n = val('nameInput').trim();
     if(!n){ showToast('이름 입력 필요!'); return false; }
@@ -3302,8 +3313,7 @@ async function deployToGitHubPages(e){
   try{
     if(typeof warnIfCsHtmlNotNeeded === 'function' && warnIfCsHtmlNotNeeded()) return false;
 
-    const sUrl = getKey('script');
-    if(!sUrl){ openKeyModal(); return false; }
+    const sUrl = getScriptUrlOrAlert(); if(!sUrl) return false;
 
     const ghU = getKey('ghUser') || 'docssam1';
     const ghR = getKey('ghRepo') || 'gfield-report';
