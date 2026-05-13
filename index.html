@@ -864,7 +864,7 @@ button.btn-busy{
 <div class="btns">
   <button type="button" class="kakao-btn" id="previewParentBtn" onclick="return openParentPreview(event)">👨‍👩‍👧 학부모 HTML 템플릿 미리보기</button>
   <button type="button" class="btn-dl" id="saveDriveBtn" onclick="return saveToDrive(event)">💾 1단계: 드라이브 저장 및 시트 기록</button>
-  <button class="btn-gh" id="ghBtn" onclick="deployToGitHubPages()">🔗 2단계: 웹 링크 생성 (배포)</button>
+  <button class="btn-gh" id="ghBtn" onclick="return deployToGitHubPages(event)">🔗 2단계: 웹 링크 생성 (배포)</button>
   <button class="notion-btn" id="notionBtn" onclick="saveToNotion()">📅 3단계: 캘린더 전송</button>
   <button class="kakao-btn" id="kakaoBtn" onclick="shareKakao()">💬 카카오톡 템플릿 전송 (리포트/안내문)</button>
 </div>
@@ -3221,57 +3221,147 @@ function explicitSheetSaveOnly(){
 
 async function saveToDrive(e){
   if(e&&e.preventDefault)e.preventDefault();
-  if(lockAction('saveToDrive', 2500)) return false;
-  const __restoreBtn = setButtonBusy(e?.currentTarget || qs('saveDriveBtn'), '저장 중...');
-  explicitSheetSaveOnly();
-  if(e&&e.preventDefault)e.preventDefault();
-  const csRec = getCSRecordSummary();
-  const sUrl=getKey('script');if(!sUrl){openKeyModal();return;}
-  const n=val('nameInput').trim();if(!n){showToast('이름 입력 필요!');return;}
-  
-  let backendType = classType;
-  if(classType === '결석') {
-    const reasonType = document.querySelector('input[name="absentReasonType"]:checked').value;
-    backendType = reasonType === 'free' ? '보강' : '결석';
-  }
-  
-  const fName=`지필드_${val('dateInput').replace(/-/g,'')}_${n}_${backendType}_리포트.html`;
-  const subjects = Array.from(document.querySelectorAll('#subjectList .subj-row-wrap')).map(row => {
-    const title = row.querySelector('.v-subj').value.trim(); const content = row.querySelector('.v-content').value.trim(); return title ? `${title}(${content})` : '';
-  }).filter(v => v).slice(0, 3).join(', ');
-  
-  const btn = document.getElementById('saveDriveBtn'); btn.textContent='⏳ 저장 중...'; btn.disabled = true;
-  
-  try{
-    const res=await fetch(sUrl,{method:'POST',body:JSON.stringify({
-      action:'save_drive', mode:currentMode, csRecord:csRec, studentName:n, name:csRec.name||n, type:backendType, school:csRec.school, grade:csRec.grade, phone:csRec.phone, course:csRec.course, content:currentMode==='상담'?csRec.content:undefined, fileName:fName, htmlContent:buildSnapshot(),
-      sheetId:getKey('sheetId')||DEFAULT_SHEET, attendance:{date:val('dateInput'), type:backendType, course:val('courseInput').trim(), subjects_merged:subjects}
-    })});
-    const r=await res.json(); if(r.result==='success'){window.setLink(r.url);showToast('✅ 구글 드라이브/시트 기록 완료!');}else throw new Error(r.error || "응답 오류");
-  }catch(e){alert('❌ 저장 실패: '+e.message);}finally{ if(typeof updateActionButtonLabels==='function') updateActionButtonLabels(); else btn.textContent='💾 1단계: 드라이브 저장 및 시트 기록'; btn.disabled = false;}
+  if(lockAction && lockAction('saveToDrive', 2500)) return false;
 
-  setTimeout(__restoreBtn, 400);
+  const btn = (e && e.currentTarget) || qs('saveDriveBtn');
+  const restore = typeof setButtonBusy === 'function' ? setButtonBusy(btn, '저장 중...') : function(){};
+
+  try{
+    const csRec = typeof getCSRecordSummary === 'function' ? getCSRecordSummary() : {};
+    const sUrl = getKey('script');
+    if(!sUrl){ openKeyModal(); return false; }
+
+    const n = val('nameInput').trim();
+    if(!n){ showToast('이름 입력 필요!'); return false; }
+
+    let backendType = classType || (typeof getCsType === 'function' ? getCsType() : '안내');
+    if(backendType === '결석') {
+      const reasonEl = document.querySelector('input[name="absentReasonType"]:checked');
+      const reasonType = reasonEl ? reasonEl.value : '';
+      backendType = reasonType === 'free' ? '보강' : '결석';
+    }
+
+    const subjects = Array.from(document.querySelectorAll('#subjectList .subj-row-wrap')).map(row => {
+      const title = row.querySelector('.v-subj')?.value?.trim() || row.querySelector('input')?.value?.trim() || '';
+      const content = row.querySelector('.v-content')?.value?.trim() || row.querySelector('textarea')?.value?.trim() || '';
+      return title ? `${title}${content ? '('+content+')' : ''}` : '';
+    }).filter(Boolean).slice(0, 3).join(', ');
+
+    const htmlContent = typeof buildSnapshot === 'function' ? buildSnapshot() : '<!doctype html><meta charset="utf-8"><body>내용 없음</body>';
+    const fName = `지필드_${val('dateInput').replace(/-/g,'')}_${n}_${backendType}_리포트.html`;
+
+    const payload = {
+      action:'save_drive',
+      mode:currentMode,
+      csRecord:csRec,
+      studentName:n,
+      name:csRec.name || n,
+      type:backendType,
+      school:csRec.school || val('dbSchool'),
+      grade:csRec.grade || val('dbGrade'),
+      phone:csRec.phone || val('dbPhone'),
+      course:csRec.course || val('courseInput').trim(),
+      content:currentMode==='상담' ? (csRec.content || val('msgText') || val('csMemo')) : undefined,
+      fileName:fName,
+      htmlContent:htmlContent,
+      sheetId:getKey('sheetId') || DEFAULT_SHEET,
+      attendance:{
+        date:val('dateInput'),
+        type:backendType,
+        course:csRec.course || val('courseInput').trim(),
+        school:csRec.school || val('dbSchool'),
+        grade:csRec.grade || val('dbGrade'),
+        phone:csRec.phone || val('dbPhone'),
+        subjects_merged:subjects,
+        memo:currentMode==='상담' ? (csRec.content || val('msgText') || val('csMemo')) : ''
+      }
+    };
+
+    const res = await fetch(sUrl,{method:'POST',body:JSON.stringify(payload)});
+    const r = await res.json();
+    if(r.result !== 'success') throw new Error(r.error || '저장 실패');
+
+    if(window.setLink) window.setLink(r.url);
+    showToast('✅ 드라이브 저장 및 시트 기록 완료');
+  }catch(err){
+    alert('❌ 저장 실패: ' + err.message);
+  }finally{
+    if(typeof updateActionButtonLabels === 'function') updateActionButtonLabels();
+    restore();
+  }
   return false;
 }
 
-async function deployToGitHubPages(){
-  const sUrl=getKey('script'); if(!sUrl){openKeyModal();return;}
-  const ghU=getKey('ghUser')||'docssam1', ghR=getKey('ghRepo')||'gfield-report';
-  const n=val('nameInput').trim()||'학생';
-  if(!n){showToast('이름 입력 필요!');return;}
-  let backendType = classType;
-  if(classType === '결석') { const reasonType = document.querySelector('input[name=\"absentReasonType\"]:checked').value; backendType = reasonType === 'free' ? '보강' : '결석'; }
-  const btn = document.getElementById('ghBtn'); btn.textContent='⏳ 배포 중...'; btn.disabled = true;
+async function deployToGitHubPages(e){
+  if(e&&e.preventDefault)e.preventDefault();
+  if(lockAction && lockAction('deployToGitHubPages', 2500)) return false;
+
+  const btn = (e && e.currentTarget) || qs('ghBtn');
+  const restore = typeof setButtonBusy === 'function' ? setButtonBusy(btn, '배포 중...') : function(){};
+
   try{
-    const fName=`지필드_${val('dateInput').replace(/-/g,'')}_${n}_${backendType}_리포트.html`;
-    const path=`${n}/${fName}`;
-    const res=await fetch(sUrl,{method:'POST',body:JSON.stringify({
-      action:'deploy_github', repo:`${ghU}/${ghR}`, path:path, htmlContent:buildSnapshot(), message:`[자동배포] ${n} ${backendType} 리포트`, sheetId:getKey('sheetId')||DEFAULT_SHEET
-    })});
-    const r=await res.json();
+    if(typeof warnIfCsHtmlNotNeeded === 'function' && warnIfCsHtmlNotNeeded()) return false;
+
+    const sUrl = getKey('script');
+    if(!sUrl){ openKeyModal(); return false; }
+
+    const ghU = getKey('ghUser') || 'docssam1';
+    const ghR = getKey('ghRepo') || 'gfield-report';
+    const n = val('nameInput').trim() || '학생';
+    if(!n){ showToast('이름 입력 필요!'); return false; }
+
+    let backendType = classType || (typeof getCsType === 'function' ? getCsType() : '안내');
+    if(backendType === '결석') {
+      const reasonEl = document.querySelector('input[name="absentReasonType"]:checked');
+      const reasonType = reasonEl ? reasonEl.value : '';
+      backendType = reasonType === 'free' ? '보강' : '결석';
+    }
+
+    const htmlContent = typeof buildSnapshot === 'function' ? buildSnapshot() : '<!doctype html><meta charset="utf-8"><body>내용 없음</body>';
+    const fName = `지필드_${val('dateInput').replace(/-/g,'')}_${n}_${backendType}_리포트.html`;
+    const path = `${n}/${fName}`;
+
+    const payload = {
+      action:'deploy_github',
+      repo:`${ghU}/${ghR}`,
+      path:path,
+      htmlContent:htmlContent,
+      message:`[자동배포] ${n} ${backendType} 리포트`,
+      sheetId:getKey('sheetId') || DEFAULT_SHEET,
+      logToSheet:true,
+      studentName:n,
+      name:n,
+      type:backendType,
+      date:val('dateInput'),
+      school:val('dbSchool'),
+      grade:val('dbGrade'),
+      phone:val('dbPhone'),
+      course:val('courseInput').trim(),
+      content:val('msgText') || val('csMemo') || '',
+      attendance:{
+        date:val('dateInput'),
+        type:backendType,
+        course:val('courseInput').trim(),
+        school:val('dbSchool'),
+        grade:val('dbGrade'),
+        phone:val('dbPhone'),
+        subjects_merged:val('msgText') || val('csMemo') || ''
+      }
+    };
+
+    const res = await fetch(sUrl,{method:'POST',body:JSON.stringify(payload)});
+    const r = await res.json();
     if(r.result !== 'success') throw new Error(r.error || 'GitHub 배포 실패');
-    window.setLink(r.url); showToast('🎉 전용 웹 링크 생성 완료!');
-  }catch(e){alert('❌ GitHub 오류: '+e.message);}finally{btn.textContent='🔗 2단계: 웹 링크 생성 (배포)'; btn.disabled = false;}
+
+    if(window.setLink) window.setLink(r.url);
+    showToast('🎉 웹 링크 생성 및 시트 링크 기록 완료');
+  }catch(err){
+    alert('❌ GitHub 오류: ' + err.message);
+  }finally{
+    if(btn && !setButtonBusy) { btn.textContent='🔗 2단계: 웹 링크 생성 (배포)'; btn.disabled=false; }
+    restore();
+  }
+  return false;
 }
 
 async function saveToNotion(){
