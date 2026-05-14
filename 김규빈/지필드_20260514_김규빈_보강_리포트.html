@@ -1,0 +1,494 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>김규빈 일정공지</title><style>:root{color-scheme:light;}*{box-sizing:border-box;margin:0;padding:0;}html,body{background:#f4f5fb !important;color:#0f172a !important;color-scheme:light;}body{font-family:sans-serif;background:#f4f5fb !important;color:#0f172a !important;}.wrap{max-width:480px;margin:0 auto;padding:30px 16px;}.card{background:#fff;border-radius:20px;padding:28px;margin-bottom:16px;box-shadow:0 4px 15px rgba(0,0,0,.05);}.badge{background:#dbeafe;color:#166534;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:800;display:inline-block;margin-bottom:16px;}h1{font-size:20px;margin-bottom:6px;}.info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9;font-size:14px;}.info-label{color:#64748b;font-weight:600;}.info-val{font-weight:700;}.notice-box{background:#fffbeb;padding:14px;border-radius:12px;border:1px solid #fde68a;white-space:pre-wrap;margin-top:4px;}
+/* G-FIELD 안정화: 드라이브 링크 사진/자동 높이 */
+.drive-photo-adder{display:flex;gap:8px;margin-bottom:12px;align-items:center;}
+.drive-photo-adder input{flex:1;border:1px solid var(--border);border-radius:8px;padding:9px;font-size:13px;}
+.drive-photo-adder button{padding:10px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:800;cursor:pointer;}
+.photo-card{width:180px;}
+.photo-card img{width:100%;height:auto;aspect-ratio:3/4;object-fit:cover;border-radius:8px;background:#f1f5f9;display:block;}
+.photo-card textarea.photo-input{width:100%;border:1px solid var(--border);border-radius:6px;padding:7px;font-size:12px;resize:none;overflow:hidden;line-height:1.45;min-height:34px;font-family:inherit;}
+textarea{overflow:hidden;}
+.ai-answer-box{margin-top:10px;padding:10px;border:1px solid #bfdbfe;border-radius:8px;background:#f8fbff;min-height:80px;white-space:pre-wrap;font-size:12px;line-height:1.6;color:#1e293b;}
+.ai-btn{width:100%;margin-top:8px;background:#2563eb;color:#fff;padding:10px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;}
+
+
+/* 학부모 HTML 템플릿 미리보기 */
+.preview-modal{max-width:960px;width:94%;height:90vh;display:flex;flex-direction:column;}
+.preview-modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+.preview-modal-title{font-size:18px;font-weight:900;color:var(--accent);}
+.preview-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.preview-actions button{border:none;border-radius:10px;padding:9px 13px;font-size:12px;font-weight:900;cursor:pointer;}
+.preview-refresh{background:#e0e7ff;color:#3730a3;}
+.preview-open{background:#16a34a;color:#fff;}
+.preview-close{background:#e5e7eb;color:#374151;}
+.preview-frame-wrap{flex:1;border:1.5px solid var(--border);border-radius:14px;overflow:hidden;background:#fff;}
+#parentPreviewFrame{width:100%;height:100%;border:none;background:#fff;}
+.preview-note{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:9px 11px;}
+
+
+.key-field input[data-secure="true"]{letter-spacing:1.5px;font-family:monospace;}
+
+
+
+
+/* 클릭 안정화 패치 */
+.modal-overlay{pointer-events:none;}
+.modal-overlay.show{pointer-events:auto;}
+.modal{pointer-events:auto;}
+.modal button,.modal input,.modal select,.modal textarea{pointer-events:auto;}
+button:disabled{opacity:.55;cursor:not-allowed;}
+.key-field input{position:relative;z-index:2;}
+.quick-links a, .btns button, .msg-copy-btn, .db-upload-btn{pointer-events:auto;}
+
+
+/* 모드 전환 색상 명확화 패치 */
+.mode-toggle-wrap{
+  overflow:hidden;
+  background:#ffffff;
+  border:1.5px solid #dbe3f2;
+}
+.mode-toggle-wrap label{
+  position:relative;
+  z-index:3;
+  color:#64748b;
+}
+.mode-toggle-wrap label span{
+  position:relative;
+  z-index:4;
+  display:block;
+  color:#475569;
+  text-shadow:none;
+}
+.mode-toggle-wrap .slider{
+  background:linear-gradient(135deg,#16417C,#2a5b9e);
+  box-shadow:0 8px 20px rgba(22,65,124,.22);
+}
+.mode-toggle-wrap.report-active label:first-child span,
+.mode-toggle-wrap:not(.cs-active) label:first-child span{
+  color:#ffffff !important;
+}
+.mode-toggle-wrap.cs-active label:nth-child(2) span{
+  color:#ffffff !important;
+}
+.mode-toggle-wrap.cs-active label:first-child span{
+  color:#64748b !important;
+}
+.mode-toggle-wrap.cs-active .slider{
+  transform:translateX(100%);
+  background:linear-gradient(135deg,#f59e0b,#d97706);
+  box-shadow:0 8px 20px rgba(217,119,6,.25);
+}
+.mode-toggle-wrap.cs-active{
+  border-color:#fcd34d;
+}
+.mode-toggle-wrap.report-active{
+  border-color:#9bb7ff;
+}
+.header.cs-mode{
+  background:linear-gradient(135deg,#f59e0b,#d97706) !important;
+}
+.header.cs-mode .hd-tag.active{
+  color:#b45309 !important;
+}
+.header:not(.cs-mode){
+  background:linear-gradient(135deg,#16417C,#2a5b9e) !important;
+}
+
+
+/* 학부모 미리보기 클릭 안정화 */
+#parentPreviewModal{z-index:12000;}
+#parentPreviewModal.show{display:flex !important;pointer-events:auto !important;}
+#parentPreviewModal .modal{pointer-events:auto !important;}
+#previewParentBtn{pointer-events:auto !important;position:relative;z-index:2;}
+
+
+/* 과제 확인 표 줄맞춤 패치 */
+.hw-table-head,
+.hw-row{
+  display:grid !important;
+  grid-template-columns:30% 20% 50% !important;
+  gap:0 !important;
+  width:100%;
+}
+.hw-table-head{
+  background:#f7f8fe;
+  border:1.5px solid var(--border);
+  border-radius:10px 10px 0 0;
+  overflow:hidden;
+}
+.hw-table-head > div{
+  padding:9px 12px !important;
+  font-size:11px;
+  font-weight:700;
+  color:var(--muted);
+  border-left:1.5px solid var(--border);
+}
+.hw-table-head > div:first-child{border-left:none;}
+.hw-row{
+  border:1.5px solid var(--border) !important;
+  border-top:none !important;
+  border-radius:0 !important;
+  overflow:hidden;
+  align-items:stretch;
+}
+.hw-c1,.hw-c2,.hw-c3{
+  padding:12px !important;
+  border-right:1.5px solid var(--border);
+  display:flex;
+  align-items:flex-start;
+}
+.hw-c3{border-right:none;}
+.hw-c1 input,
+.hw-c2 select,
+.hw-c3 textarea{
+  width:100% !important;
+  min-height:42px;
+  margin:0 !important;
+  box-sizing:border-box;
+}
+.hw-c3 textarea{
+  resize:none;
+  overflow:hidden;
+  line-height:1.45;
+}
+@media(max-width:599px){
+  .hw-table-head{display:none !important;}
+  .hw-row{display:block !important;border:1.5px solid var(--border) !important;border-radius:10px !important;margin-bottom:8px;}
+  .hw-c1,.hw-c2,.hw-c3{border-right:none !important;border-bottom:1px dashed var(--border);padding:8px 10px !important;}
+  .hw-c3{border-bottom:none !important;}
+}
+
+
+/* 학부모 미리보기 모바일 클릭 안정화 */
+#parentPreviewModal{z-index:12000;}
+#parentPreviewModal.show{display:flex !important;pointer-events:auto !important;}
+#parentPreviewModal .modal{pointer-events:auto !important;}
+#parentPreviewModal iframe{pointer-events:auto;}
+#previewParentBtn{pointer-events:auto !important;position:relative;z-index:3;touch-action:manipulation;}
+.preview-actions button{touch-action:manipulation;}
+
+
+/* 학부모 미리보기 버튼 최종 활성화 패치 */
+#previewParentBtn{
+  pointer-events:auto !important;
+  position:relative !important;
+  z-index:30 !important;
+  touch-action:manipulation !important;
+}
+#parentPreviewModal{
+  z-index:12000 !important;
+}
+#parentPreviewModal.show{
+  display:flex !important;
+  pointer-events:auto !important;
+}
+#parentPreviewModal .modal,
+#parentPreviewModal button,
+#parentPreviewModal iframe{
+  pointer-events:auto !important;
+}
+
+
+/* 입력 행/자동높이/썸네일 복구 패치 */
+.hw-table-head,
+.hw-row{
+  display:grid !important;
+  grid-template-columns:30% 20% 50% !important;
+  gap:0 !important;
+  width:100%;
+}
+.hw-table-head{
+  background:#f7f8fe;
+  border:1.5px solid var(--border);
+  border-radius:10px 10px 0 0;
+  overflow:hidden;
+}
+.hw-table-head > div{
+  padding:9px 12px !important;
+  font-size:11px;
+  font-weight:800;
+  color:var(--muted);
+  border-left:1.5px solid var(--border);
+  text-align:left;
+}
+.hw-table-head > div:first-child{border-left:none;}
+.hw-row{
+  border:1.5px solid var(--border) !important;
+  border-top:none !important;
+  border-radius:0 !important;
+  overflow:hidden;
+  align-items:stretch;
+  background:#fff;
+}
+.hw-c1,.hw-c2,.hw-c3{
+  padding:12px !important;
+  border-right:1.5px solid var(--border);
+  display:flex;
+  align-items:flex-start;
+}
+.hw-c3{border-right:none;}
+.hw-c1 input,
+.hw-c2 select,
+.hw-c3 textarea{
+  width:100% !important;
+  min-height:42px;
+  margin:0 !important;
+  box-sizing:border-box;
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:9px 10px;
+  font-family:inherit;
+}
+.hw-c3 textarea,
+textarea.auto-grow{
+  resize:none !important;
+  overflow:hidden !important;
+  line-height:1.5;
+}
+.subj-row-wrap{
+  border:1.5px solid var(--border) !important;
+  border-radius:14px !important;
+  margin-bottom:10px;
+  overflow:hidden;
+  background:#fff;
+}
+.subj-row{
+  display:grid;
+  grid-template-columns:30% 20% 50%;
+  gap:0;
+}
+.subj-cell{
+  padding:12px;
+  border-right:1.5px solid var(--border);
+}
+.subj-cell:last-child{border-right:none;}
+.subj-cell input,
+.subj-cell select,
+.subj-cell textarea{
+  width:100%;
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:9px 10px;
+  min-height:42px;
+  font-family:inherit;
+}
+.today-row{
+  display:grid !important;
+  grid-template-columns:30% 20% 50% !important;
+  gap:0 !important;
+  border:1.5px solid var(--border) !important;
+  border-top:none !important;
+  overflow:hidden;
+  background:#fff;
+}
+.today-row > div{
+  padding:12px !important;
+  border-right:1.5px solid var(--border);
+}
+.today-row > div:last-child{border-right:none;}
+.today-row input,
+.today-row select,
+.today-row textarea{
+  width:100%;
+  min-height:42px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:9px 10px;
+  font-family:inherit;
+}
+.photos-grid,
+.video-grid{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  margin-top:12px;
+}
+.photo-card,
+.video-card{
+  width:180px;
+  background:#fafbff;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:8px;
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  position:relative;
+}
+.photo-card img,
+.video-card iframe,
+.video-thumb{
+  width:100%;
+  aspect-ratio:3/4;
+  height:auto;
+  object-fit:cover;
+  border-radius:8px;
+  background:#f1f5f9;
+  border:0;
+}
+.photo-card textarea,
+.video-card textarea,
+.photo-input,
+.video-input{
+  width:100%;
+  border:1px solid var(--border);
+  border-radius:7px;
+  padding:8px;
+  font-size:12px;
+  line-height:1.45;
+  resize:none !important;
+  overflow:hidden !important;
+  min-height:36px;
+  font-family:inherit;
+}
+.del-photo,
+.del-video{
+  position:absolute;
+  top:6px;
+  right:6px;
+  border:none;
+  background:rgba(255,255,255,.9);
+  color:#ef4444;
+  border-radius:50%;
+  width:24px;
+  height:24px;
+  cursor:pointer;
+  font-weight:900;
+}
+@media(max-width:599px){
+  .hw-table-head{display:none !important;}
+  .hw-row,.today-row,.subj-row{
+    display:block !important;
+    border:1.5px solid var(--border) !important;
+    border-radius:10px !important;
+    margin-bottom:8px;
+  }
+  .hw-c1,.hw-c2,.hw-c3,.today-row > div,.subj-cell{
+    border-right:none !important;
+    border-bottom:1px dashed var(--border);
+    padding:8px 10px !important;
+  }
+  .hw-c3,.today-row > div:last-child,.subj-cell:last-child{border-bottom:none !important;}
+  .photo-card,.video-card{width:calc(50% - 8px);}
+}
+
+
+/* CS 저장/미리보기 버튼 클릭 복구 */
+#saveDriveBtn,#previewParentBtn{
+  pointer-events:auto !important;
+  position:relative !important;
+  z-index:50 !important;
+  touch-action:manipulation !important;
+}
+.btns,.btns button{pointer-events:auto !important;}
+#parentPreviewModal{z-index:12000 !important;}
+#parentPreviewModal.show{display:flex !important;pointer-events:auto !important;}
+#parentPreviewModal .modal,#parentPreviewModal button,#parentPreviewModal iframe{pointer-events:auto !important;}
+
+
+/* 모든 버튼 클릭감 / 중복 클릭 방지 표시 */
+button{
+  transition:transform .08s ease, filter .12s ease, opacity .12s ease !important;
+}
+button:active,
+button.is-pressing{
+  transform:scale(.975) translateY(1px) !important;
+  filter:brightness(.94) !important;
+}
+button:disabled,
+button.btn-busy{
+  opacity:.62 !important;
+  cursor:not-allowed !important;
+  pointer-events:none !important;
+}
+
+
+.logo-wrap{position:absolute;right:26px;top:26px;width:72px;height:72px;border-radius:20px;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(15,23,42,.16);z-index:2;}
+.logo-wrap img{max-width:58px;max-height:58px;object-fit:contain;}
+
+
+
+/* =========================================================
+ * 학부모 리포트 버튼 최종 레이아웃
+ * - 텍스트 넘침 방지
+ * - 모바일 엄지 터치 최적화
+ * - 용도별 버튼 색상 고정
+ * ========================================================= */
+.action-grid{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:12px !important;
+  margin-top:16px !important;
+}
+.action-grid a,
+.action-grid button{
+  width:100% !important;
+  min-width:0 !important;
+  min-height:58px !important;
+  padding:12px 14px !important;
+  border:none !important;
+  border-radius:16px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  white-space:normal !important;
+  word-break:keep-all !important;
+  overflow-wrap:break-word !important;
+  line-height:1.25 !important;
+  font-size:14.5px !important;
+  font-weight:900 !important;
+  letter-spacing:-.35px !important;
+  text-decoration:none !important;
+  font-family:inherit !important;
+  box-shadow:0 7px 16px rgba(15,23,42,.13) !important;
+  cursor:pointer !important;
+  box-sizing:border-box !important;
+}
+.action-grid a:active,
+.action-grid button:active{
+  transform:scale(.98);
+  filter:brightness(.95);
+}
+.action-copy{background:#047857!important;color:#fff!important;}
+.action-pay{background:#2563EB!important;color:#fff!important;}
+.action-zero{background:#00A651!important;color:#fff!important;}
+.action-teacher{background:#4F46E5!important;color:#fff!important;}
+.action-confirm{background:#0F766E!important;color:#fff!important;}
+.action-kakao{background:#FEE500!important;color:#3B1E1E!important;}
+.action-call{background:#DC2626!important;color:#fff!important;}
+.action-map{background:#2DBE5E!important;color:#fff!important;}
+.action-grid-payment .action-map{
+  grid-column:1 / -1 !important;
+  min-height:60px !important;
+  font-size:15.5px !important;
+}
+@media(max-width:640px){
+  .action-grid{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+  .action-grid a,
+  .action-grid button{
+    min-height:56px !important;
+    font-size:15px !important;
+    padding:12px 16px !important;
+  }
+  .action-grid-payment .action-map{
+    grid-column:auto !important;
+  }
+}
+
+
+/* [PATCH] 썸네일 카드 비율 고정 */
+.kakao-thumb,
+.og-thumb,
+.parent-cover,
+.cover-image{
+  width:100% !important;
+  aspect-ratio:2/1 !important;
+  object-fit:cover !important;
+  object-position:center center !important;
+  display:block !important;
+}
+
+</style></head><body><div class="wrap"><div class="card"><div class="badge">📅 보강/일정 공지</div><h1>김규빈 학생 보강/보충 안내</h1><div style="color:#64748b;font-size:13px;margin-bottom:20px;">2026.05.14</div><div class="info-row"><span class="info-label">공지일</span><span class="info-val">2026.05.14</span></div><div class="info-row"><span class="info-label">보강/보충 일정</span><span class="info-val">5/14 03:00</span></div></div><div style="text-align:center;color:#94a3b8;font-size:11px;margin-top:30px;">© G-Field Gifted Education</div></div></body></html>
