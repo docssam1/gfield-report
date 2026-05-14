@@ -604,19 +604,6 @@ button.btn-busy{
   }
 }
 
-
-/* [PATCH] 썸네일 카드 비율 고정 */
-.kakao-thumb,
-.og-thumb,
-.parent-cover,
-.cover-image{
-  width:100% !important;
-  aspect-ratio:2/1 !important;
-  object-fit:cover !important;
-  object-position:center center !important;
-  display:block !important;
-}
-
 </style>
 </head>
 <body>
@@ -2661,19 +2648,6 @@ button.btn-busy{
   }
 }
 
-
-/* [PATCH] 썸네일 카드 비율 고정 */
-.kakao-thumb,
-.og-thumb,
-.parent-cover,
-.cover-image{
-  width:100% !important;
-  aspect-ratio:2/1 !important;
-  object-fit:cover !important;
-  object-position:center center !important;
-  display:block !important;
-}
-
 </style></head><body><div class="wrap"><div class="card"><div class="badge">${badgeText}</div><h1>${titleText}</h1><div style="color:#64748b;font-size:13px;margin-bottom:20px;">${d}</div><div class="info-row"><span class="info-label">${dateLabel}</span><span class="info-val">${d}</span></div>${r&&reasonType!=='free'?`<div class="info-row"><span class="info-label">${rLab}</span><span class="info-val">${esc(r)}</span></div>`:''}<div class="info-row"><span class="info-label">보강/보충 일정</span><span class="info-val">${mStr}</span></div></div>${nt?`<div class="card"><div style="font-weight:800;color:#16417C;margin-bottom:12px;">📢 추가 전달 사항 및 공지</div><div class="notice-box">${esc(nt)}</div></div>`:''}${sr('동영상 강의','🎬',vidH)}${sr('추가 자료','🔗',resH)}<div style="text-align:center;color:#94a3b8;font-size:11px;margin-top:30px;">© G-Field Gifted Education</div></div></body></html>`;
 }
 
@@ -3170,19 +3144,6 @@ button.btn-busy{
   .action-grid-payment .action-map{
     grid-column:auto !important;
   }
-}
-
-
-/* [PATCH] 썸네일 카드 비율 고정 */
-.kakao-thumb,
-.og-thumb,
-.parent-cover,
-.cover-image{
-  width:100% !important;
-  aspect-ratio:2/1 !important;
-  object-fit:cover !important;
-  object-position:center center !important;
-  display:block !important;
 }
 
 </style></head><body><div class="web-wrap"><div class="web-header"><div class="hd-l"><h1>지필드 영재교육 학습 리포트</h1><p>G-Field Gifted Education</p><div class="badge">${classType}</div></div><div class="hd-r"><div class="s-name">${esc(n)} 학생</div><div class="date">${d}${crs?' · '+esc(crs):''}</div></div></div>${nt?`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:16px;padding:16px;margin-bottom:16px;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#451a03;">📢 ${esc(nt)}</div>`:''}${sr('과제 확인','✅',hwR+hwPH)}${sr('학습 요약','📖',subH)}${sr('수업 사진','📸',pRen(classPhotos))}${sr('동영상 강의','🎬',vidH)}${sr('추가 자료','🔗',resH)}${sr('오늘의 과제','✏️',tHwH)}<div style="text-align:center;margin:36px 0;font-size:11px;color:#94a3b8;">© G-Field Gifted Education</div>${hideD}</div></body></html>`;
@@ -3885,19 +3846,6 @@ button.btn-busy{
   }
 }
 
-
-/* [PATCH] 썸네일 카드 비율 고정 */
-.kakao-thumb,
-.og-thumb,
-.parent-cover,
-.cover-image{
-  width:100% !important;
-  aspect-ratio:2/1 !important;
-  object-fit:cover !important;
-  object-position:center center !important;
-  display:block !important;
-}
-
 </style></head><body><div class="wrap"><div class="header"><h2>지필드 영재교육</h2><p>${esc(n)} 학생 ${esc(type)} 미리보기</p></div><div class="card">${esc(msg || '현재 입력된 내용으로 미리보기를 표시합니다.')}</div></div></body></html>`;
 }
 
@@ -3958,19 +3906,6 @@ function getKakaoThumbInfo(){
 
 
 
-
-/* [PATCH] 카카오 썸네일 800x400 비율 보정 */
-function getKakaoThumbnailUrl(){
-  const type = String(classType || '').replace(/\s/g,'');
-  const base = 'https://docssam1.github.io/gfield-report/assets/kakao/';
-  if(type.includes('결석')) return base + 'absent-cover.png';
-  if(type.includes('보강')) return base + 'makeup-cover.png';
-  if(type.includes('테스트')) return base + 'test-cover.png';
-  if(type.includes('대면') || type.includes('상담')) return base + 'consult-cover.png';
-  if(type.includes('수업안내') || type.includes('수강') || type.includes('등록')) return base + 'welcome-cover.png';
-  return base + 'og-cover.png';
-}
-
 function shareKakao(){
   const reportUrl =
     (window.state && window.state.lastUrl) ||
@@ -3993,9 +3928,7 @@ function shareKakao(){
     content: {
       title: thumb.title,
       description: thumb.desc,
-      imageUrl: getKakaoThumbnailUrl(),
-      imageWidth: 800,
-      imageHeight: 400,
+      imageUrl: thumb.imageUrl,
       link: {
         mobileWebUrl: reportUrl,
         webUrl: reportUrl
@@ -4195,26 +4128,13 @@ function buildCsConditionalHtml(){
   }
 }
 
-
-/* [PATCH] 썸네일 카드 비율 고정 */
-.kakao-thumb,
-.og-thumb,
-.parent-cover,
-.cover-image{
-  width:100% !important;
-  aspect-ratio:2/1 !important;
-  object-fit:cover !important;
-  object-position:center center !important;
-  display:block !important;
-}
-
 </style></head><body><div class="wrap">
 <section class="hero"><div class="logo-wrap"><img src="${logoUrl}" alt="G-FIELD 로고" onerror="this.style.display='none'"></div><div class="badge">${esc2(theme.badge)}</div><h1>${esc2(theme.icon)} ${esc2(theme.title)}</h1><p>${esc2(studentName)} 학생을 위한 지필드 영재교육 안내문입니다.</p></section>
 <section class="card"><div class="section-title">👤 학생 안내</div><div class="student-line"><div class="chip">학생명: ${esc2(studentName)}</div>${school ? `<div class="chip">학교/유치원: ${esc2(school)}</div>` : ''}${grade ? `<div class="chip">학년/나이: ${esc2(grade)}</div>` : ''}</div></section>
 ${scheduleLine ? `<section class="card"><div class="section-title">📅 차후 일정</div><div class="schedule">${esc2(scheduleLine)}</div></section>` : ''}
 <section class="card"><div class="section-title">📨 ${esc2(theme.noticeTitle)}</div><div class="message">${esc2(msg || theme.desc)}</div></section>
 ${setHtml ? `<section class="card"><div class="section-title">📚 수업 세트 안내</div>${setHtml}</section>` : ''}${paymentHtml}
-
+<section class="card"><div class="section-title">📍 학원 위치 안내</div><div class="address-box"><b>지필드 영재교육</b><br><span>서울 강남구 대치동 지필드 영재교육</span><br><small>방문 전 정확한 호실 및 입실 안내는 원에서 다시 확인해 주세요.</small></div></section>
 <section class="card"><div class="section-title">✅ 안내 및 주의사항</div><ul class="caution"><li>수업 또는 상담 시간 5분 전 도착을 권장드립니다.</li><li>일정 변경이 필요한 경우 가능한 한 미리 연락 부탁드립니다.</li><li>교재, 필기도구 등 필요한 준비물은 안내 내용에 따라 준비해 주세요.</li><li>본 안내문은 학부모 확인용이며, 내부 상담 기록은 포함하지 않습니다.</li></ul></section>
 <section class="footer">${esc2(theme.desc)}</section></div></body></html>`;
 }
