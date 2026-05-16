@@ -895,16 +895,15 @@ function parseReportHtmlToDom_(htmlText){
   return parser.parseFromString(String(htmlText || ''), 'text/html');
 }
 
-function fillTodayHomeworkFromSnapshot_(doc){
+function fillHomeworkFromSnapshot_(doc){
   const rows = Array.from(doc.querySelectorAll('.data-today-hw'));
   if(!rows.length) return 0;
-  if(qs('todayHwList')) qs('todayHwList').innerHTML = '';
+  if(qs('hwList')) qs('hwList').innerHTML = '';
   rows.forEach(r => {
     const course = r.getAttribute('data-course') || '';
     const perf = r.getAttribute('data-perf') || '';
     const content = r.getAttribute('data-content') || '';
-    const t = perf === 'miss' ? '필수' : (perf === 'partial' ? '도전' : '필수');
-    addTodayHwRow(course, t, content);
+    addHwRow(course, perf || 'done', content);
   });
   return rows.length;
 }
@@ -974,13 +973,13 @@ function loadFromFile(event, mode){
       if(!doc || !doc.body) throw new Error('파일 파싱 실패');
 
       if(mode === 'homework'){
-        const loaded = fillTodayHomeworkFromSnapshot_(doc);
+        const loaded = fillHomeworkFromSnapshot_(doc);
         if(!loaded) throw new Error('과제 데이터(.data-today-hw)를 찾지 못했습니다.');
         updateMsgBox();
         showToast('✅ 이전 과제 불러오기 완료');
       } else if(mode === 'all'){
         clearReportInputs_();
-        const hwLoaded = fillTodayHomeworkFromSnapshot_(doc);
+        const hwLoaded = fillHomeworkFromSnapshot_(doc);
         const summaryLoaded = fillSummaryFromSection_(extractSectionByTitle_(doc, '학습 요약'));
         const hwPhotoLoaded = fillPhotosFromSection_(extractSectionByTitle_(doc, '과제 확인'), 'hwPhotos');
         const classPhotoLoaded = fillPhotosFromSection_(extractSectionByTitle_(doc, '수업 사진'), 'classPhotos');
@@ -1458,7 +1457,8 @@ function buildCsConditionalHtml(){
 
   <div class="btn-grid">
     ${account ? `<button class="btn btn-green" onclick="navigator.clipboard?navigator.clipboard.writeText('${copyCode}').then(()=>alert('계좌가 복사되었습니다.')):alert('${esc2(account)}')">계좌 복사하기 <span>></span></button>` : ''}
-    ${account ? `<a href="${paymentSms}" class="btn btn-blue btn-text-fit">결제 확인 요청 문자 보내기 <span>></span></a>` : ''}
+    ${account ? `<a href="${paymentSms}" class="btn btn-blue btn-text-fit">결제선생 요청하기 <span>></span></a>` : ''}
+    <a href="${zeroPayUrl}" class="btn btn-green" target="_blank">서울페이 요청하기 <span>></span></a>
     <a href="${kakaoChannelUrl}" class="btn btn-yellow" target="_blank">카카오로 문의하기 <span>></span></a>
     <a href="tel:${academyPhone}" class="btn btn-red">전화 걸기 <span>></span></a>
     <a href="${locationUrl}" class="btn btn-full" target="_blank">📍 학원 위치 보기 <span>></span></a>
