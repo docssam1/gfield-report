@@ -1183,7 +1183,8 @@ function getDriveThumbUrl(url){ const id=extractDriveFileId(url); return id ? `h
 
 function renderPhotos(cid,arr){
   const g=qs(cid); if(!g) return; g.innerHTML='';
-  arr.forEach(p=>{
+  const items = Array.isArray(arr) ? arr : (cid==='hwPhotos' ? hwPhotos : classPhotos);
+  items.forEach(p=>{
     const d=document.createElement('div'); d.className='photo-card';
     d.innerHTML=`<a href="${esc(p.driveUrl||p.src)}" target="_blank" title="드라이브 원본 열기"><img src="${esc(p.src||getDriveThumbUrl(p.driveUrl))}" onerror="this.src='${esc(p.driveUrl||'')}'"></a><textarea class="photo-input" placeholder="사진 설명">${esc(p.caption||'')}</textarea><button class="del-photo" onclick="removePhoto('${p.id}','${cid}')">✕</button>`;
     const ta=d.querySelector('textarea'); ta.oninput=e=>{p.caption=e.target.value; autoGrow(e.target); updateMsgBox();}; g.appendChild(d); applyAutoGrow(d);
