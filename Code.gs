@@ -676,7 +676,7 @@ function buildActivityRow_(p, extra) {
   const at = p.attendance || {};
   const date = p.date || cs.date || at.date || '';
   const type = p.type || cs.type || at.type || '';
-  const content = p.content || cs.content || at.memo || at.subjects_merged || '';
+  const content = p.content || cs.summaryContent || at.memo || at.subjects_merged || cs.content || '';
   const docType = p.mode === '상담' ? 'CS' : '학습리포트';
   return [
     new Date(),
