@@ -137,12 +137,6 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
 .drive-photo-adder input{flex:1;border:1px solid var(--border);border-radius:8px;padding:9px;font-size:13px;}
 .drive-photo-adder button{padding:10px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:800;cursor:pointer;}
 textarea{overflow:hidden;}
-.mark-toolbar{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 10px;}
-.mark-toolbar button{border:1px solid #e2e8f0;background:#fff;color:#334155;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:900;cursor:pointer;}
-.mark-toolbar button:hover{filter:brightness(.98);}
-.mark-toolbar .mark-hl{background:#fef08a;border-color:#fde047;color:#713f12;}
-.mark-toolbar .mark-em{background:#dbeafe;border-color:#93c5fd;color:#1d4ed8;}
-.mark-toolbar .mark-star{background:#fff7ed;border-color:#fdba74;color:#c2410c;}
 .rpt-mark-hl{background:linear-gradient(transparent 48%,#fef08a 48%);font-weight:800;padding:0 2px;border-radius:3px;}
 .rpt-mark-em{background:#dbeafe;color:#1e40af;font-weight:900;padding:1px 5px;border-radius:6px;}
 .rpt-mark-star{color:#c2410c;font-weight:900;}
@@ -364,24 +358,12 @@ button:disabled{opacity:.62 !important;cursor:not-allowed !important;}
 
 <div class="sec" style="background:#fffbf0;border-color:#fde68a;" id="noticeSection">
   <div style="font-size:11px;font-weight:800;color:#92400e;margin-bottom:8px;">📢 기타/추가 전달 사항 및 공지</div>
-  <div class="mark-toolbar" aria-label="텍스트 강조 도구">
-    <button type="button" class="mark-hl" data-mark="hl">형광펜</button>
-    <button type="button" class="mark-em" data-mark="em">강조</button>
-    <button type="button" class="mark-star" data-mark="star">별표</button>
-    <button type="button" data-mark="clear">해제</button>
-  </div>
   <textarea id="noticeArea" style="width:100%;border:none;background:transparent;font-size:14px;min-height:60px;outline:none;line-height:1.6;" placeholder="내용을 입력하세요." oninput="updateMsgBox()"></textarea>
 </div>
 
 <div id="mainContentSection">
   <div class="sec">
     <div class="sec-hd"><div class="sec-title">✅ 과제 확인</div></div>
-    <div class="mark-toolbar" aria-label="텍스트 강조 도구">
-      <button type="button" class="mark-hl" data-mark="hl">형광펜</button>
-      <button type="button" class="mark-em" data-mark="em">강조</button>
-      <button type="button" class="mark-star" data-mark="star">별표</button>
-      <button type="button" data-mark="clear">해제</button>
-    </div>
     <div class="hw-head-pc hw-table-head"><div>과정</div><div>수행</div><div>코멘트</div></div>
     <div id="hwList"></div>
     <button style="width:100%;padding:10px;margin-top:10px;border:1.5px dashed #ccc;border-radius:10px;cursor:pointer;background:transparent;" onclick="addHwRow()">+ 과제 항목 추가</button>
@@ -396,12 +378,6 @@ button:disabled{opacity:.62 !important;cursor:not-allowed !important;}
   </div>
   <div class="sec">
     <div class="sec-hd"><div class="sec-title">📖 학습 내용 요약 (최대 3과정 통합저장)</div></div>
-    <div class="mark-toolbar" aria-label="텍스트 강조 도구">
-      <button type="button" class="mark-hl" data-mark="hl">형광펜</button>
-      <button type="button" class="mark-em" data-mark="em">강조</button>
-      <button type="button" class="mark-star" data-mark="star">별표</button>
-      <button type="button" data-mark="clear">해제</button>
-    </div>
     <div id="subjectList"></div>
     <button style="width:100%;padding:10px;border:1.5px dashed #ccc;border-radius:10px;cursor:pointer;background:transparent;" onclick="addSubjRow()">+ 학습 내용 추가</button>
   </div>
@@ -416,12 +392,6 @@ button:disabled{opacity:.62 !important;cursor:not-allowed !important;}
   </div>
   <div class="sec">
     <div class="sec-hd"><div class="sec-title">✏️ 오늘의 과제</div></div>
-    <div class="mark-toolbar" aria-label="텍스트 강조 도구">
-      <button type="button" class="mark-hl" data-mark="hl">형광펜</button>
-      <button type="button" class="mark-em" data-mark="em">강조</button>
-      <button type="button" class="mark-star" data-mark="star">별표</button>
-      <button type="button" data-mark="clear">해제</button>
-    </div>
     <div class="today-row-pc today-row-head" style="background:#f7f8fe;border:1px solid var(--border);border-radius:10px 10px 0 0;font-size:11px;font-weight:700;color:var(--muted);text-align:center;padding:9px 0;"><div>과정</div><div>구분</div><div>내용</div></div>
     <div id="todayHwList"></div>
     <button style="width:100%;padding:10px;margin-top:10px;border:1.5px dashed #ccc;border-radius:10px;cursor:pointer;background:transparent;" onclick="addTodayHwRow()">+ 과제 추가</button>
