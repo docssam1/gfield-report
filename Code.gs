@@ -149,18 +149,19 @@ function saveDrive_(p) {
   const folder = getOrCreateStudentFolder_(name);
   const file = folder.createFile(fileName, html, MimeType.HTML);
   const sharingWarning = safeSetAnyoneWithLink_(file);
+  const photoSharingWarning = openSharedPhotoFiles_(p.photoDriveUrls);
 
   const driveUrl = file.getUrl();
   const row = buildActivityRow_(p, {
     name: name,
     driveUrl: driveUrl,
     reportUrl: p.reportUrl || '',
-    status: sharingWarning ? 'Drive 저장 완료(공유 권한 확인 필요)' : 'Drive 저장 완료'
+    status: (sharingWarning || photoSharingWarning) ? 'Drive 저장 완료(공유 권한 확인 필요)' : 'Drive 저장 완료'
   });
   appendActivity_(p.sheetId, row);
   upsertStudent_(Object.assign({}, p, { name: name }));
 
-  return { result: 'success', url: driveUrl, fileId: file.getId(), warning: sharingWarning };
+  return { result: 'success', url: driveUrl, fileId: file.getId(), warning: [sharingWarning, photoSharingWarning].filter(Boolean).join(' / ') };
 }
 
 function deployGithub_(p) {
@@ -193,6 +194,7 @@ function deployGithub_(p) {
   if (code < 200 || code >= 300) {
     throw new Error('GitHub 업로드 실패: ' + response.getContentText());
   }
+  const photoSharingWarning = openSharedPhotoFiles_(p.photoDriveUrls);
 
   const pagesUrl = CONFIG.PAGES_BASE_URL + '/' + path.split('/').map(encodeURIComponent).join('/');
   const updated = updateLatestActivityReportLink_(p.sheetId, name, p.date, p.type, pagesUrl, p.driveUrl || '');
@@ -205,7 +207,7 @@ function deployGithub_(p) {
     }));
   }
 
-  return { result: 'success', url: pagesUrl };
+  return { result: 'success', url: pagesUrl, warning: photoSharingWarning };
 }
 
 function saveCsRecord_(p) {
@@ -559,6 +561,36 @@ function safeSetAnyoneWithLink_(file) {
   } catch (err) {
     return 'Google Drive 정책 또는 폴더 설정 때문에 anyone with link 권한 부여가 차단되었습니다: ' + (err.message || err);
   }
+}
+
+function extractDriveFileId_(url) {
+  const s = String(url || '').trim();
+  let m = s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (m) return m[1];
+  m = s.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (m) return m[1];
+  m = s.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (m) return m[1];
+  return '';
+}
+
+function openSharedPhotoFiles_(urls) {
+  if (!Array.isArray(urls) || !urls.length) return '';
+  const ids = {};
+  urls.forEach(function(url) {
+    const id = extractDriveFileId_(url);
+    if (id) ids[id] = true;
+  });
+  const errors = [];
+  Object.keys(ids).forEach(function(id) {
+    try {
+      const warning = safeSetAnyoneWithLink_(DriveApp.getFileById(id));
+      if (warning) errors.push(id + ': ' + warning);
+    } catch (err) {
+      errors.push(id + ': ' + (err.message || err));
+    }
+  });
+  return errors.length ? '일부 사진 공유권한 설정 실패: ' + errors.join(', ') : '';
 }
 
 function sanitizeFileName_(name) {
