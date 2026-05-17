@@ -579,6 +579,7 @@ const KEYS={gh:'gf_gh_token',script:'gf_script_url',kakao:'gf_kakao_key',notionK
 const getKey=k=>localStorage.getItem(KEYS[k])||'';
 const setKey=(k,v)=>localStorage.setItem(KEYS[k],String(v||'').trim());
 const DEFAULT_SHEET = '1Ta1o_v504jtDsyHPY0bER6WpI3xYTbVVffEl0iy58f8';
+const PHOTO_DRIVE_FOLDER_URL = 'https://drive.google.com/drive/folders/1ydIsZGns3_yq--hRaYEvORViWiCUrgy6?usp=drive_link';
 
 function openAppsScriptEditor(e){
   if(e) e.preventDefault();
@@ -1332,7 +1333,12 @@ function renderPhotos(cid,arr){
 function removePhoto(pid,cid){ if(cid==='hwPhotos') hwPhotos=hwPhotos.filter(x=>x.id!==pid); else classPhotos=classPhotos.filter(x=>x.id!==pid); renderPhotos(cid,cid==='hwPhotos'?hwPhotos:classPhotos); updateMsgBox(); }
 function addDrivePhoto(cid) {
   const inputId = cid === 'hwPhotos' ? 'hwPhotoDriveInput' : 'classPhotoDriveInput';
-  const url = val(inputId).trim(); if (!url) return showToast('드라이브 링크를 붙여넣으세요.');
+  const url = val(inputId).trim();
+  if (!url) {
+    window.open(PHOTO_DRIVE_FOLDER_URL, '_blank');
+    showToast('Drive 폴더에서 사진을 선택한 뒤 공유 링크를 붙여넣어 주세요.');
+    return;
+  }
   const src = getDriveThumbUrl(url); if(!src) return showToast('올바른 드라이브 링크가 아닙니다.');
   const arr = cid === 'hwPhotos' ? hwPhotos : classPhotos;
   if (arr.some(p => p.driveUrl === url)) return showToast('이미 추가된 사진입니다.');
