@@ -1614,7 +1614,9 @@ function buildCsConditionalHtml(){
   const setHtml = buildCourseGuideHtmlBlocks();
   
   const copyCode = account.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' '); 
-  const paymentSms = `sms:${academyPhone}?body=${encodeURIComponent('결제 완료했습니다. ' + studentName + ' 학생입니다. 확인 부탁드립니다.')}`;
+  const paidSms = `sms:${academyPhone}?body=${encodeURIComponent('결제 완료했습니다. ' + studentName + ' 학생입니다. 확인 부탁드립니다.')}`;
+  const guideConfirmSms = `sms:${academyPhone}?body=${encodeURIComponent('수업 안내 확인했습니다. ' + studentName + ' 학생입니다.')}`;
+  const paymentRequestUrl = 'https://www.payteacher.com/';
   
   return `<!DOCTYPE html>
 <html lang="ko">
@@ -1643,16 +1645,20 @@ function buildCsConditionalHtml(){
   .quote-end { margin-left: 5px; top: 15px; }
 
   .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 20px; margin-top: 24px; }
-  .btn { padding: 16px 14px; border-radius: 14px; text-decoration: none; color: #fff; text-align: left; font-weight: 800; font-size: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor:pointer; border:none; letter-spacing: -0.5px;}
+  .btn { min-height: 78px; padding: 14px 13px; border-radius: 14px; text-decoration: none; color: #fff; text-align: left; font-weight: 900; font-size: clamp(13px, 3.4vw, 16px); line-height: 1.22; display: flex; justify-content: space-between; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor:pointer; border:none; letter-spacing: 0; word-break: keep-all; overflow-wrap: anywhere;}
   .btn:active { transform: scale(0.97); }
-  .btn span { font-size: 18px; opacity: 0.8; font-weight: 300;} 
+  .btn span { font-size: 18px; opacity: 0.8; font-weight: 300; flex: 0 0 auto;} 
   
   .btn-green { background: #0f766e; }
   .btn-blue { background: #0284c7; }
+  .btn-teal { background: #0f766e; }
+  .btn-purple { background: #4f46e5; }
+  .btn-emerald { background: #059669; }
   .btn-yellow { background: #eab308; color: #333; }
   .btn-red { background: #e11d48; }
-  .btn-full { grid-column: 1 / -1; background: #65a30d; font-size: 16px; justify-content: center; gap: 10px;}
-  .btn-text-fit { font-size: 13.5px; padding: 16px 10px; } 
+  .btn-full { grid-column: 1 / -1; background: #65a30d; font-size: clamp(15px, 4vw, 18px); justify-content: center; gap: 10px;}
+  .btn-text-fit { font-size: clamp(12px, 3.15vw, 15px); } 
+  @media(max-width:360px){.btn-grid{gap:9px;padding:0 14px;}.btn{min-height:72px;padding:12px 10px;font-size:12px;}.btn span{font-size:15px;}}
 
   .footer-notice { margin: 24px 20px; background: #fcf9f2; padding: 18px; border-radius: 14px; font-size: 12.5px; color: #555; display: flex; gap: 12px; align-items: flex-start; line-height: 1.6;}
   .footer-notice span { font-size: 22px; line-height: 1;}
@@ -1718,8 +1724,10 @@ function buildCsConditionalHtml(){
 
   <div class="btn-grid">
     ${account ? `<button class="btn btn-green" onclick="navigator.clipboard?navigator.clipboard.writeText('${copyCode}').then(()=>alert('계좌가 복사되었습니다.')):alert('${esc2(account)}')">계좌 복사하기 <span>></span></button>` : ''}
-    ${account ? `<a href="${paymentSms}" class="btn btn-blue btn-text-fit">결제선생 요청하기 <span>></span></a>` : ''}
-    <a href="${zeroPayUrl}" class="btn btn-green" target="_blank">서울페이 요청하기 <span>></span></a>
+    <a href="${paidSms}" class="btn btn-blue btn-text-fit">결제 확인 문자 보내기 <span>></span></a>
+    <a href="${zeroPayUrl}" class="btn btn-teal">제로페이 요청하기 <span>></span></a>
+    <a href="${paymentRequestUrl}" class="btn btn-purple btn-text-fit" target="_blank">결제선생 요청하기 <span>></span></a>
+    <a href="${guideConfirmSms}" class="btn btn-emerald btn-text-fit">안내 확인 보내기 <span>></span></a>
     <a href="${kakaoChannelUrl}" class="btn btn-yellow" target="_blank">카카오로 문의하기 <span>></span></a>
     <a href="tel:${academyPhone}" class="btn btn-red">전화 걸기 <span>></span></a>
     <a href="${locationUrl}" class="btn btn-full" target="_blank">📍 학원 위치 보기 <span>></span></a>
