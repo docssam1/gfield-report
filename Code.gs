@@ -44,6 +44,17 @@ const STUDENT_HEADERS = [
   '최근기록일'
 ];
 
+const TODO_SHEET = '실무_TODO';
+const TODO_HEADERS = [
+  'ID',
+  '기록시간',
+  '내용',
+  '상태',
+  '작성자',
+  '출처',
+  '완료시간'
+];
+
 function authorizeGfieldServices() {
   const root = DriveApp.getFolderById(getDriveRootId_());
   const ss = SpreadsheetApp.openById(getSheetId_());
@@ -56,6 +67,10 @@ function authorizeGfieldServices() {
     driveRootName: root.getName(),
     spreadsheetName: ss.getName()
   };
+}
+
+function 권한_승인() {
+  return authorizeGfieldServices();
 }
 
 function checkDriveRootAccess() {
@@ -77,6 +92,10 @@ function checkDriveRootAccess() {
   }
 }
 
+function 드라이브_폴더_확인() {
+  return checkDriveRootAccess();
+}
+
 function testDriveAndSheetSetup() {
   const ss = SpreadsheetApp.openById(getSheetId_());
   const activity = ensureSheet_(ss, ACTIVITY_SHEET, ACTIVITY_HEADERS);
@@ -96,6 +115,10 @@ function testDriveAndSheetSetup() {
   };
 }
 
+function 드라이브_시트_점검() {
+  return testDriveAndSheetSetup();
+}
+
 function testGithubToken() {
   const token = getGithubToken_({});
   const repo = parseRepo_('');
@@ -113,6 +136,25 @@ function testGithubToken() {
     result: 'success',
     message: 'GitHub token 및 repo 접근 확인 완료',
     repo: repo.owner + '/' + repo.repo
+  };
+}
+
+function 깃허브_토큰_확인() {
+  return testGithubToken();
+}
+
+function 시트_열행_맞추기() {
+  const ss = SpreadsheetApp.openById(getSheetId_());
+  const activity = ensureSheet_(ss, ACTIVITY_SHEET, ACTIVITY_HEADERS);
+  const students = ensureSheet_(ss, STUDENT_SHEET, STUDENT_HEADERS);
+  const todo = ss.getSheetByName(TODO_SHEET) || ss.insertSheet(TODO_SHEET);
+  applySheetLayout_(activity, ACTIVITY_HEADERS, '#16417C', [150, 120, 110, 210, 110, 260, 110, 110, 130, 420, 130, 260, 180, 150, 180, 180, 260, 180, 220]);
+  applySheetLayout_(students, STUDENT_HEADERS, '#0f766e', [120, 150, 110, 130, 230, 110, 150]);
+  applySheetLayout_(todo, TODO_HEADERS, '#b45309', [160, 150, 360, 100, 100, 120, 150]);
+  return {
+    result: 'success',
+    message: '시트 1행 헤더, 색상, 고정, 열 너비를 맞췄습니다.',
+    sheets: [activity.getName(), students.getName(), todo.getName()]
   };
 }
 
@@ -706,6 +748,26 @@ function ensureActivityHeaders_(sheet) {
     }
   });
   return changed;
+}
+
+function applySheetLayout_(sheet, headers, headerColor, widths) {
+  const lastCol = Math.max(sheet.getLastColumn(), headers.length);
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  if (lastCol > headers.length) {
+    sheet.getRange(1, headers.length + 1, 1, lastCol - headers.length).clearContent();
+  }
+  sheet.setFrozenRows(1);
+  sheet.setRowHeight(1, 36);
+  sheet.getRange(1, 1, 1, headers.length)
+    .setBackground(headerColor)
+    .setFontColor('#ffffff')
+    .setFontWeight('bold')
+    .setHorizontalAlignment('center')
+    .setVerticalAlignment('middle')
+    .setWrap(true);
+  headers.forEach(function(_, i) {
+    sheet.setColumnWidth(i + 1, widths && widths[i] ? widths[i] : 140);
+  });
 }
 
 function headerIndex_(headers) {
