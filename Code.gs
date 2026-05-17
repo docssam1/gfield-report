@@ -127,6 +127,7 @@ function doPost(e) {
     else if (action === 'update_student') data = upsertStudent_(payload);
     else if (action === 'update_keys') data = updateKeys_(payload);
     else if (action === 'notion') data = saveToNotion_(payload);
+    else if (action === 'list_drive_photos') data = listDrivePhotos_(payload);
     else if (action === 'delete_record' || action === 'delete_activity' || action === 'dashboard_delete') data = deleteRecord_(payload);
     else throw new Error('Unknown action: ' + action);
 
@@ -220,6 +221,29 @@ function saveCsRecord_(p) {
   }));
   upsertStudent_(Object.assign({}, p, { name: name }));
   return { result: 'success', message: '시트 기록 완료' };
+}
+
+function listDrivePhotos_(p) {
+  const folderId = String(p.folderId || getDriveRootId_()).trim();
+  const folder = DriveApp.getFolderById(folderId);
+  const files = [];
+  const iter = folder.getFiles();
+  while (iter.hasNext()) {
+    const file = iter.next();
+    const mime = String(file.getMimeType() || '');
+    if (mime.indexOf('image/') !== 0) continue;
+    const id = file.getId();
+    files.push({
+      id: id,
+      name: file.getName(),
+      mimeType: mime,
+      url: file.getUrl(),
+      thumbUrl: 'https://drive.google.com/thumbnail?id=' + id + '&sz=w700',
+      updated: file.getLastUpdated().getTime()
+    });
+  }
+  files.sort(function(a, b) { return b.updated - a.updated; });
+  return { result: 'success', files: files.slice(0, 120) };
 }
 
 function searchStudent_(p) {

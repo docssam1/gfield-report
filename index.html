@@ -160,6 +160,12 @@ textarea{overflow:hidden;}
 .preview-frame-wrap{flex:1;border:1.5px solid var(--border);border-radius:14px;overflow:hidden;background:#fff;}
 #parentPreviewFrame{width:100%;height:100%;border:none;background:#fff;}
 .preview-note{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:9px 11px;}
+.photo-picker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;max-height:52vh;overflow-y:auto;padding:4px;}
+.photo-picker-card{position:relative;border:1.5px solid var(--border);border-radius:12px;background:#fff;overflow:hidden;cursor:pointer;}
+.photo-picker-card input{position:absolute;top:8px;left:8px;width:18px;height:18px;accent-color:#16417C;z-index:2;}
+.photo-picker-card img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:#eef2ff;}
+.photo-picker-card span{display:block;padding:7px 8px;font-size:11px;font-weight:700;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.photo-picker-card:has(input:checked){border-color:#16417C;box-shadow:0 0 0 3px rgba(22,65,124,.14);}
 
 .key-field input[data-secure="true"]{letter-spacing:1.5px;font-family:monospace;}
 
@@ -516,6 +522,23 @@ button:disabled{opacity:.62 !important;cursor:not-allowed !important;}
     </div>
     <button onclick="processCSV()" style="width:100%; padding:12px; background:#10b981; color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">🚀 업로드 실행</button>
     <button onclick="document.getElementById('csvModal').classList.remove('show')" style="width:100%; padding:10px; background:transparent; border:none; color:#666; cursor:pointer; margin-top:10px;">닫기</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="photoPickerModal">
+  <div class="modal" style="max-width:760px;">
+    <h2 style="color:#16417C;margin-bottom:10px;">📸 Drive 사진 선택</h2>
+    <div style="font-size:12px;color:#64748b;line-height:1.55;margin-bottom:12px;">폴더에 올린 사진을 여러 장 선택한 뒤 자동으로 리포트에 추가합니다.</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+      <button onclick="loadDrivePhotoPicker(true)" style="padding:9px 12px;background:#e0e7ff;color:#3730a3;border:none;border-radius:8px;font-weight:800;cursor:pointer;">새로고침</button>
+      <button onclick="window.open(PHOTO_DRIVE_FOLDER_URL,'_blank')" style="padding:9px 12px;background:#f1f5f9;color:#334155;border:none;border-radius:8px;font-weight:800;cursor:pointer;">Drive 폴더 열기</button>
+    </div>
+    <div id="photoPickerStatus" style="font-size:12px;color:#64748b;margin-bottom:10px;">사진 목록을 불러오는 중...</div>
+    <div class="photo-picker-grid" id="photoPickerGrid"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button onclick="insertSelectedDrivePhotos()" style="flex:1;padding:12px;background:#16417C;color:#fff;border:none;border-radius:10px;font-weight:900;cursor:pointer;">선택 사진 추가</button>
+      <button onclick="closePhotoPicker()" style="padding:12px 18px;background:#e5e7eb;color:#374151;border:none;border-radius:10px;font-weight:800;cursor:pointer;">닫기</button>
+    </div>
   </div>
 </div>
 
@@ -1287,6 +1310,8 @@ function addResourceRow(name='',link=''){ const d=document.createElement('div');
 function addVideo(){ const url=val('videoUrlInput').trim(); if(!url){window.open('https://studio.youtube.com/','_blank');return;} const m=url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i); if(!m)return showToast('유튜브 링크 확인 필요'); const d=document.createElement('div');d.className='video-card';d.innerHTML=`<div class="video-thumb-wrap"><img src="https://img.youtube.com/vi/${m[1]}/hqdefault.jpg" class="video-thumb" data-url="${esc(url)}"><div class="play-icon">▶</div></div><input type="text" class="video-input" placeholder="비디오 제목/설명..." oninput="updateMsgBox()"><button class="del-video" onclick="this.parentElement.remove(); updateMsgBox();">✕</button>`;qs('videoList').appendChild(d);qs('videoUrlInput').value = ''; updateMsgBox(); }
 
 let hwPhotos=[], classPhotos=[];
+let photoPickerTarget = 'classPhotos';
+let photoPickerItems = [];
 function extractDriveFileId(url){ url=String(url||'').trim(); let m=url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/); if(m) return m[1]; m=url.match(/[?&]id=([a-zA-Z0-9_-]+)/); if(m) return m[1]; m=url.match(/\/d\/([a-zA-Z0-9_-]+)/); if(m) return m[1]; return ''; }
 function getDriveThumbUrl(url){ const id=extractDriveFileId(url); return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w700` : url; }
 function getDriveLargeUrl(url){ const id=extractDriveFileId(url); return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w1600` : url; }
@@ -1305,14 +1330,71 @@ function addDrivePhoto(cid) {
   const inputId = cid === 'hwPhotos' ? 'hwPhotoDriveInput' : 'classPhotoDriveInput';
   const url = val(inputId).trim();
   if (!url) {
-    window.open(PHOTO_DRIVE_FOLDER_URL, '_blank');
-    showToast('Drive 폴더에서 사진을 선택한 뒤 공유 링크를 붙여넣어 주세요.');
+    openPhotoPicker(cid);
     return;
   }
   const src = getDriveThumbUrl(url); if(!src) return showToast('올바른 드라이브 링크가 아닙니다.');
   const arr = cid === 'hwPhotos' ? hwPhotos : classPhotos;
   if (arr.some(p => p.driveUrl === url)) return showToast('이미 추가된 사진입니다.');
   arr.push({ id: 'p' + Date.now(), driveUrl: url, src: src, caption: '' }); qs(inputId).value = ''; renderPhotos(cid, arr); updateMsgBox();
+}
+function closePhotoPicker(){ qs('photoPickerModal')?.classList.remove('show'); }
+function openPhotoPicker(cid){
+  photoPickerTarget = cid || 'classPhotos';
+  const modal = qs('photoPickerModal');
+  if(!modal) return window.open(PHOTO_DRIVE_FOLDER_URL, '_blank');
+  modal.classList.add('show');
+  loadDrivePhotoPicker(false);
+}
+async function loadDrivePhotoPicker(force){
+  const grid = qs('photoPickerGrid'), status = qs('photoPickerStatus');
+  if(!grid || !status) return;
+  if(photoPickerItems.length && !force){ renderDrivePhotoPicker(); return; }
+  const sUrl = getKey('script');
+  if(!sUrl){
+    status.textContent = 'Apps Script URL이 없어 Drive 폴더를 새 탭으로 엽니다.';
+    window.open(PHOTO_DRIVE_FOLDER_URL, '_blank');
+    return;
+  }
+  status.textContent = '사진 목록을 불러오는 중...';
+  grid.innerHTML = '';
+  try{
+    const res = await fetch(sUrl, { method:'POST', body:JSON.stringify({ action:'list_drive_photos' }) });
+    const data = await res.json();
+    if(data.result !== 'success') throw new Error(data.error || '사진 목록을 불러오지 못했습니다.');
+    photoPickerItems = data.files || [];
+    renderDrivePhotoPicker();
+  }catch(err){
+    status.textContent = '사진 목록 오류: ' + err.message;
+  }
+}
+function renderDrivePhotoPicker(){
+  const grid = qs('photoPickerGrid'), status = qs('photoPickerStatus');
+  if(!grid || !status) return;
+  grid.innerHTML = '';
+  if(!photoPickerItems.length){ status.textContent = '폴더에 표시할 사진이 없습니다.'; return; }
+  status.textContent = `${photoPickerItems.length}장의 사진 중 선택하세요.`;
+  photoPickerItems.forEach((p, idx)=>{
+    const label = document.createElement('label');
+    label.className = 'photo-picker-card';
+    label.innerHTML = `<input type="checkbox" value="${idx}"><img src="${esc(p.thumbUrl || p.url)}" alt="${esc(p.name || '사진')}" loading="lazy"><span>${esc(p.name || '사진')}</span>`;
+    grid.appendChild(label);
+  });
+}
+function insertSelectedDrivePhotos(){
+  const checked = Array.from(document.querySelectorAll('#photoPickerGrid input:checked')).map(input => photoPickerItems[Number(input.value)]).filter(Boolean);
+  if(!checked.length) return showToast('추가할 사진을 선택해 주세요.');
+  const arr = photoPickerTarget === 'hwPhotos' ? hwPhotos : classPhotos;
+  let added = 0;
+  checked.forEach(p=>{
+    if(arr.some(x => x.driveUrl === p.url)) return;
+    arr.push({ id:'p' + Date.now() + '_' + added, driveUrl:p.url, src:p.thumbUrl || getDriveThumbUrl(p.url), caption:'' });
+    added++;
+  });
+  renderPhotos(photoPickerTarget, arr);
+  updateMsgBox();
+  closePhotoPicker();
+  showToast(`${added}장 사진이 추가되었습니다.`);
 }
 function getReportPhotoDriveUrls(){
   return [...hwPhotos, ...classPhotos].map(p => p && (p.driveUrl || p.src)).filter(Boolean);
