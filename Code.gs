@@ -16,16 +16,18 @@ const ACTIVITY_HEADERS = [
   '기록시간',
   '수업일/상담일',
   '학생명',
-  '학교/유치원',
-  '학년/나이',
-  '연락처',
   '과정',
   '수업유형',
-  '세부유형',
-  '내용',
-  '드라이브링크',
   '리포트링크',
+  '문서구분',
+  '세부유형',
+  '상담/테스트일',
+  '내용',
+  '연락처',
+  '드라이브링크',
+  '학부모문의',
   '처리상태',
+  '비고',
   '노션페이지ID',
   '노션페이지URL',
   '구글캘린더ID',
@@ -633,20 +635,27 @@ function buildActivityRow_(p, extra) {
   const date = p.date || cs.date || at.date || '';
   const type = p.type || cs.type || at.type || '';
   const content = p.content || cs.content || at.memo || at.subjects_merged || '';
+  const docType = p.mode === '상담' ? 'CS' : '학습리포트';
   return [
     new Date(),
     date,
     extra.name,
-    p.school || cs.school || at.school || '',
-    p.grade || cs.grade || at.grade || '',
-    p.phone || cs.phone || at.phone || '',
     p.course || cs.course || at.course || '',
-    p.mode === '상담' ? 'CS' : '학습리포트',
+    docType,
+    extra.reportUrl || p.reportUrl || '',
+    docType,
     type,
+    date,
     content,
+    p.phone || cs.phone || at.phone || '',
     extra.driveUrl || '',
-    extra.reportUrl || '',
-    extra.status || ''
+    '',
+    extra.status || '',
+    '',
+    '',
+    '',
+    '',
+    ''
   ];
 }
 
