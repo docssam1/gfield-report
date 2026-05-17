@@ -413,14 +413,14 @@ button:disabled{opacity:.62 !important;cursor:not-allowed !important;}
 </div>
 
 <div class="btns">
-  <button type="button" class="kakao-btn" id="previewParentBtn" onclick="return openParentPreview(event)">👨‍👩‍👧 학부모 HTML 템플릿 미리보기</button>
-  <button type="button" class="btn-dl" id="saveDriveBtn" onclick="return saveToDrive(event)">💾 1단계: 드라이브 저장 및 시트 기록</button>
-  <button class="btn-gh" id="ghBtn" onclick="return deployToGitHubPages(event)">🔗 2단계: 웹 링크 생성 (배포)</button>
-  <button class="notion-btn" id="notionBtn" onclick="saveToNotion()">📅 3단계: 캘린더 전송</button>
-  <button class="kakao-btn" id="kakaoBtn" onclick="shareKakao()">💬 카카오톡 템플릿 전송 (리포트/안내문)</button>
+  <button type="button" class="kakao-btn" id="previewParentBtn" onclick="return openParentPreview(event)">👨‍👩‍👧 학부모 화면 보기</button>
+  <button type="button" class="btn-dl" id="saveDriveBtn" onclick="return saveToDrive(event)">💾 1단계: 드라이브 저장</button>
+  <button class="btn-gh" id="ghBtn" onclick="return deployToGitHubPages(event)">🔗 2단계: 웹링크 만들기</button>
+  <button class="notion-btn" id="notionBtn" onclick="saveToNotion()">📅 3단계: 일정 저장</button>
+  <button class="kakao-btn" id="kakaoBtn" onclick="shareKakao()">💬 4단계: 카카오톡 전송</button>
 </div>
 
-<button style="width:100%;margin-top:12px;padding:10px;background:#e2e8f0;border:none;border-radius:10px;cursor:pointer;font-weight:bold;color:#475569;" onclick="openKeyModal()">⚙️ API 키 및 환경 설정</button>
+<button style="width:100%;margin-top:12px;padding:10px;background:#e2e8f0;border:none;border-radius:10px;cursor:pointer;font-weight:bold;color:#475569;" onclick="openKeyModal()">⚙️ 연동 설정</button>
 
 <div class="toast" id="toast"></div>
 </div> 
@@ -477,11 +477,12 @@ button:disabled{opacity:.62 !important;cursor:not-allowed !important;}
     <div class="key-field"><label>🛠 APPS SCRIPT 편집기 URL</label><input type="text" id="k_script_edit_url" placeholder="https://script.google.com/home/projects/.../edit"></div>
     <div class="key-field"><label>📓 NOTION API KEY</label><input type="password" id="k_notion_key" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" data-secure="true" data-lpignore="true" data-1p-ignore="true"></div>
     <div class="key-field"><label>📓 NOTION DATABASE ID</label><input type="text" id="k_notion_db"></div>
+    <div class="key-field"><label>📆 GOOGLE CALENDAR ID</label><input type="text" id="k_google_calendar_id" placeholder="primary 또는 캘린더 ID"></div>
     <div class="key-field"><label>🐱 GITHUB 사용자명</label><input type="text" id="k_ghuser"></div>
     <div class="key-field"><label>🐱 GITHUB 저장소명</label><input type="text" id="k_ghrepo"></div>
     <div class="key-field"><label>📊 대시보드 시트 ID</label><input type="text" id="k_sheet_id" placeholder="1Ta1o_v504jtDsyHPY0bER6WpI3xYTbVVffEl0iy58f8"></div>
-    <button class="modal-save" onclick="saveKeys()">💾 저장하고 닫기</button>
-    <button style="width:100%;padding:10px;background:transparent;border:1px solid var(--border);border-radius:10px;cursor:pointer;color:var(--muted);margin-top:8px;font-size:13px;" onclick="closeKeyModal()">취소</button>
+    <button class="modal-save" onclick="saveKeys()">💾 설정 저장</button>
+    <button style="width:100%;padding:10px;background:transparent;border:1px solid var(--border);border-radius:10px;cursor:pointer;color:var(--muted);margin-top:8px;font-size:13px;" onclick="closeKeyModal()">닫기</button>
   </div>
 </div>
 
@@ -528,7 +529,7 @@ function setButtonBusy(btn, busyText){
 }
 
 // --- 전역 설정 및 초기화 ---
-const KEYS={gh:'gf_gh_token',script:'gf_script_url',kakao:'gf_kakao_key',notionKey:'gf_notion_key',notionDb:'gf_notion_db',ghUser:'gf_gh_user',ghRepo:'gf_gh_repo',sheetId:'gf_sheet_id',aligoId:'gf_aligo_id',aligoKey:'gf_aligo_key',scriptEditUrl:'gf_script_edit_url'};
+const KEYS={gh:'gf_gh_token',script:'gf_script_url',kakao:'gf_kakao_key',notionKey:'gf_notion_key',notionDb:'gf_notion_db',googleCalendarId:'gf_google_calendar_id',ghUser:'gf_gh_user',ghRepo:'gf_gh_repo',sheetId:'gf_sheet_id',aligoId:'gf_aligo_id',aligoKey:'gf_aligo_key',scriptEditUrl:'gf_script_edit_url'};
 const getKey=k=>localStorage.getItem(KEYS[k])||'';
 const setKey=(k,v)=>localStorage.setItem(KEYS[k],String(v||'').trim());
 const DEFAULT_SHEET = '1Ta1o_v504jtDsyHPY0bER6WpI3xYTbVVffEl0iy58f8';
@@ -553,7 +554,7 @@ window.addEventListener('load', ()=>{ syncSecureKeyInputs(); setTimeout(syncSecu
 
 function openKeyModal(){
   const modal = qs('keyModal'); if(!modal){ alert('설정창을 찾을 수 없습니다.'); return; }
-  const map = { k_gh:'gh', k_script:'script', k_kakao:'kakao', k_notion_key:'notionKey', k_notion_db:'notionDb', k_ghuser:'ghUser', k_ghrepo:'ghRepo', k_sheet_id:'sheetId', k_aligo_id:'aligoId', k_aligo_key:'aligoKey', k_script_edit_url:'scriptEditUrl' };
+  const map = { k_gh:'gh', k_script:'script', k_kakao:'kakao', k_notion_key:'notionKey', k_notion_db:'notionDb', k_google_calendar_id:'googleCalendarId', k_ghuser:'ghUser', k_ghrepo:'ghRepo', k_sheet_id:'sheetId', k_aligo_id:'aligoId', k_aligo_key:'aligoKey', k_script_edit_url:'scriptEditUrl' };
   Object.keys(map).forEach(id=>{ const el=qs(id); if(el) el.value=getKey(map[id]) || ''; });
   if(qs('k_ghuser') && !qs('k_ghuser').value) qs('k_ghuser').value='docssam1';
   if(qs('k_ghrepo') && !qs('k_ghrepo').value) qs('k_ghrepo').value='gfield-report';
@@ -570,7 +571,7 @@ async function saveKeys(){
   const oldText = saveBtn ? saveBtn.textContent : '';
   if(saveBtn){ saveBtn.disabled = true; saveBtn.textContent = '저장 중...'; }
   try{
-    const pairs = { gh:'k_gh', script:'k_script', kakao:'k_kakao', notionKey:'k_notion_key', notionDb:'k_notion_db', ghUser:'k_ghuser', ghRepo:'k_ghrepo', sheetId:'k_sheet_id', aligoId:'k_aligo_id', aligoKey:'k_aligo_key', scriptEditUrl:'k_script_edit_url' };
+    const pairs = { gh:'k_gh', script:'k_script', kakao:'k_kakao', notionKey:'k_notion_key', notionDb:'k_notion_db', googleCalendarId:'k_google_calendar_id', ghUser:'k_ghuser', ghRepo:'k_ghrepo', sheetId:'k_sheet_id', aligoId:'k_aligo_id', aligoKey:'k_aligo_key', scriptEditUrl:'k_script_edit_url' };
     Object.keys(pairs).forEach(k=>{ const el=qs(pairs[k]); if(el) setKey(k, el.value || ''); });
     if(!getKey('ghUser')) setKey('ghUser','docssam1');
     if(!getKey('ghRepo')) setKey('ghRepo','gfield-report');
@@ -578,7 +579,7 @@ async function saveKeys(){
     const sUrl = getKey('script');
     if(sUrl){
       const payload = {
-        action:'update_keys', google_apps_script_url:val('k_script'), script_url:val('k_script'), github_token:val('k_gh'), github_user:val('k_ghuser','docssam1'), github_repo:val('k_ghrepo','gfield-report'), kakao_key:val('k_kakao'), sheet_id:val('k_sheet_id',DEFAULT_SHEET), drive_folder_id:'1ydIsZGns3_yq--hRaYEvORViWiCUrgy6'
+        action:'update_keys', google_apps_script_url:val('k_script'), script_url:val('k_script'), github_token:val('k_gh'), github_user:val('k_ghuser','docssam1'), github_repo:val('k_ghrepo','gfield-report'), kakao_key:val('k_kakao'), notion_key:val('k_notion_key'), notion_db:val('k_notion_db'), google_calendar_id:val('k_google_calendar_id','primary'), sheet_id:val('k_sheet_id',DEFAULT_SHEET), drive_folder_id:'1ydIsZGns3_yq--hRaYEvORViWiCUrgy6'
       };
       await fetch(sUrl, { method:'POST', body:JSON.stringify(payload) }).catch(e=>e);
     }
@@ -736,15 +737,15 @@ let classType = '정규수업';
 function updateActionButtonLabels(){
   const saveBtn = qs('saveDriveBtn'); const ghBtn = qs('ghBtn'); const notionBtn = qs('notionBtn'); const kakaoBtn = qs('kakaoBtn');
   if(currentMode === '상담'){
-    if(saveBtn) saveBtn.textContent = '💾 1단계: 상담내용 드라이브 저장 및 시트 기록';
-    if(ghBtn) ghBtn.textContent = '🔗 2단계: 상담/안내 웹 링크 생성';
-    if(notionBtn) notionBtn.textContent = '📅 3단계: 캘린더 전송';
-    if(kakaoBtn) kakaoBtn.textContent = '💬 카카오톡 템플릿 전송 (상담/안내문)';
+    if(saveBtn) saveBtn.textContent = '💾 1단계: 드라이브 저장';
+    if(ghBtn) ghBtn.textContent = '🔗 2단계: 웹링크 만들기';
+    if(notionBtn) notionBtn.textContent = '📅 3단계: 일정 저장';
+    if(kakaoBtn) kakaoBtn.textContent = '💬 4단계: 카카오톡 전송';
   } else {
-    if(saveBtn) saveBtn.textContent = '💾 1단계: 드라이브 저장 및 시트 기록';
-    if(ghBtn) ghBtn.textContent = '🔗 2단계: 웹 링크 생성 (배포)';
-    if(notionBtn) notionBtn.textContent = '📅 3단계: 캘린더 전송';
-    if(kakaoBtn) kakaoBtn.textContent = '💬 카카오톡 템플릿 전송 (리포트/안내문)';
+    if(saveBtn) saveBtn.textContent = '💾 1단계: 드라이브 저장';
+    if(ghBtn) ghBtn.textContent = '🔗 2단계: 웹링크 만들기';
+    if(notionBtn) notionBtn.textContent = '📅 3단계: 일정 저장';
+    if(kakaoBtn) kakaoBtn.textContent = '💬 4단계: 카카오톡 전송';
   }
 }
 
@@ -1291,7 +1292,7 @@ async function deployToGitHubPages(e){
     const res = await fetch(sUrl,{method:'POST',body:JSON.stringify(payload)}); const r = await res.json();
     if(r.result !== 'success') throw new Error(r.error || 'GitHub 배포 실패');
     if(window.setLink) window.setLink(r.url, 'github'); showToast('웹 링크가 생성되었습니다.');
-  }catch(err){ alert('❌ GitHub 오류: ' + err.message); }finally{ if(btn) { btn.textContent='🔗 2단계: 웹 링크 생성 (배포)'; btn.disabled=false; } restore(); }
+  }catch(err){ alert('❌ GitHub 오류: ' + err.message); }finally{ if(btn) { btn.textContent='🔗 2단계: 웹링크 만들기'; btn.disabled=false; } restore(); }
   return false;
 }
 
@@ -1300,12 +1301,12 @@ async function saveToNotion(){
   const mdDate = val('absentMakeupDate');
   if(classType === '결석' && mdDate) { let savedSchedules = JSON.parse(localStorage.getItem('gf_schedules') || '[]'); let conflict = savedSchedules.find(s => s.date === mdDate && s.name !== n); if(conflict && !confirm(`⚠️ 경고: [${mdDate}] 해당 날짜에 이미 [${conflict.name}] 학생의 일정이 등록되어 있습니다. 같이 진행하시겠습니까?`)) return; savedSchedules = savedSchedules.filter(s => !(s.date === mdDate && s.name === n)); savedSchedules.push({date: mdDate, name: n}); localStorage.setItem('gf_schedules', JSON.stringify(savedSchedules)); }
   let backendType = classType; if(classType === '결석') { backendType = document.querySelector('input[name="absentReasonType"]:checked').value === 'free' ? '보강' : '결석'; }
-  btn.disabled = true; btn.textContent = '⏳ 캘린더 전송 중...';
+  btn.disabled = true; btn.textContent = '⏳ 일정 저장 중...';
   const docType=document.querySelector('input[name="docType"]:checked').value, u=qs('resultUrl').href;
-  const payload={action:'notion',name:n,docType:docType,url:(u&&u!=='#'&&!u.includes('github.io'))?u:null, sheetId:getKey('sheetId')||DEFAULT_SHEET};
+  const payload={action:'notion',name:n,docType:docType,url:(u&&u!=='#'&&!u.includes('github.io'))?u:null, sheetId:getKey('sheetId')||DEFAULT_SHEET, notion_key:getKey('notionKey')||'', notion_db:getKey('notionDb')||'', google_calendar_id:getKey('googleCalendarId')||'primary'};
   if(docType==='상담'){ payload.cType=document.querySelector('input[name="c_type"]')?.value || classType; payload.testDate=val('testTime'); payload.school=val('dbSchool'); payload.grade=val('dbGrade'); payload.phone=val('dbPhone'); payload.content=val('csMemo');
   }else{ payload.date=val('dateInput'); payload.course=val('courseInput').trim(); payload.type=backendType; payload.makeupType=val('absentMakeupType'); payload.makeupDate=mdDate; }
-  try{ const res=await fetch(sUrl,{method:'POST',body:JSON.stringify(payload)}); const r=await res.json(); if(r.result==='success'){ showToast('📅 캘린더 전송 완료!'); if(currentMode==='상담') saveDbData(); autoAddTodoForSchedule(); } else throw new Error(r.error || "알 수 없는 에러"); }catch(e){alert('❌ 캘린더 전송 실패: '+e.message);}finally{btn.disabled = false; btn.textContent = '📅 3단계: 캘린더 전송';}
+  try{ const res=await fetch(sUrl,{method:'POST',body:JSON.stringify(payload)}); const r=await res.json(); if(r.result==='success'){ showToast('📅 노션 + 구글 캘린더 저장 완료!'); if(currentMode==='상담') saveDbData(); autoAddTodoForSchedule(); } else throw new Error(r.error || "알 수 없는 에러"); }catch(e){alert('❌ 일정 저장 실패: '+e.message);}finally{btn.disabled = false; btn.textContent = '📅 3단계: 일정 저장';}
 }
 
 function sendAligoSms(isScheduled) {

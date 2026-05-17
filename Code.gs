@@ -25,7 +25,11 @@ const ACTIVITY_HEADERS = [
   '내용',
   '드라이브링크',
   '리포트링크',
-  '처리상태'
+  '처리상태',
+  '노션페이지ID',
+  '노션페이지URL',
+  '구글캘린더ID',
+  '구글캘린더이벤트ID'
 ];
 
 const STUDENT_HEADERS = [
@@ -123,6 +127,7 @@ function doPost(e) {
     else if (action === 'update_student') data = upsertStudent_(payload);
     else if (action === 'update_keys') data = updateKeys_(payload);
     else if (action === 'notion') data = saveToNotion_(payload);
+    else if (action === 'delete_record' || action === 'delete_activity' || action === 'dashboard_delete') data = deleteRecord_(payload);
     else throw new Error('Unknown action: ' + action);
 
     return json_(data);
@@ -318,6 +323,16 @@ function saveToNotion_(p) {
   }
   const data = JSON.parse(response.getContentText());
   const calendarResult = createGoogleCalendarEvent_(p, data.url);
+  linkNotionCalendarToLatestActivity_(
+    p.sheetId,
+    String(p.name || p.studentName || ''),
+    String(p.date || p.testDate || ''),
+    String(p.type || p.cType || p.docType || ''),
+    data.id || '',
+    data.url || '',
+    calendarResult.calendarId || '',
+    calendarResult.eventId || ''
+  );
   const message = calendarResult.created
     ? '노션 + 구글 캘린더 전송 완료'
     : '노션 전송 완료 (구글 캘린더는 일정일이 없어 생성 생략)';
@@ -326,6 +341,41 @@ function saveToNotion_(p) {
     id: data.id,
     url: data.url,
     message: message,
+    googleCalendar: calendarResult
+  };
+}
+
+function deleteRecord_(p) {
+  const ss = SpreadsheetApp.openById(getSheetId_(p.sheetId));
+  const sheet = ensureSheet_(ss, ACTIVITY_SHEET, ACTIVITY_HEADERS);
+  ensureActivityHeaders_(sheet);
+  const values = sheet.getDataRange().getValues();
+  if (values.length < 2) throw new Error('삭제할 기록이 없습니다.');
+  const idx = headerIndex_(values[0]);
+
+  let rowNumber = Number(p.rowNumber || p.row || 0);
+  if (!rowNumber) {
+    rowNumber = findActivityRowNumber_(values, idx, p);
+  }
+  if (!rowNumber || rowNumber < 2 || rowNumber > sheet.getLastRow()) {
+    throw new Error('삭제할 행을 찾지 못했습니다.');
+  }
+
+  const row = sheet.getRange(rowNumber, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const notionPageId = String(p.notionPageId || row[idx['노션페이지ID']] || '').trim();
+  const notionPageUrl = String(p.notionPageUrl || row[idx['노션페이지URL']] || '').trim();
+  const calendarId = String(p.googleCalendarId || row[idx['구글캘린더ID']] || PropertiesService.getScriptProperties().getProperty('GOOGLE_CALENDAR_ID') || CONFIG.GOOGLE_CALENDAR_ID || 'primary').trim();
+  const eventId = String(p.googleEventId || row[idx['구글캘린더이벤트ID']] || '').trim();
+
+  const notionResult = archiveNotionPageSafe_(notionPageId, notionPageUrl, p);
+  const calendarResult = deleteGoogleCalendarEventSafe_(calendarId, eventId);
+
+  sheet.deleteRow(rowNumber);
+  return {
+    result: 'success',
+    message: '대시보드 기록 및 캘린더 동기 삭제 완료',
+    rowNumber: rowNumber,
+    notion: notionResult,
     googleCalendar: calendarResult
   };
 }
@@ -547,6 +597,7 @@ function buildActivityRow_(p, extra) {
 function appendActivity_(sheetId, row) {
   const ss = SpreadsheetApp.openById(getSheetId_(sheetId));
   const sheet = ensureSheet_(ss, ACTIVITY_SHEET, ACTIVITY_HEADERS);
+  ensureActivityHeaders_(sheet);
   sheet.appendRow(row);
 }
 
@@ -577,6 +628,19 @@ function ensureSheet_(ss, name, headers) {
   const empty = first.every(v => String(v || '').trim() === '');
   if (empty) sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
   return sheet;
+}
+
+function ensureActivityHeaders_(sheet) {
+  const lastCol = Math.max(sheet.getLastColumn(), 1);
+  const headerRow = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  let changed = false;
+  ACTIVITY_HEADERS.forEach(function(h, i) {
+    if (String(headerRow[i] || '').trim() !== h) {
+      sheet.getRange(1, i + 1).setValue(h);
+      changed = true;
+    }
+  });
+  return changed;
 }
 
 function headerIndex_(headers) {
@@ -625,6 +689,91 @@ function findHistory_(sheet, name) {
     }
   }
   return rows;
+}
+
+function linkNotionCalendarToLatestActivity_(sheetId, name, date, type, notionPageId, notionPageUrl, calendarId, eventId) {
+  if (!name) return false;
+  const ss = SpreadsheetApp.openById(getSheetId_(sheetId));
+  const sheet = ensureSheet_(ss, ACTIVITY_SHEET, ACTIVITY_HEADERS);
+  ensureActivityHeaders_(sheet);
+  const values = sheet.getDataRange().getValues();
+  if (values.length < 2) return false;
+  const idx = headerIndex_(values[0]);
+
+  for (let i = values.length - 1; i >= 1; i--) {
+    const sameName = String(values[i][idx['학생명']] || '').trim() === String(name).trim();
+    const sameDate = !date || String(values[i][idx['수업일/상담일']] || '').trim() === String(date).trim();
+    const sameType = !type || String(values[i][idx['세부유형']] || '').trim() === String(type).trim();
+    if (sameName && sameDate && sameType) {
+      if (notionPageId) sheet.getRange(i + 1, idx['노션페이지ID'] + 1).setValue(notionPageId);
+      if (notionPageUrl) sheet.getRange(i + 1, idx['노션페이지URL'] + 1).setValue(notionPageUrl);
+      if (calendarId) sheet.getRange(i + 1, idx['구글캘린더ID'] + 1).setValue(calendarId);
+      if (eventId) sheet.getRange(i + 1, idx['구글캘린더이벤트ID'] + 1).setValue(eventId);
+      return true;
+    }
+  }
+  return false;
+}
+
+function findActivityRowNumber_(values, idx, p) {
+  const keyName = String(p.name || p.studentName || '').trim();
+  const keyDate = String(p.date || '').trim();
+  const keyType = String(p.type || '').trim();
+  const keyDrive = String(p.driveUrl || '').trim();
+  const keyReport = String(p.reportUrl || '').trim();
+
+  for (let i = values.length - 1; i >= 1; i--) {
+    const sameName = !keyName || String(values[i][idx['학생명']] || '').trim() === keyName;
+    const sameDate = !keyDate || String(values[i][idx['수업일/상담일']] || '').trim() === keyDate;
+    const sameType = !keyType || String(values[i][idx['세부유형']] || '').trim() === keyType;
+    const sameDrive = !keyDrive || String(values[i][idx['드라이브링크']] || '').trim() === keyDrive;
+    const sameReport = !keyReport || String(values[i][idx['리포트링크']] || '').trim() === keyReport;
+    if (sameName && sameDate && sameType && sameDrive && sameReport) return i + 1;
+  }
+  return 0;
+}
+
+function archiveNotionPageSafe_(notionPageId, notionPageUrl, p) {
+  const token = String(
+    p.notion_key ||
+    PropertiesService.getScriptProperties().getProperty('NOTION_KEY') ||
+    ''
+  ).trim();
+  const id = String(notionPageId || extractNotionPageId_(notionPageUrl)).trim();
+  if (!id) return { attempted: false, reason: 'no_notion_id' };
+  if (!token) return { attempted: false, reason: 'no_notion_token' };
+
+  const response = UrlFetchApp.fetch('https://api.notion.com/v1/pages/' + id, {
+    method: 'patch',
+    contentType: 'application/json',
+    headers: notionHeaders_(token),
+    payload: JSON.stringify({ archived: true }),
+    muteHttpExceptions: true
+  });
+  const code = response.getResponseCode();
+  if (code < 200 || code >= 300) {
+    return { attempted: true, archived: false, error: response.getContentText() };
+  }
+  return { attempted: true, archived: true, id: id };
+}
+
+function extractNotionPageId_(url) {
+  const text = String(url || '');
+  const m1 = text.match(/([a-f0-9]{32})/i);
+  if (m1) return m1[1];
+  const m2 = text.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
+  if (m2) return m2[1];
+  return '';
+}
+
+function deleteGoogleCalendarEventSafe_(calendarId, eventId) {
+  if (!eventId) return { attempted: false, reason: 'no_event_id' };
+  const cal = CalendarApp.getCalendarById(calendarId || CONFIG.GOOGLE_CALENDAR_ID);
+  if (!cal) return { attempted: false, reason: 'calendar_not_found' };
+  const ev = cal.getEventById(eventId);
+  if (!ev) return { attempted: false, reason: 'event_not_found', eventId: eventId };
+  ev.deleteEvent();
+  return { attempted: true, deleted: true, eventId: eventId };
 }
 
 function getGithubToken_(p) {
