@@ -25,16 +25,20 @@
   .quote-end { margin-left: 5px; top: 15px; }
 
   .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 20px; margin-top: 24px; }
-  .btn { padding: 16px 14px; border-radius: 14px; text-decoration: none; color: #fff; text-align: left; font-weight: 800; font-size: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor:pointer; border:none; letter-spacing: -0.5px;}
+  .btn { min-height: 78px; padding: 14px 13px; border-radius: 14px; text-decoration: none; color: #fff; text-align: left; font-weight: 900; font-size: clamp(13px, 3.4vw, 16px); line-height: 1.22; display: flex; justify-content: space-between; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor:pointer; border:none; letter-spacing: 0; word-break: keep-all; overflow-wrap: anywhere;}
   .btn:active { transform: scale(0.97); }
-  .btn span { font-size: 18px; opacity: 0.8; font-weight: 300;} 
+  .btn span { font-size: 18px; opacity: 0.8; font-weight: 300; flex: 0 0 auto;} 
   
   .btn-green { background: #0f766e; }
   .btn-blue { background: #0284c7; }
+  .btn-teal { background: #0f766e; }
+  .btn-purple { background: #4f46e5; }
+  .btn-emerald { background: #059669; }
   .btn-yellow { background: #eab308; color: #333; }
   .btn-red { background: #e11d48; }
-  .btn-full { grid-column: 1 / -1; background: #65a30d; font-size: 16px; justify-content: center; gap: 10px;}
-  .btn-text-fit { font-size: 13.5px; padding: 16px 10px; } 
+  .btn-full { grid-column: 1 / -1; background: #65a30d; font-size: clamp(15px, 4vw, 18px); justify-content: center; gap: 10px;}
+  .btn-text-fit { font-size: clamp(12px, 3.15vw, 15px); } 
+  @media(max-width:360px){.btn-grid{gap:9px;padding:0 14px;}.btn{min-height:72px;padding:12px 10px;font-size:12px;}.btn span{font-size:15px;}}
 
   .footer-notice { margin: 24px 20px; background: #fcf9f2; padding: 18px; border-radius: 14px; font-size: 12.5px; color: #555; display: flex; gap: 12px; align-items: flex-start; line-height: 1.6;}
   .footer-notice span { font-size: 22px; line-height: 1;}
@@ -73,7 +77,7 @@
     <div class="card-icon">💬</div>
     <div class="card-content">
       <div class="card-title">안내 메시지</div>
-      <div class="card-text" style="color:#555;"><span class="quote-mark">“</span>안녕하세요<br>성공하는 공부 습관을 만드는 지필드 영재교육입니다.<br>송리한 학생의 수업 및 등록 안내입니다.<br><br>[수업안내]<br>- 수업 시작일: <br>- 과정: 5월 부족분 화 오후 7시-8시 개인<br>- 교재: <br>------------------------------<br>* 교재 구매 링크<br><br>* 수업료<br>2회	20만<br>------------------------------<br><br>[수업안내]<br>- 수업 시작일: <br>- 과정: [6월분] 화 오후 7시-8시 개인 초등팩토 1C<br>- 교재: <br>------------------------------<br>* 교재 구매 링크<br><br>* 수업료<br>5회	50만<br>------------------------------<br><br>[수업안내]<br>- 수업 시작일: <br>- 과정: [6월분] 일 오전 10시-오후 12시 TOP CLASS대비<br>- 교재: <br>------------------------------<br>* 교재 구매 링크<br><br>* 수업료<br>4회	24만<br>------------------------------<br><br>총 94만<br><br>* 매월 10일경 다음달 수강료 문자가 발송됩니다.<br>* (우리은행 1002-629-797436, 이주연 지필드영재교육) 입금 또는 결제선생/카드로 결제하면 최종 확정됩니다.<br>* 주차장이 협소하여 잠시 주차만 가능합니다.<br>* 1층 출입문 비밀번호: &lt;종 모양 버튼 누르신 후 0852&gt;<br>- 문의: 02)3453-7772<br>- 위치: 강남구 역삼로 460-2, 뉴원빌딩 4층<span class="quote-mark quote-end">”</span></div>
+      <div class="card-text" style="color:#555;"><span class="quote-mark">“</span>안녕하세요<br>성공하는 공부 습관을 만드는 지필드 영재교육입니다.<br>송리한 학생의 수업 및 등록 안내입니다.<br><br>- 과정: 5월 부족분 화 오후 7시-8시 개인<br><br>* 수업료<br>2회 20만<br><br>- 과정: [6월분] 화 오후 7시-8시 개인 초등팩토 1C<br><br>* 수업료<br>5회 50만<br><br>- 과정: [6월분] 일 오전 10시-오후 12시 TOP CLASS대비<br><br>* 수업료<br>4회 24만<br><br>총 94만<br><br>* 매월 10일경 다음달 수강료 문자가 발송됩니다.<br>* (하나은행 853-910-18114807 노관호 지필드 영재교육) 입금 또는 결제선생/카드로 결제하면 최종 확정됩니다.<br>* 주차장이 협소하여 잠시 주차만 가능합니다.<br>* 1층 출입문 비밀번호: &lt;종 모양 버튼 누르신 후 0852&gt;<br>- 문의: 02)3453-7772<br>- 위치: 강남구 역삼로 460-2, 뉴원빌딩 4층<span class="quote-mark quote-end">”</span></div>
     </div>
   </div>
 
@@ -82,7 +86,7 @@
     <div class="card-icon">📖</div>
     <div class="card-content">
       <div class="card-title">수업 안내</div>
-      <div class="card-text"><div style="margin-bottom:12px;"><b style="color:#b99042;">[수업 1]</b><br><span style="display:block; margin-top:3px;">• 5월 부족분 화 오후 7시-8시 개인</span><span style="display:block; margin-top:3px;">• 2회	20만</span></div><div style="margin-bottom:12px;"><b style="color:#b99042;">[수업 2]</b><br><span style="display:block; margin-top:3px;">• [6월분] 화 오후 7시-8시 개인 초등팩토 1C</span><span style="display:block; margin-top:3px;">• 5회	50만</span></div><div style="margin-bottom:12px;"><b style="color:#b99042;">[수업 3]</b><br><span style="display:block; margin-top:3px;">• [6월분] 일 오전 10시-오후 12시 TOP CLASS대비</span><span style="display:block; margin-top:3px;">• 4회	24만</span></div></div>
+      <div class="card-text"><div style="margin-bottom:14px;"><b style="color:#b99042;">[수업 1]</b><span style="display:block;margin-top:5px;">• 과정: 5월 부족분 화 오후 7시-8시 개인</span><span style="display:block;margin-top:5px;">• 수업료: 2회 20만</span></div><div style="margin-bottom:14px;"><b style="color:#b99042;">[수업 2]</b><span style="display:block;margin-top:5px;">• 과정: [6월분] 화 오후 7시-8시 개인 초등팩토 1C</span><span style="display:block;margin-top:5px;">• 수업료: 5회 50만</span></div><div style="margin-bottom:14px;"><b style="color:#b99042;">[수업 3]</b><span style="display:block;margin-top:5px;">• 과정: [6월분] 일 오전 10시-오후 12시 TOP CLASS대비</span><span style="display:block;margin-top:5px;">• 수업료: 4회 24만</span></div></div>
     </div>
   </div>
 
@@ -93,15 +97,17 @@
       <div class="card-title">결제 안내</div>
       <div class="card-text">
         <div style="margin-bottom:8px; color:#b99042; font-weight:800;">안내 금액: 94만</div>
-        <div>입금 계좌: 우리은행 1002-629-797436, 이주연 지필드영재교육</div>
+        <div>입금 계좌: 하나은행 853-910-18114807 노관호 지필드 영재교육</div>
       </div>
     </div>
   </div>
 
   <div class="btn-grid">
-    <button class="btn btn-green" onclick="navigator.clipboard?navigator.clipboard.writeText('우리은행 1002-629-797436, 이주연 지필드영재교육').then(()=>alert('계좌가 복사되었습니다.')):alert('우리은행 1002-629-797436, 이주연 지필드영재교육')">계좌 복사하기 <span>></span></button>
-    <a href="sms:01020837265?body=%EA%B2%B0%EC%A0%9C%20%EC%99%84%EB%A3%8C%ED%96%88%EC%8A%B5%EB%8B%88%EB%8B%A4.%20%EC%86%A1%EB%A6%AC%ED%95%9C%20%ED%95%99%EC%83%9D%EC%9E%85%EB%8B%88%EB%8B%A4.%20%ED%99%95%EC%9D%B8%20%EB%B6%80%ED%83%81%EB%93%9C%EB%A6%BD%EB%8B%88%EB%8B%A4." class="btn btn-blue btn-text-fit">결제선생 요청하기 <span>></span></a>
-    <a href="https://drive.google.com/open?id=18oDp8YjImIu8fCpYpl35gtXxCTkaMW4J&usp=drive_fs" class="btn btn-green" target="_blank">서울페이 요청하기 <span>></span></a>
+    <button class="btn btn-green" onclick="navigator.clipboard?navigator.clipboard.writeText('하나은행 853-910-18114807 노관호 지필드 영재교육').then(()=>alert('계좌가 복사되었습니다.')):alert('하나은행 853-910-18114807 노관호 지필드 영재교육')">계좌 복사하기 <span>></span></button>
+    <a href="sms:01020837265?body=%EA%B2%B0%EC%A0%9C%20%EC%99%84%EB%A3%8C%ED%96%88%EC%8A%B5%EB%8B%88%EB%8B%A4.%20%EC%86%A1%EB%A6%AC%ED%95%9C%20%ED%95%99%EC%83%9D%EC%9E%85%EB%8B%88%EB%8B%A4.%20%ED%99%95%EC%9D%B8%20%EB%B6%80%ED%83%81%EB%93%9C%EB%A6%BD%EB%8B%88%EB%8B%A4." class="btn btn-blue btn-text-fit">결제 확인 문자 보내기 <span>></span></a>
+    <a href="https://drive.google.com/open?id=18oDp8YjImIu8fCpYpl35gtXxCTkaMW4J&usp=drive_fs" class="btn btn-teal">제로페이 요청하기 <span>></span></a>
+    <a href="https://www.payteacher.com/" class="btn btn-purple btn-text-fit" target="_blank">결제선생 요청하기 <span>></span></a>
+    <a href="sms:01020837265?body=%EC%88%98%EC%97%85%20%EC%95%88%EB%82%B4%20%ED%99%95%EC%9D%B8%ED%96%88%EC%8A%B5%EB%8B%88%EB%8B%A4.%20%EC%86%A1%EB%A6%AC%ED%95%9C%20%ED%95%99%EC%83%9D%EC%9E%85%EB%8B%88%EB%8B%A4." class="btn btn-emerald btn-text-fit">안내 확인 보내기 <span>></span></a>
     <a href="https://pf.kakao.com/_htxhxmn" class="btn btn-yellow" target="_blank">카카오로 문의하기 <span>></span></a>
     <a href="tel:01020837265" class="btn btn-red">전화 걸기 <span>></span></a>
     <a href="https://naver.me/xyTRpBHo" class="btn btn-full" target="_blank">📍 학원 위치 보기 <span>></span></a>
