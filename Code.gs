@@ -172,6 +172,7 @@ function doPost(e) {
     else if (action === 'update_keys') data = updateKeys_(payload);
     else if (action === 'notion') data = saveToNotion_(payload);
     else if (action === 'list_drive_photos') data = listDrivePhotos_(payload);
+    else if (action === 'list_drive_folder') data = listDriveFolder_(payload);
     else if (action === 'delete_record' || action === 'delete_activity' || action === 'dashboard_delete') data = deleteRecord_(payload);
     else throw new Error('Unknown action: ' + action);
 
@@ -288,6 +289,48 @@ function listDrivePhotos_(p) {
   }
   files.sort(function(a, b) { return b.updated - a.updated; });
   return { result: 'success', files: files.slice(0, 120) };
+}
+
+function listDriveFolder_(p) {
+  const folderId = String(p.folderId || getDriveRootId_()).trim();
+  const folder = DriveApp.getFolderById(folderId);
+
+  const folders = [];
+  const folderIter = folder.getFolders();
+  while (folderIter.hasNext()) {
+    const f = folderIter.next();
+    folders.push({
+      id: f.getId(),
+      name: f.getName(),
+      updated: f.getLastUpdated().getTime()
+    });
+  }
+  folders.sort(function(a, b) { return a.name.localeCompare(b.name, 'ko'); });
+
+  const files = [];
+  const fileIter = folder.getFiles();
+  while (fileIter.hasNext()) {
+    const file = fileIter.next();
+    const mime = String(file.getMimeType() || '');
+    if (mime.indexOf('image/') !== 0) continue;
+    const id = file.getId();
+    files.push({
+      id: id,
+      name: file.getName(),
+      mimeType: mime,
+      url: file.getUrl(),
+      thumbUrl: 'https://drive.google.com/thumbnail?id=' + id + '&sz=w700',
+      updated: file.getLastUpdated().getTime()
+    });
+  }
+  files.sort(function(a, b) { return b.updated - a.updated; });
+
+  return {
+    result: 'success',
+    folder: { id: folder.getId(), name: folder.getName() },
+    folders: folders,
+    files: files.slice(0, 300)
+  };
 }
 
 function searchStudent_(p) {

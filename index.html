@@ -533,6 +533,7 @@ button:disabled{opacity:.62 !important;cursor:not-allowed !important;}
       <button onclick="loadDrivePhotoPicker(true)" style="padding:9px 12px;background:#e0e7ff;color:#3730a3;border:none;border-radius:8px;font-weight:800;cursor:pointer;">새로고침</button>
       <button onclick="window.open(PHOTO_DRIVE_FOLDER_URL,'_blank')" style="padding:9px 12px;background:#f1f5f9;color:#334155;border:none;border-radius:8px;font-weight:800;cursor:pointer;">Drive 폴더 열기</button>
     </div>
+    <div id="photoPickerPath" style="font-size:12px;color:#334155;margin-bottom:8px;font-weight:700;">폴더: -</div>
     <div id="photoPickerStatus" style="font-size:12px;color:#64748b;margin-bottom:10px;">사진 목록을 불러오는 중...</div>
     <div class="photo-picker-grid" id="photoPickerGrid"></div>
     <div style="display:flex;gap:8px;margin-top:14px;">
@@ -1311,6 +1312,10 @@ function addVideo(){ const url=val('videoUrlInput').trim(); if(!url){window.open
 let hwPhotos=[], classPhotos=[];
 let photoPickerTarget = 'classPhotos';
 let photoPickerItems = [];
+let photoPickerFolders = [];
+let photoPickerSelected = {};
+let photoPickerCurrentFolderId = '';
+let photoPickerHistory = [];
 function extractDriveFileId(url){ url=String(url||'').trim(); let m=url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/); if(m) return m[1]; m=url.match(/[?&]id=([a-zA-Z0-9_-]+)/); if(m) return m[1]; m=url.match(/\/d\/([a-zA-Z0-9_-]+)/); if(m) return m[1]; return ''; }
 function getDriveThumbUrl(url){ const id=extractDriveFileId(url); return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w700` : url; }
 function getDriveLargeUrl(url){ const id=extractDriveFileId(url); return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w1600` : url; }
@@ -1340,15 +1345,17 @@ function addDrivePhoto(cid) {
 function closePhotoPicker(){ qs('photoPickerModal')?.classList.remove('show'); }
 function openPhotoPicker(cid){
   photoPickerTarget = cid || 'classPhotos';
+  photoPickerSelected = {};
+  photoPickerCurrentFolderId = '';
+  photoPickerHistory = [];
   const modal = qs('photoPickerModal');
   if(!modal) return window.open(PHOTO_DRIVE_FOLDER_URL, '_blank');
   modal.classList.add('show');
-  loadDrivePhotoPicker(false);
+  loadDrivePhotoPicker(true);
 }
 async function loadDrivePhotoPicker(force){
-  const grid = qs('photoPickerGrid'), status = qs('photoPickerStatus');
-  if(!grid || !status) return;
-  if(photoPickerItems.length && !force){ renderDrivePhotoPicker(); return; }
+  const grid = qs('photoPickerGrid'), status = qs('photoPickerStatus'), pathEl = qs('photoPickerPath');
+  if(!grid || !status || !pathEl) return;
   const sUrl = getKey('script');
   if(!sUrl){
     status.textContent = 'Apps Script URL이 없어 Drive 폴더를 새 탭으로 엽니다.';
@@ -1358,10 +1365,13 @@ async function loadDrivePhotoPicker(force){
   status.textContent = '사진 목록을 불러오는 중...';
   grid.innerHTML = '';
   try{
-    const res = await fetch(sUrl, { method:'POST', body:JSON.stringify({ action:'list_drive_photos' }) });
+    const res = await fetch(sUrl, { method:'POST', body:JSON.stringify({ action:'list_drive_folder', folderId: photoPickerCurrentFolderId || '' }) });
     const data = await res.json();
     if(data.result !== 'success') throw new Error(data.error || '사진 목록을 불러오지 못했습니다.');
+    photoPickerCurrentFolderId = data.folder && data.folder.id ? data.folder.id : photoPickerCurrentFolderId;
+    photoPickerFolders = data.folders || [];
     photoPickerItems = data.files || [];
+    pathEl.textContent = '폴더: ' + ((data.folder && data.folder.name) ? data.folder.name : '알 수 없음');
     renderDrivePhotoPicker();
   }catch(err){
     status.textContent = '사진 목록 오류: ' + err.message;
@@ -1371,17 +1381,56 @@ function renderDrivePhotoPicker(){
   const grid = qs('photoPickerGrid'), status = qs('photoPickerStatus');
   if(!grid || !status) return;
   grid.innerHTML = '';
-  if(!photoPickerItems.length){ status.textContent = '폴더에 표시할 사진이 없습니다.'; return; }
-  status.textContent = `${photoPickerItems.length}장의 사진 중 선택하세요.`;
-  photoPickerItems.forEach((p, idx)=>{
+  const selectedCount = Object.keys(photoPickerSelected).length;
+  const folderCount = photoPickerFolders.length;
+  status.textContent = `하위폴더 ${folderCount}개 / 사진 ${photoPickerItems.length}장 / 선택 ${selectedCount}장`;
+
+  if(photoPickerHistory.length){
+    const back = document.createElement('button');
+    back.type = 'button';
+    back.style.cssText = 'padding:8px 10px;background:#e2e8f0;color:#0f172a;border:none;border-radius:8px;font-weight:800;cursor:pointer;grid-column:1/-1;margin-bottom:2px;';
+    back.textContent = '← 상위 폴더로';
+    back.onclick = function(){
+      const prevId = photoPickerHistory.pop();
+      photoPickerCurrentFolderId = prevId || '';
+      loadDrivePhotoPicker(true);
+    };
+    grid.appendChild(back);
+  }
+
+  photoPickerFolders.forEach((f)=>{
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'photo-picker-card';
+    card.style.cssText = 'text-align:left;padding:0;border:1.5px solid var(--border);background:#f8fafc;';
+    card.innerHTML = `<div style="aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;font-size:36px;">📁</div><span>${esc(f.name || '폴더')}</span>`;
+    card.onclick = function(){
+      if(photoPickerCurrentFolderId) photoPickerHistory.push(photoPickerCurrentFolderId);
+      photoPickerCurrentFolderId = f.id;
+      loadDrivePhotoPicker(true);
+    };
+    grid.appendChild(card);
+  });
+
+  if(!photoPickerItems.length && !photoPickerFolders.length){ status.textContent = '폴더에 표시할 항목이 없습니다.'; return; }
+
+  photoPickerItems.forEach((p)=>{
     const label = document.createElement('label');
     label.className = 'photo-picker-card';
-    label.innerHTML = `<input type="checkbox" value="${idx}"><img src="${esc(p.thumbUrl || p.url)}" alt="${esc(p.name || '사진')}" loading="lazy"><span>${esc(p.name || '사진')}</span>`;
+    const checked = !!photoPickerSelected[p.url];
+    label.innerHTML = `<input type="checkbox" value="${esc(p.url)}" ${checked ? 'checked' : ''}><img src="${esc(p.thumbUrl || p.url)}" alt="${esc(p.name || '사진')}" loading="lazy"><span>${esc(p.name || '사진')}</span>`;
+    const cb = label.querySelector('input');
+    cb.addEventListener('change', function(){
+      if(cb.checked) photoPickerSelected[p.url] = p;
+      else delete photoPickerSelected[p.url];
+      const c = Object.keys(photoPickerSelected).length;
+      status.textContent = `하위폴더 ${photoPickerFolders.length}개 / 사진 ${photoPickerItems.length}장 / 선택 ${c}장`;
+    });
     grid.appendChild(label);
   });
 }
 function insertSelectedDrivePhotos(){
-  const checked = Array.from(document.querySelectorAll('#photoPickerGrid input:checked')).map(input => photoPickerItems[Number(input.value)]).filter(Boolean);
+  const checked = Object.keys(photoPickerSelected).map(k => photoPickerSelected[k]).filter(Boolean);
   if(!checked.length) return showToast('추가할 사진을 선택해 주세요.');
   const arr = photoPickerTarget === 'hwPhotos' ? hwPhotos : classPhotos;
   let added = 0;
