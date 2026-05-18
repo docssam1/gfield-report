@@ -646,7 +646,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   addHwRow(); addSubjRow(); addTodayHwRow(); loadTodos(); updateAppsScriptEditorLink(); applyAutoGrow(document);
 });
 
-window.state = window.state || { driveUrl:'', driveFileId:'', lastUrl:'' };
+window.state = window.state || { driveUrl:'', driveFileId:'', lastUrl:'', lastRowNumber:'' };
 window.setLink = function(url, kind) {
   const label = document.querySelector('#linkResult div');
   if(kind === 'drive'){ window.state.driveUrl = url; if(label) label.textContent = '저장되었습니다. 구글 드라이브 HTML 링크:'; } 
@@ -1428,8 +1428,8 @@ function buildSnapshot(){
   document.querySelectorAll('#todayHwList > div.today-row-pc').forEach(r=>{const c=r.querySelector('.v-course').value,ty=r.querySelector('.v-type').value,ct=r.querySelector('.v-content').value;if(c||ct){tHwH+=`<div class="today-hw-item" style="border-bottom:1px solid #e2e8f0; padding:14px 0;"><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" class="hw-chk" value="${esc(c)}" style="width:18px; height:18px; accent-color:#16417C; cursor:pointer;"><span class="hw-course-title" style="font-weight:700; color:#16417C; font-size:14px;">${esc(c)}</span><span style="background:${ty==='필수'?'#ef4444':'#3b82f6'};color:#fff;font-size:10px;padding:3px 6px;border-radius:4px;font-weight:bold;">${ty}</span></label>${ct ? `<div class="hw-content-text" style="font-size:13px; white-space:pre-wrap; line-height:1.6; color:#333; margin-left:26px; margin-top:8px;">${renderMarkedText(ct)}</div>`:''}</div>`;}});
   if(tHwH){tHwH=`<div id="hw-container">${tHwH}<div style="margin-top:20px; text-align:center;"><button onclick="sendBulkKakao()" style="background:#FEE500; color:#191919; border:none; padding:14px 20px; border-radius:12px; font-weight:800; font-size:14px; cursor:pointer; width:100%;">💬 지필드 영재교육으로 과제 완료 알리기</button><div style="font-size:11px; color:#64748b; margin-top:10px;">* 완료된 과제에 체크하신 후 버튼을 눌러주세요.</div></div></div><script>function sendBulkKakao(){var c=Array.from(document.querySelectorAll('.hw-chk:checked')).map(function(cb){return cb.value;});if(c.length===0){alert('과제를 먼저 체크해주세요!');return;}var m="[과제완료] ${esc(n)} 학생\\n\\n✅ 완료 내역:\\n"+c.map(function(x){return "- "+x;}).join('\\n');var ta=document.createElement("textarea");ta.value=m;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(m).catch(function(){});}alert('📋 복사 완료! [확인]을 누르면 오픈채팅방으로 이동합니다.\\n붙여넣기 해주세요!');window.location.href='https://open.kakao.com/me/gfield';}<\/script>`;}
   
-  const photoStyle = `.photo-carousel{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 14px;-webkit-overflow-scrolling:touch;}.photo-carousel::-webkit-scrollbar{height:7px;}.photo-carousel::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:999px;}.photo-card-view{position:relative;flex:0 0 min(74vw,320px);scroll-snap-align:center;border:none;background:#0f172a;border-radius:18px;overflow:hidden;box-shadow:0 12px 26px rgba(15,23,42,.16);padding:0;cursor:pointer;}.photo-card-view img{width:100%;aspect-ratio:3/4;object-fit:contain;display:block;background:#eef2ff;}.photo-caption-hand{position:absolute;left:12px;right:12px;bottom:12px;background:rgba(15,23,42,.54);color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:14px;padding:9px 10px;text-align:center;font-family:'Comic Sans MS','Segoe Print','Nanum Pen Script','Apple SD Gothic Neo',cursive;font-size:17px;line-height:1.32;text-shadow:0 1px 2px rgba(0,0,0,.35);white-space:pre-wrap;}.photo-viewer{position:fixed;inset:0;background:rgba(2,6,23,.94);display:none;align-items:center;justify-content:center;z-index:9999;padding:18px;}.photo-viewer.show{display:flex;}.photo-viewer img{max-width:100%;max-height:86vh;object-fit:contain;border-radius:14px;background:#fff;}.photo-viewer-caption{position:fixed;left:18px;right:18px;bottom:18px;color:#fff;text-align:center;font-family:'Comic Sans MS','Segoe Print','Nanum Pen Script','Apple SD Gothic Neo',cursive;font-size:19px;line-height:1.35;text-shadow:0 2px 5px rgba(0,0,0,.6);white-space:pre-wrap;}.photo-viewer-close{position:fixed;right:14px;top:14px;width:42px;height:42px;border-radius:999px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.16);color:#fff;font-size:24px;line-height:1;cursor:pointer;}`;
-  const photoViewerScript = `<script>function openPhotoViewer(src,cap){var v=document.getElementById('photoViewer');if(!v)return;v.querySelector('img').src=src;v.querySelector('.photo-viewer-caption').textContent=cap||'';v.classList.add('show');document.body.style.overflow='hidden';}function closePhotoViewer(){var v=document.getElementById('photoViewer');if(!v)return;v.classList.remove('show');document.body.style.overflow='';}document.addEventListener('click',function(e){var card=e.target.closest&&e.target.closest('.photo-card-view');if(card)openPhotoViewer(card.dataset.full,card.dataset.caption||'');});document.addEventListener('keydown',function(e){if(e.key==='Escape')closePhotoViewer();});<\/script>`;
+  const photoStyle = `.photo-carousel{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:8px 10px 20px;-webkit-overflow-scrolling:touch;perspective:1100px;scroll-padding:28px;}.photo-carousel::-webkit-scrollbar{height:7px;}.photo-carousel::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:999px;}.photo-card-view{position:relative;flex:0 0 min(72vw,300px);scroll-snap-align:center;border:none;background:#0f172a;border-radius:18px;overflow:hidden;box-shadow:0 12px 26px rgba(15,23,42,.16);padding:0;cursor:pointer;transform-origin:center center;transform:scale(.92) rotateY(18deg);opacity:.72;transition:transform .28s ease,opacity .28s ease,box-shadow .28s ease;}.photo-card-view.active{transform:scale(1) rotateY(0deg);opacity:1;box-shadow:0 18px 34px rgba(15,23,42,.26);}.photo-card-view.prev{transform:scale(.94) rotateY(16deg);opacity:.86;}.photo-card-view.next{transform:scale(.94) rotateY(-16deg);opacity:.86;}.photo-card-view img{width:100%;aspect-ratio:3/4;object-fit:contain;display:block;background:#eef2ff;}.photo-caption-hand{position:absolute;left:12px;right:12px;bottom:12px;background:rgba(15,23,42,.54);color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:14px;padding:9px 10px;text-align:center;font-family:'Comic Sans MS','Segoe Print','Nanum Pen Script','Apple SD Gothic Neo',cursive;font-size:17px;line-height:1.32;text-shadow:0 1px 2px rgba(0,0,0,.35);white-space:pre-wrap;}.photo-viewer{position:fixed;inset:0;background:rgba(2,6,23,.94);display:none;align-items:center;justify-content:center;z-index:9999;padding:18px;}.photo-viewer.show{display:flex;}.photo-viewer img{max-width:100%;max-height:86vh;object-fit:contain;border-radius:14px;background:#fff;}.photo-viewer-caption{position:fixed;left:18px;right:18px;bottom:18px;color:#fff;text-align:center;font-family:'Comic Sans MS','Segoe Print','Nanum Pen Script','Apple SD Gothic Neo',cursive;font-size:19px;line-height:1.35;text-shadow:0 2px 5px rgba(0,0,0,.6);white-space:pre-wrap;}.photo-viewer-close{position:fixed;right:14px;top:14px;width:42px;height:42px;border-radius:999px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.16);color:#fff;font-size:24px;line-height:1;cursor:pointer;}`;
+  const photoViewerScript = `<script>function openPhotoViewer(src,cap){var v=document.getElementById('photoViewer');if(!v)return;v.querySelector('img').src=src;v.querySelector('.photo-viewer-caption').textContent=cap||'';v.classList.add('show');document.body.style.overflow='hidden';}function closePhotoViewer(){var v=document.getElementById('photoViewer');if(!v)return;v.classList.remove('show');document.body.style.overflow='';}function applyCoverFlowState(car){if(!car)return;var cards=[].slice.call(car.querySelectorAll('.photo-card-view'));if(!cards.length)return;var center=car.scrollLeft+car.clientWidth/2;var best=0;var bestDist=1e12;cards.forEach(function(c,i){c.classList.remove('active','prev','next');var x=c.offsetLeft+c.offsetWidth/2;var d=Math.abs(center-x);if(d<bestDist){bestDist=d;best=i;}});cards[best].classList.add('active');if(cards[best-1])cards[best-1].classList.add('prev');if(cards[best+1])cards[best+1].classList.add('next');}function bindCoverFlow(){var carousels=[].slice.call(document.querySelectorAll('.photo-carousel'));carousels.forEach(function(car){var t;applyCoverFlowState(car);car.addEventListener('scroll',function(){clearTimeout(t);t=setTimeout(function(){applyCoverFlowState(car);},40);},{passive:true});window.addEventListener('resize',function(){applyCoverFlowState(car);});});}document.addEventListener('click',function(e){var card=e.target.closest&&e.target.closest('.photo-card-view');if(card)openPhotoViewer(card.dataset.full,card.dataset.caption||'');});document.addEventListener('keydown',function(e){if(e.key==='Escape')closePhotoViewer();});window.addEventListener('load',bindCoverFlow);<\/script>`;
   const photoViewerHtml = `<div class="photo-viewer" id="photoViewer" onclick="if(event.target.id==='photoViewer')closePhotoViewer()"><button class="photo-viewer-close" onclick="closePhotoViewer()" aria-label="닫기">×</button><img alt="확대 사진"><div class="photo-viewer-caption"></div></div>`;
   const pRen=arr=>{
     if(!arr || !arr.length) return '';
@@ -1513,7 +1513,8 @@ async function saveToDrive(e){
     const payload = { action:'save_drive', mode:currentMode, csRecord:csRec, studentName:n, name:csRec.name || n, type:backendType, school:csRec.school || val('dbSchool'), grade:csRec.grade || val('dbGrade'), phone:csRec.phone || val('dbPhone'), course:csRec.course || val('courseInput').trim(), content:currentMode==='상담' ? (csRec.summaryContent || csRec.content || val('msgText') || val('csMemo')) : undefined, fileName:fName, htmlContent:htmlContent, photoDriveUrls:getReportPhotoDriveUrls(), sheetId:getKey('sheetId') || DEFAULT_SHEET, attendance:{ date:val('dateInput'), type:backendType, course:csRec.course || val('courseInput').trim(), school:csRec.school || val('dbSchool'), grade:csRec.grade || val('dbGrade'), phone:csRec.phone || val('dbPhone'), subjects_merged:subjects, memo:currentMode==='상담' ? (csRec.summaryContent || csRec.content || val('msgText') || val('csMemo')) : '' } };
     const res = await fetch(sUrl,{method:'POST',body:JSON.stringify(payload)}); const r = await res.json();
     if(r.result !== 'success') throw new Error(r.error || '저장 실패');
-    if(window.state) window.state.driveFileId = r.fileId || ''; if(window.setLink) window.setLink(r.url, 'drive'); showToast('저장되었습니다.');
+    if(window.state){ window.state.driveFileId = r.fileId || ''; window.state.lastRowNumber = r.rowNumber || ''; }
+    if(window.setLink) window.setLink(r.url, 'drive'); showToast('저장되었습니다.');
   }catch(err){ alert('❌ 저장 실패: ' + err.message); }finally{ if(typeof updateActionButtonLabels === 'function') updateActionButtonLabels(); restore(); }
   return false;
 }
@@ -1528,7 +1529,7 @@ async function deployToGitHubPages(e){
     const htmlContent = typeof buildSnapshot === 'function' ? buildSnapshot() : '<!doctype html><meta charset="utf-8"><body>내용 없음</body>'; const fName = makeReportFileName(n, backendType); const path = `${n}/${fName}`;
     const csRec = typeof getCSRecordSummary === 'function' ? getCSRecordSummary() : {};
     const contentSummary = csRec.summaryContent || val('msgText') || val('csMemo') || '';
-    const payload = { action:'deploy_github', repo:`${ghU}/${ghR}`, path:path, htmlContent:htmlContent, photoDriveUrls:getReportPhotoDriveUrls(), message:`[자동배포] ${n} ${backendType} 리포트`, sheetId:getKey('sheetId') || DEFAULT_SHEET, logToSheet:true, studentName:n, name:n, type:backendType, date:val('dateInput'), school:val('dbSchool'), grade:val('dbGrade'), phone:val('dbPhone'), course:val('courseInput').trim(), content:contentSummary, driveUrl:(window.state && window.state.driveUrl) || '', driveFileId:(window.state && window.state.driveFileId) || '', attendance:{ date:val('dateInput'), type:backendType, course:val('courseInput').trim(), school:val('dbSchool'), grade:val('dbGrade'), phone:val('dbPhone'), subjects_merged:contentSummary } };
+    const payload = { action:'deploy_github', mode:currentMode, rowNumber:(window.state && window.state.lastRowNumber) || '', repo:`${ghU}/${ghR}`, path:path, htmlContent:htmlContent, photoDriveUrls:getReportPhotoDriveUrls(), message:`[자동배포] ${n} ${backendType} 리포트`, sheetId:getKey('sheetId') || DEFAULT_SHEET, logToSheet:true, studentName:n, name:n, type:backendType, date:val('dateInput'), school:val('dbSchool'), grade:val('dbGrade'), phone:val('dbPhone'), course:val('courseInput').trim(), content:contentSummary, driveUrl:(window.state && window.state.driveUrl) || '', driveFileId:(window.state && window.state.driveFileId) || '', attendance:{ date:val('dateInput'), type:backendType, course:val('courseInput').trim(), school:val('dbSchool'), grade:val('dbGrade'), phone:val('dbPhone'), subjects_merged:contentSummary } };
     const res = await fetch(sUrl,{method:'POST',body:JSON.stringify(payload)}); const r = await res.json();
     if(r.result !== 'success') throw new Error(r.error || 'GitHub 배포 실패');
     if(window.setLink) window.setLink(r.url, 'github'); showToast('웹 링크가 생성되었습니다.');
@@ -1643,7 +1644,7 @@ function getCleanCsDisplayMessage(rawMsg){
 // [수업 안내 템플릿] "수업 세트" -> "수업" 변경 적용됨
 // =====================================================================
 function buildCsConditionalHtml(){
-  const type = getCsType(); const studentName = getCsField('nameInput') || '학생'; const school = getCsField('dbSchool') || ''; const grade = getCsField('dbGrade') || ''; const date = getCsField('dateInput') || ''; const weekday = typeof getKoreanWeekday === 'function' ? getKoreanWeekday(date) : ''; const startTime = getCsField('startTimeInput') || ''; const endTime = getCsField('endTimeInput') || ''; const msg = getCleanCsDisplayMessage(getCsField('msgText') || getCsField('csMemo') || ''); const account = document.querySelector('input[name="c_account"]:checked')?.value || ''; const totalFee = getCsField('totalFee') || getCsField('feeInput') || getCsField('tuitionInput') || ''; const logoUrl = 'https://docssam1.github.io/gfield-report/logo.png'; const academyPhone = '01020837265'; const locationUrl = 'https://naver.me/xyTRpBHo'; const kakaoChannelUrl = 'https://pf.kakao.com/_htxhxmn'; const zeroPayUrl = 'https://drive.google.com/open?id=18oDp8YjImIu8fCpYpl35gtXxCTkaMW4J&usp=drive_fs';
+  const type = getCsType(); const studentName = getCsField('nameInput') || '학생'; const school = getCsField('dbSchool') || ''; const grade = getCsField('dbGrade') || ''; const date = getCsField('dateInput') || ''; const weekday = typeof getKoreanWeekday === 'function' ? getKoreanWeekday(date) : ''; const startTime = getCsField('startTimeInput') || ''; const endTime = getCsField('endTimeInput') || ''; const msg = getCleanCsDisplayMessage(getCsField('msgText') || getCsField('csMemo') || ''); const account = document.querySelector('input[name="c_account"]:checked')?.value || ''; const totalFee = getCsField('totalFee') || getCsField('feeInput') || getCsField('tuitionInput') || ''; const logoUrl = 'https://docssam1.github.io/gfield-report/logo.png'; const academyPhone = '01020837265'; const locationUrl = 'https://naver.me/xyTRpBHo'; const kakaoChannelUrl = 'https://pf.kakao.com/_htxhxmn'; const kakaoTalkDirect = 'https://open.kakao.com/me/docssam'; const zeroPayUrl = 'https://drive.google.com/open?id=18oDp8YjImIu8fCpYpl35gtXxCTkaMW4J&usp=drive_fs';
   
   let titleStr = type.includes('테스트') ? '테스트 안내' : (type.includes('상담') ? '상담 안내' : '수업 안내');
   const esc2 = (typeof esc === 'function') ? esc : (v)=>String(v||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -1652,9 +1653,16 @@ function buildCsConditionalHtml(){
   const setHtml = buildCourseGuideHtmlBlocks();
   
   const copyCode = account.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' '); 
-  const paidSms = `sms:${academyPhone}?body=${encodeURIComponent('결제 완료했습니다. ' + studentName + ' 학생입니다. 확인 부탁드립니다.')}`;
-  const guideConfirmSms = `sms:${academyPhone}?body=${encodeURIComponent('수업 안내 확인했습니다. ' + studentName + ' 학생입니다.')}`;
-  const paymentRequestUrl = `sms:${academyPhone}?body=${encodeURIComponent(studentName + '학생 결제 선생요청합니다.')}`;
+  const paidRequestText = `${studentName}학생 결제 확인 요청합니다.`;
+  const classChangeText = `${studentName}학생 수강 변경 요청합니다.`;
+  const tuitionChangeText = `${studentName}학생 수강료 변경이 필요합니다.`;
+  const paymentTeacherText = `${studentName}학생 결제 선생요청합니다.`;
+  const kakaoInquiryText = `${studentName}학생 문의드립니다.`;
+  const kakaoPaidRequestEsc = esc2(paidRequestText).replace(/'/g, '&#39;');
+  const kakaoClassChangeEsc = esc2(classChangeText).replace(/'/g, '&#39;');
+  const kakaoTuitionChangeEsc = esc2(tuitionChangeText).replace(/'/g, '&#39;');
+  const kakaoPaymentTeacherEsc = esc2(paymentTeacherText).replace(/'/g, '&#39;');
+  const kakaoInquiryEsc = esc2(kakaoInquiryText).replace(/'/g, '&#39;');
   
   return `<!DOCTYPE html>
 <html lang="ko">
@@ -1691,6 +1699,7 @@ function buildCsConditionalHtml(){
   .btn-blue { background: #0284c7; }
   .btn-teal { background: #0f766e; }
   .btn-purple { background: #4f46e5; }
+  .btn-indigo { background: #6366f1; }
   .btn-emerald { background: #059669; }
   .btn-yellow { background: #eab308; color: #333; }
   .btn-red { background: #e11d48; }
@@ -1762,12 +1771,14 @@ function buildCsConditionalHtml(){
 
   <div class="btn-grid">
     ${account ? `<button class="btn btn-green" onclick="navigator.clipboard?navigator.clipboard.writeText('${copyCode}').then(()=>alert('계좌가 복사되었습니다.')):alert('${esc2(account)}')">계좌 복사하기 <span>></span></button>` : ''}
-    <a href="${paidSms}" class="btn btn-blue btn-text-fit">결제 확인 문자 보내기 <span>></span></a>
+    <a href="${kakaoTalkDirect}" class="btn btn-blue btn-text-fit" target="_blank" onclick="return openKakaoChat('${kakaoPaidRequestEsc}', this.href)">결제 확인 요청 보내기 <span>></span></a>
     <a href="${zeroPayUrl}" class="btn btn-teal">제로페이 요청하기 <span>></span></a>
-    <a href="${paymentRequestUrl}" class="btn btn-purple btn-text-fit">결제선생 요청하기 <span>></span></a>
-    <a href="${guideConfirmSms}" class="btn btn-emerald btn-text-fit">안내 확인 보내기 <span>></span></a>
-    <a href="${kakaoChannelUrl}" class="btn btn-yellow" target="_blank">카카오로 문의하기 <span>></span></a>
+    <a href="${kakaoTalkDirect}" class="btn btn-purple btn-text-fit" target="_blank" onclick="return openKakaoChat('${kakaoPaymentTeacherEsc}', this.href)">결제선생 요청하기 <span>></span></a>
+    <a href="${kakaoTalkDirect}" class="btn btn-emerald btn-text-fit" target="_blank" onclick="return openKakaoChat('${kakaoClassChangeEsc}', this.href)">수강 변경 요청하기 <span>></span></a>
+    <a href="${kakaoTalkDirect}" class="btn btn-indigo btn-text-fit" target="_blank" onclick="return openKakaoChat('${kakaoTuitionChangeEsc}', this.href)">수강료 변경 요청하기 <span>></span></a>
+    <a href="${kakaoTalkDirect}" class="btn btn-yellow" target="_blank" onclick="return openKakaoChat('${kakaoInquiryEsc}', this.href)">카카오로 문의하기 <span>></span></a>
     <a href="tel:${academyPhone}" class="btn btn-red">전화 걸기 <span>></span></a>
+    <a href="${kakaoChannelUrl}" class="btn btn-teal btn-text-fit" target="_blank">지필드 영재교육 채널 추가 <span>></span></a>
     <a href="${locationUrl}" class="btn btn-full" target="_blank">📍 학원 위치 보기 <span>></span></a>
   </div>
 
@@ -1780,6 +1791,26 @@ function buildCsConditionalHtml(){
     </div>
   </div>
 </div>
+<script>
+function openKakaoChat(message, url){
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(message || '');
+    }else{
+      var ta=document.createElement('textarea');
+      ta.value=message||'';
+      ta.style.position='fixed';
+      ta.style.opacity='0';
+      document.body.appendChild(ta);
+      ta.select();
+      try{document.execCommand('copy');}catch(e){}
+      document.body.removeChild(ta);
+    }
+  }catch(e){}
+  window.open(url, '_blank');
+  return false;
+}
+</script>
 </body>
 </html>`;
 }
