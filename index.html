@@ -1706,12 +1706,12 @@ function buildCsConditionalHtml(){
   const classChangeText = `${studentName}학생 수강 변경 요청합니다.`;
   const tuitionChangeText = `${studentName}학생 수강료 변경이 필요합니다.`;
   const paymentTeacherText = `${studentName}학생 결제 선생요청합니다.`;
-  const kakaoInquiryText = `${studentName}학생 문의드립니다.`;
-  const kakaoPaidRequestEsc = esc2(paidRequestText).replace(/'/g, '&#39;');
-  const kakaoClassChangeEsc = esc2(classChangeText).replace(/'/g, '&#39;');
-  const kakaoTuitionChangeEsc = esc2(tuitionChangeText).replace(/'/g, '&#39;');
-  const kakaoPaymentTeacherEsc = esc2(paymentTeacherText).replace(/'/g, '&#39;');
-  const kakaoInquiryEsc = esc2(kakaoInquiryText).replace(/'/g, '&#39;');
+  const smsHref = (text) => `sms:${academyPhone}?body=${encodeURIComponent(text)}`;
+  const smsPaidRequestUrl = smsHref(paidRequestText);
+  const smsClassChangeUrl = smsHref(classChangeText);
+  const smsTuitionChangeUrl = smsHref(tuitionChangeText);
+  const smsPaymentTeacherUrl = smsHref(paymentTeacherText);
+  const kakaoInquiryOpenUrl = 'https://open.kakao.com/me/gfield';
   
   return `<!DOCTYPE html>
 <html lang="ko">
@@ -1820,12 +1820,12 @@ function buildCsConditionalHtml(){
 
   <div class="btn-grid">
     ${account ? `<button class="btn btn-green" onclick="navigator.clipboard?navigator.clipboard.writeText('${copyCode}').then(()=>alert('계좌가 복사되었습니다.')):alert('${esc2(account)}')">계좌 복사하기 <span>></span></button>` : ''}
-    <a href="${kakaoTalkDirect}" class="btn btn-blue btn-text-fit" target="_blank" onclick="return openKakaoChat('${kakaoPaidRequestEsc}', this.href)">결제 확인 요청 보내기 <span>></span></a>
+    <a href="${smsPaidRequestUrl}" class="btn btn-blue btn-text-fit">결제 확인 요청 보내기 <span>></span></a>
     <a href="${zeroPayUrl}" class="btn btn-teal">제로페이 요청하기 <span>></span></a>
-    <a href="${kakaoTalkDirect}" class="btn btn-purple btn-text-fit" target="_blank" onclick="return openKakaoChat('${kakaoPaymentTeacherEsc}', this.href)">결제선생 요청하기 <span>></span></a>
-    <a href="${kakaoTalkDirect}" class="btn btn-emerald btn-text-fit" target="_blank" onclick="return openKakaoChat('${kakaoClassChangeEsc}', this.href)">수강 변경 요청하기 <span>></span></a>
-    <a href="${kakaoTalkDirect}" class="btn btn-indigo btn-text-fit" target="_blank" onclick="return openKakaoChat('${kakaoTuitionChangeEsc}', this.href)">수강료 변경 요청하기 <span>></span></a>
-    <a href="${kakaoTalkDirect}" class="btn btn-yellow" target="_blank" onclick="return openKakaoChat('${kakaoInquiryEsc}', this.href)">카카오로 문의하기 <span>></span></a>
+    <a href="${smsPaymentTeacherUrl}" class="btn btn-purple btn-text-fit">결제선생 요청하기 <span>></span></a>
+    <a href="${smsClassChangeUrl}" class="btn btn-emerald btn-text-fit">수강 변경 요청하기 <span>></span></a>
+    <a href="${smsTuitionChangeUrl}" class="btn btn-indigo btn-text-fit">수강료 변경 요청하기 <span>></span></a>
+    <a href="${kakaoInquiryOpenUrl}" class="btn btn-yellow" target="_blank">오픈톡으로 문의하기 <span>></span></a>
     <a href="tel:${academyPhone}" class="btn btn-red">전화 걸기 <span>></span></a>
     <a href="${kakaoChannelUrl}" class="btn btn-teal btn-text-fit" target="_blank">지필드 영재교육 채널 추가 <span>></span></a>
     <a href="${locationUrl}" class="btn btn-full" target="_blank">📍 학원 위치 보기 <span>></span></a>
