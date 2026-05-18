@@ -1654,7 +1654,7 @@ function buildCsConditionalHtml(){
   const copyCode = account.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' '); 
   const paidSms = `sms:${academyPhone}?body=${encodeURIComponent('결제 완료했습니다. ' + studentName + ' 학생입니다. 확인 부탁드립니다.')}`;
   const guideConfirmSms = `sms:${academyPhone}?body=${encodeURIComponent('수업 안내 확인했습니다. ' + studentName + ' 학생입니다.')}`;
-  const paymentRequestUrl = 'https://www.payteacher.com/';
+  const paymentRequestUrl = `sms:${academyPhone}?body=${encodeURIComponent(studentName + '학생 결제 선생요청합니다.')}`;
   
   return `<!DOCTYPE html>
 <html lang="ko">
@@ -1764,7 +1764,7 @@ function buildCsConditionalHtml(){
     ${account ? `<button class="btn btn-green" onclick="navigator.clipboard?navigator.clipboard.writeText('${copyCode}').then(()=>alert('계좌가 복사되었습니다.')):alert('${esc2(account)}')">계좌 복사하기 <span>></span></button>` : ''}
     <a href="${paidSms}" class="btn btn-blue btn-text-fit">결제 확인 문자 보내기 <span>></span></a>
     <a href="${zeroPayUrl}" class="btn btn-teal">제로페이 요청하기 <span>></span></a>
-    <a href="${paymentRequestUrl}" class="btn btn-purple btn-text-fit" target="_blank">결제선생 요청하기 <span>></span></a>
+    <a href="${paymentRequestUrl}" class="btn btn-purple btn-text-fit">결제선생 요청하기 <span>></span></a>
     <a href="${guideConfirmSms}" class="btn btn-emerald btn-text-fit">안내 확인 보내기 <span>></span></a>
     <a href="${kakaoChannelUrl}" class="btn btn-yellow" target="_blank">카카오로 문의하기 <span>></span></a>
     <a href="tel:${academyPhone}" class="btn btn-red">전화 걸기 <span>></span></a>
