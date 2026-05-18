@@ -1,4 +1,4 @@
-const CONFIG = {
+﻿const CONFIG = {
   DRIVE_ROOT_ID: '1ydIsZGns3_yq--hRaYEvORViWiCUrgy6',
   DASHBOARD_SHEET_ID: '1Ta1o_v504jtDsyHPY0bER6WpI3xYTbVVffEl0iy58f8',
   GITHUB_OWNER: 'docssam1',
@@ -203,10 +203,10 @@ function saveDrive_(p) {
     reportUrl: p.reportUrl || '',
     status: (sharingWarning || photoSharingWarning) ? 'Drive 저장 완료(공유 권한 확인 필요)' : 'Drive 저장 완료'
   });
-  const rowNumber = appendActivity_(p.sheetId, row);
+  appendActivity_(p.sheetId, row);
   upsertStudent_(Object.assign({}, p, { name: name }));
 
-  return { result: 'success', url: driveUrl, fileId: file.getId(), rowNumber: rowNumber, warning: [sharingWarning, photoSharingWarning].filter(Boolean).join(' / ') };
+  return { result: 'success', url: driveUrl, fileId: file.getId(), warning: [sharingWarning, photoSharingWarning].filter(Boolean).join(' / ') };
 }
 
 function deployGithub_(p) {
@@ -242,14 +242,7 @@ function deployGithub_(p) {
   const photoSharingWarning = openSharedPhotoFiles_(p.photoDriveUrls);
 
   const pagesUrl = CONFIG.PAGES_BASE_URL + '/' + path.split('/').map(encodeURIComponent).join('/');
-  const modeForRow = inferMode_(p);
-  let updated = false;
-  if (p.rowNumber) {
-    updated = updateActivityReportLinkByRow_(p.sheetId, Number(p.rowNumber), pagesUrl, p.driveUrl || '', modeForRow);
-  }
-  if (!updated) {
-    updated = updateLatestActivityReportLink_(p.sheetId, name, p.date, p.type, pagesUrl, p.driveUrl || '', modeForRow);
-  }
+  const updated = updateLatestActivityReportLink_(p.sheetId, name, p.date, p.type, pagesUrl, p.driveUrl || '');
   if (!updated) {
     appendActivity_(p.sheetId, buildActivityRow_(p, {
       name: name,
@@ -684,7 +677,7 @@ function buildActivityRow_(p, extra) {
   const date = p.date || cs.date || at.date || '';
   const type = p.type || cs.type || at.type || '';
   const content = p.content || cs.summaryContent || at.memo || at.subjects_merged || cs.content || '';
-  const docType = inferMode_(p);
+  const docType = p.mode === '상담' ? 'CS' : '학습리포트';
   return [
     new Date(),
     date,
@@ -713,10 +706,9 @@ function appendActivity_(sheetId, row) {
   const sheet = ensureSheet_(ss, ACTIVITY_SHEET, ACTIVITY_HEADERS);
   ensureActivityHeaders_(sheet);
   sheet.appendRow(row);
-  return sheet.getLastRow();
 }
 
-function updateLatestActivityReportLink_(sheetId, name, date, type, reportUrl, driveUrl, modeForRow) {
+function updateLatestActivityReportLink_(sheetId, name, date, type, reportUrl, driveUrl) {
   const ss = SpreadsheetApp.openById(getSheetId_(sheetId));
   const sheet = ensureSheet_(ss, ACTIVITY_SHEET, ACTIVITY_HEADERS);
   const values = sheet.getDataRange().getValues();
@@ -728,29 +720,12 @@ function updateLatestActivityReportLink_(sheetId, name, date, type, reportUrl, d
     const sameType = !type || String(values[i][idx['세부유형']] || '').trim() === String(type).trim();
     if (sameName && sameDate && sameType) {
       if (driveUrl && !values[i][idx['드라이브링크']]) sheet.getRange(i + 1, idx['드라이브링크'] + 1).setValue(driveUrl);
-      if (modeForRow && idx['수업유형'] !== undefined) sheet.getRange(i + 1, idx['수업유형'] + 1).setValue(modeForRow);
       sheet.getRange(i + 1, idx['리포트링크'] + 1).setValue(reportUrl);
       sheet.getRange(i + 1, idx['처리상태'] + 1).setValue('GitHub 링크 생성 완료');
       return true;
     }
   }
   return false;
-}
-
-function updateActivityReportLinkByRow_(sheetId, rowNumber, reportUrl, driveUrl, modeForRow) {
-  const ss = SpreadsheetApp.openById(getSheetId_(sheetId));
-  const sheet = ensureSheet_(ss, ACTIVITY_SHEET, ACTIVITY_HEADERS);
-  if (!rowNumber || rowNumber < 2 || rowNumber > sheet.getLastRow()) return false;
-  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  const idx = headerIndex_(headers);
-  if (driveUrl && idx['드라이브링크'] !== undefined) {
-    const curDrive = String(sheet.getRange(rowNumber, idx['드라이브링크'] + 1).getValue() || '').trim();
-    if (!curDrive) sheet.getRange(rowNumber, idx['드라이브링크'] + 1).setValue(driveUrl);
-  }
-  if (modeForRow && idx['수업유형'] !== undefined) sheet.getRange(rowNumber, idx['수업유형'] + 1).setValue(modeForRow);
-  if (idx['리포트링크'] !== undefined) sheet.getRange(rowNumber, idx['리포트링크'] + 1).setValue(reportUrl);
-  if (idx['처리상태'] !== undefined) sheet.getRange(rowNumber, idx['처리상태'] + 1).setValue('GitHub 링크 생성 완료');
-  return true;
 }
 
 function ensureSheet_(ss, name, headers) {
@@ -841,13 +816,6 @@ function findHistory_(sheet, name) {
     }
   }
   return rows;
-}
-
-function inferMode_(p) {
-  if (String(p.mode || '').trim() === '상담') return 'CS';
-  const t = String(p.type || p.cType || '').trim();
-  if (['재원생 상담', '수업 문의', '테스트 진행', '대면 상담', '수업 안내', '재원생상담', '수업문의', '테스트진행', '대면상담', '수업안내'].indexOf(t) !== -1) return 'CS';
-  return '학습리포트';
 }
 
 function linkNotionCalendarToLatestActivity_(sheetId, name, date, type, notionPageId, notionPageUrl, calendarId, eventId) {
