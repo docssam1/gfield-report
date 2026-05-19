@@ -436,6 +436,8 @@ button:disabled{opacity:.62 !important;cursor:not-allowed !important;}
 
 <div class="btns">
   <button type="button" class="kakao-btn" id="previewParentBtn" onclick="return openParentPreview(event)">👨‍👩‍👧 학부모 화면 보기</button>
+  <button type="button" class="btn-dl" id="draftSaveBtn" onclick="manualSaveDraft()">🧷 오프라인 임시 저장</button>
+  <button type="button" class="btn-gh" id="draftLoadBtn" onclick="manualRestoreDraft()">♻️ 오프라인 임시 복구</button>
   <button type="button" class="btn-dl" id="saveDriveBtn" onclick="return saveToDrive(event)">💾 1단계: 드라이브 저장</button>
   <button class="btn-gh" id="ghBtn" onclick="return deployToGitHubPages(event)">🔗 2단계: 웹링크 만들기</button>
   <button class="notion-btn" id="notionBtn" onclick="saveToNotion()">📅 3단계: 일정 저장</button>
@@ -678,6 +680,14 @@ function saveDraftNow(){
   if(__draftRestoring) return;
   try{ localStorage.setItem(GFIELD_DRAFT_KEY, JSON.stringify(collectDraftState())); }catch(e){}
 }
+function manualSaveDraft(){
+  try{
+    saveDraftNow();
+    showToast('✅ 오프라인 임시 저장 완료');
+  }catch(e){
+    alert('임시 저장 실패: ' + (e.message || e));
+  }
+}
 
 function scheduleDraftSave(){
   if(__draftRestoring) return;
@@ -723,6 +733,12 @@ function restoreDraftState(){
   }finally{
     __draftRestoring = false;
   }
+}
+function manualRestoreDraft(){
+  if(!confirm('현재 입력값 위에 임시 저장본을 복구할까요?')) return;
+  const ok = restoreDraftState();
+  if(ok) showToast('✅ 오프라인 임시 복구 완료');
+  else showToast('임시 저장본이 없습니다.');
 }
 
 window.addEventListener('DOMContentLoaded',()=>{ 
