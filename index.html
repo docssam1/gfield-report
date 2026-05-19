@@ -1249,7 +1249,7 @@ function renderConflicts() {
 function submitResolvedConflicts() {
   const resolved = [];
   pendingConflicts.forEach((c, idx) => {
-    const choice = document.querySelector(`input[name="cf_${idx}"]:checked`).value;
+    const choice = document.querySelector(`input[name="cf_${idx}"]:checked`)?.value || 'keep';
     resolved.push({ name: c.name, phone: c.phone, school: c.school, status: c.status, grade: choice === 'keep' ? c.existingGrade : c.newGrade, content: c.content });
   });
   const finalData = pendingBulkData.concat(resolved);
@@ -1327,7 +1327,7 @@ function autoAddTodoForSchedule() {
     else if (classType === '재원생상담') todoText = `[상담] ${n} - ${dTimeStr}`;
   } else if (currentMode === '리포트') {
     if (classType === '결석') {
-      const mdDate = val('absentMakeupDate'); const mdStart = val('absentMakeupStartTime'); const mdEnd = val('absentMakeupEndTime'); const reasonType = document.querySelector('input[name="absentReasonType"]:checked').value; const mt = qs('absentMakeupType').options[qs('absentMakeupType').selectedIndex].text;
+      const mdDate = val('absentMakeupDate'); const mdStart = val('absentMakeupStartTime'); const mdEnd = val('absentMakeupEndTime'); const reasonType = document.querySelector('input[name="absentReasonType"]:checked')?.value || ''; const mt = qs('absentMakeupType').options[qs('absentMakeupType').selectedIndex].text;
       let mTimeStr = mdDate; if (mdStart) mTimeStr += ` ${mdStart}`; if (mdEnd) mTimeStr += `~${mdEnd}`; if (!mTimeStr) mTimeStr = '일정미정';
       if (reasonType === 'free') todoText = `[보강/보충] ${n} / 보강: ${mTimeStr} / ${mt}`; else if (reasonType === 'cancelled') todoText = `[휴강] ${n} / 휴강: ${dTimeStr} / 보강: ${mTimeStr} / ${mt}`; else todoText = `[결석] ${n} / 결석: ${dTimeStr} / 보강: ${mTimeStr} / ${mt}`;
     }
@@ -1549,7 +1549,7 @@ function getReportPhotoDriveUrls(){
 function buildAbsentSnapshot(){
   const n=val('nameInput')||'학생', d=val('dateInput').replace(/-/g,'.');
   const mt=val('absentMakeupType'), mdDate=val('absentMakeupDate'); const mdStart=val('absentMakeupStartTime'), mdEnd=val('absentMakeupEndTime');
-  const r=val('absentReason'), nt=val('noticeArea'); const reasonType = document.querySelector('input[name="absentReasonType"]:checked').value;
+  const r=val('absentReason'), nt=val('noticeArea'); const reasonType = document.querySelector('input[name="absentReasonType"]:checked')?.value || '';
   let mStr="추후 결정", rLab = reasonType === 'free' ? "사유/내용" : (reasonType === 'cancelled' ? '휴강 사유' : "결석 사유");
   let badgeText = reasonType === 'free' ? "📅 보강/일정 공지" : (reasonType === 'cancelled' ? "🚫 휴강/보강 공지" : "🚫 결석/보강 공지");
   let titleText = reasonType === 'free' ? `${esc(n)} 학생 보강/보충 안내` : (reasonType === 'cancelled' ? `${esc(n)} 학생 휴강 확인` : `${esc(n)} 학생 결석 확인`);
@@ -1688,9 +1688,9 @@ async function saveToNotion(){
   const sUrl=getKey('script'); if(!sUrl){openKeyModal();return;} const btn = document.getElementById('notionBtn'); const n=val('nameInput').trim()||'학생'; if(!n){showToast('이름 입력 필요!');return;}
   const mdDate = val('absentMakeupDate');
   if(classType === '결석' && mdDate) { let savedSchedules = JSON.parse(localStorage.getItem('gf_schedules') || '[]'); let conflict = savedSchedules.find(s => s.date === mdDate && s.name !== n); if(conflict && !confirm(`⚠️ 경고: [${mdDate}] 해당 날짜에 이미 [${conflict.name}] 학생의 일정이 등록되어 있습니다. 같이 진행하시겠습니까?`)) return; savedSchedules = savedSchedules.filter(s => !(s.date === mdDate && s.name === n)); savedSchedules.push({date: mdDate, name: n}); localStorage.setItem('gf_schedules', JSON.stringify(savedSchedules)); }
-  let backendType = classType; if(classType === '결석') { backendType = document.querySelector('input[name="absentReasonType"]:checked').value === 'free' ? '보강' : '결석'; }
+  let backendType = classType; if(classType === '결석') { backendType = document.querySelector('input[name="absentReasonType"]:checked')?.value === 'free' ? '보강' : '결석'; }
   btn.disabled = true; btn.textContent = '⏳ 일정 저장 중...';
-  const docType=document.querySelector('input[name="docType"]:checked').value, u=qs('resultUrl').href;
+  const docType=document.querySelector('input[name="docType"]:checked')?.value || '리포트', u=qs('resultUrl').href;
   const payload={action:'notion',name:n,docType:docType,url:(u&&u!=='#'&&!u.includes('github.io'))?u:null, sheetId:getKey('sheetId')||DEFAULT_SHEET, notion_key:getKey('notionKey')||'', notion_db:getKey('notionDb')||'', google_calendar_id:getKey('googleCalendarId')||'primary'};
   if(docType==='상담'){ payload.cType=document.querySelector('input[name="c_type"]')?.value || classType; payload.testDate=val('testTime'); payload.school=val('dbSchool'); payload.grade=val('dbGrade'); payload.phone=val('dbPhone'); payload.content=val('csMemo');
   }else{ payload.date=val('dateInput'); payload.course=val('courseInput').trim(); payload.type=backendType; payload.makeupType=val('absentMakeupType'); payload.makeupDate=mdDate; }
