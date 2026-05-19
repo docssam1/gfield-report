@@ -1798,6 +1798,15 @@ function buildCsConditionalHtml(){
   const scheduleLine = [date ? `${date}${weekday ? ' ('+weekday+')' : ''}` : '', startTime && endTime ? `${startTime}~${endTime}` : (startTime || endTime)].filter(Boolean).join(' ');
 
   const setHtml = buildCourseGuideHtmlBlocks();
+  const csVideoHtml = Array.from(document.querySelectorAll('#videoList .video-card')).map(card => {
+    const img = card.querySelector('img');
+    if(!img) return '';
+    const url = img.getAttribute('data-url') || '';
+    const thumb = img.src || '';
+    const title = (card.querySelector('.video-input')?.value || '').trim();
+    if(!url) return '';
+    return `<a href="${esc2(url)}" target="_blank" style="display:block;text-decoration:none;color:inherit;border:1px solid #eaddc5;border-radius:12px;overflow:hidden;background:#fff;"><div style="position:relative;background:#111827;"><img src="${esc2(thumb)}" alt="video" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(220,38,38,.9);color:#fff;width:42px;height:42px;border-radius:50%;text-align:center;line-height:42px;font-weight:900;">▶</div></div>${title ? `<div style="padding:10px 12px;font-size:13px;font-weight:700;line-height:1.4;">${esc2(title)}</div>` : ''}</a>`;
+  }).filter(Boolean).join('');
   
   const copyCode = account.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' '); 
   const paidRequestText = `${studentName}학생 결제 확인 요청합니다.`;
@@ -1901,6 +1910,15 @@ function buildCsConditionalHtml(){
     <div class="card-content">
       <div class="card-title">수업 안내</div>
       <div class="card-text">${setHtml}</div>
+    </div>
+  </div>` : ''}
+
+  ${csVideoHtml ? `
+  <div class="card">
+    <div class="card-icon">🎬</div>
+    <div class="card-content">
+      <div class="card-title">동영상 강의</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;">${csVideoHtml}</div>
     </div>
   </div>` : ''}
 
