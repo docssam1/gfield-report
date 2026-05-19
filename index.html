@@ -448,6 +448,9 @@ button:disabled{opacity:.62 !important;cursor:not-allowed !important;}
   <button class="notion-btn" id="notionBtn" onclick="saveToNotion()">📅 3단계: 일정 저장</button>
   <button class="kakao-btn" id="kakaoBtn" onclick="shareKakao()">💬 4단계: 카카오톡 전송</button>
 </div>
+<div style="margin-top:8px;font-size:11px;color:#64748b;line-height:1.5;">
+  ※ PDF 인쇄는 학부모 리포트 화면 기준으로 출력되며, 사진은 인쇄 시 4분할(2x2)로 자동 배치됩니다.
+</div>
 
 <button style="width:100%;margin-top:12px;padding:10px;background:#e2e8f0;border:none;border-radius:10px;cursor:pointer;font-weight:bold;color:#475569;" onclick="openKeyModal()">⚙️ 연동 설정</button>
 
@@ -479,6 +482,7 @@ button:disabled{opacity:.62 !important;cursor:not-allowed !important;}
       <div class="preview-actions">
         <button type="button" class="preview-refresh" onclick="refreshParentPreview()">새로고침</button>
         <button type="button" class="preview-open" onclick="openParentPreviewNewTab()">새 탭으로 보기</button>
+        <button type="button" class="preview-open" style="background:#0ea5e9;" onclick="printParentPreviewPdf()">PDF 인쇄</button>
         <button type="button" class="preview-close" onclick="closeParentPreview()">닫기</button>
       </div>
     </div>
@@ -486,6 +490,7 @@ button:disabled{opacity:.62 !important;cursor:not-allowed !important;}
       현재 입력된 학생명, 수업 유형, 과제, 학습내용, 사진 링크, 전달사항이 반영된 <b>학부모용 실제 HTML 화면</b>입니다.
       저장/배포 전 모바일 화면처럼 확인할 수 있습니다.
     </div>
+    <div class="preview-note">인쇄/PDF 저장 시 사진은 자동으로 4분할(2x2)로 정렬되어 출력됩니다.</div>
     <div class="preview-frame-wrap">
       <iframe id="parentPreviewFrame" title="학부모 전송 HTML 미리보기"></iframe>
     </div>
@@ -1729,6 +1734,18 @@ function openParentPreview(e){ if(e && e.preventDefault) e.preventDefault(); con
 function closeParentPreview(){ const modal = qs('parentPreviewModal'); if(!modal) return; modal.classList.remove('show'); modal.style.display = 'none'; }
 function refreshParentPreview(){ const frame = qs('parentPreviewFrame'); if(!frame){ alert('학부모 미리보기 프레임을 찾을 수 없습니다.'); return; } let previewHtml = ''; try{ if(typeof buildSnapshot === 'function') previewHtml = buildSnapshot(); }catch(e){ console.warn('buildSnapshot 오류:', e); } if(!previewHtml || !String(previewHtml).includes('<html')){ previewHtml = buildParentPreviewFallbackHtml(); } frame.removeAttribute('src'); frame.srcdoc = previewHtml; if(__parentPreviewBlobUrl){ try{ URL.revokeObjectURL(__parentPreviewBlobUrl); }catch(e){} } __parentPreviewBlobUrl = URL.createObjectURL(new Blob([previewHtml], {type:'text/html;charset=utf-8'})); }
 function openParentPreviewNewTab(){ let previewHtml = ''; try{ if(typeof buildSnapshot === 'function') previewHtml = buildSnapshot(); }catch(e){ console.warn('새 탭 미리보기 오류:', e); } if(!previewHtml || !String(previewHtml).includes('<html')){ previewHtml = buildParentPreviewFallbackHtml(); } const blobUrl = URL.createObjectURL(new Blob([previewHtml], {type:'text/html;charset=utf-8'})); window.open(blobUrl, '_blank'); }
+function printParentPreviewPdf(){
+  let previewHtml = '';
+  try{ if(typeof buildSnapshot === 'function') previewHtml = buildSnapshot(); }catch(e){ console.warn('PDF 인쇄용 생성 오류:', e); }
+  if(!previewHtml || !String(previewHtml).includes('<html')) previewHtml = buildParentPreviewFallbackHtml();
+  const w = window.open('', '_blank');
+  if(!w){ alert('팝업이 차단되어 인쇄 창을 열 수 없습니다. 팝업 허용 후 다시 시도해 주세요.'); return; }
+  w.document.open();
+  w.document.write(previewHtml);
+  w.document.close();
+  w.focus();
+  setTimeout(()=>{ try{ w.print(); }catch(e){} }, 500);
+}
 function printParentPdf(e){
   if(e && e.preventDefault) e.preventDefault();
   let previewHtml = '';
