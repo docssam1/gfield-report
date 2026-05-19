@@ -448,9 +448,6 @@ button:disabled{opacity:.62 !important;cursor:not-allowed !important;}
   <button class="notion-btn" id="notionBtn" onclick="saveToNotion()">📅 3단계: 일정 저장</button>
   <button class="kakao-btn" id="kakaoBtn" onclick="shareKakao()">💬 4단계: 카카오톡 전송</button>
 </div>
-<div style="margin-top:8px;font-size:11px;color:#64748b;line-height:1.5;">
-  ※ PDF 인쇄는 학부모 리포트 화면 기준으로 출력되며, 사진은 인쇄 시 4분할(2x2)로 자동 배치됩니다.
-</div>
 
 <button style="width:100%;margin-top:12px;padding:10px;background:#e2e8f0;border:none;border-radius:10px;cursor:pointer;font-weight:bold;color:#475569;" onclick="openKeyModal()">⚙️ 연동 설정</button>
 
@@ -755,7 +752,6 @@ window.addEventListener('DOMContentLoaded',()=>{
   document.querySelector('.mode-toggle-wrap')?.classList.add('report-active'); initKakao(); 
   if(qs('dateInput')) qs('dateInput').value = new Date().toISOString().split('T')[0]; updateWeekday(); 
   addHwRow(); addSubjRow(); addTodayHwRow(); loadTodos(); updateAppsScriptEditorLink(); applyAutoGrow(document);
-  restoreDraftState();
   document.addEventListener('input', scheduleDraftSave, true);
   document.addEventListener('change', scheduleDraftSave, true);
   window.addEventListener('beforeunload', saveDraftNow);
@@ -1614,7 +1610,7 @@ function buildSnapshot(){
   const classPH=classPhotos.length?`${pRen(classPhotos)}${photoGuide}`:'';
   const sr=(t,i,c)=>c?`<div class="rpt-sec" style="background:#fff;border-radius:20px;padding:24px 20px;margin-bottom:16px;box-shadow:0 4px 15px rgba(0,0,0,.03);"><div class="rpt-sec-title" style="font-size:16px;font-weight:800;color:#16417C;margin-bottom:16px;border-bottom:2px solid #16417C;display:inline-block;padding-bottom:4px;">${i} ${t}</div>${c}</div>`:'';
   
-  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><title>지필드 리포트 - ${esc(n)}</title><style>:root{color-scheme:light;}*{box-sizing:border-box;margin:0;padding:0;}html,body{background:#f4f5fb !important;color:#0f172a !important;color-scheme:light;}body{font-family:sans-serif;background:#f4f5fb !important;color:#0f172a !important;}.web-wrap{max-width:900px;margin:0 auto;padding:30px 24px;}.web-header{background:linear-gradient(135deg,#16417C,#2a5b9e);border-radius:20px;padding:28px 32px;color:#fff;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;}.hd-l h1{font-size:22px;font-weight:800;margin-bottom:4px;}.hd-l p{font-size:13px;opacity:.8;}.hd-r{text-align:right;}.s-name{font-size:28px;font-weight:800;}.date{font-size:13px;opacity:.8;margin-top:4px;}.badge{display:inline-block;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.4);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;margin-top:8px;}.rpt-mark-hl{background:linear-gradient(transparent 48%,#fef08a 48%);font-weight:800;padding:0 2px;border-radius:3px;}.rpt-mark-em{background:#dbeafe;color:#1e40af;font-weight:900;padding:1px 5px;border-radius:6px;}.rpt-mark-star{color:#c2410c;font-weight:900;}${photoStyle}@media(max-width:640px){.web-wrap{padding:18px 12px;}.web-header{padding:20px 16px;display:block;}.hd-r{text-align:left;margin-top:10px;}.s-name{font-size:24px;}}</style></head><body><div class="web-wrap"><div class="web-header"><div class="hd-l"><h1>지필드 영재교육 학습 리포트</h1><p>G-Field Gifted Education</p><div class="badge">${classType}</div></div><div class="hd-r"><div class="s-name">${esc(n)} 학생</div><div class="date">${d}${crs?' · '+esc(crs):''}</div></div></div>${nt?`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:16px;padding:16px;margin-bottom:16px;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#451a03;">📢 ${renderMarkedText(nt)}</div>`:''}${sr('과제 확인','✅',hwR+hwPH)}${sr('학습 요약','📖',subH)}${sr('수업 사진','📸',classPH)}${sr('동영상 강의','🎬',vidH?`<div style=\"display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;align-items:start;\">${vidH}</div>`:'')}${sr('추가 자료','🔗',resH)}${sr('오늘의 과제','✏️',tHwH)}<div style="text-align:center;margin:36px 0;font-size:11px;color:#94a3b8;">© G-Field Gifted Education</div>${hideD}</div>${photoViewerHtml}${photoViewerScript}</body></html>`;
+  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><title>지필드 리포트 - ${esc(n)}</title><style>:root{color-scheme:light;}*{box-sizing:border-box;margin:0;padding:0;}html,body{background:#f4f5fb !important;color:#0f172a !important;color-scheme:light;}body{font-family:sans-serif;background:#f4f5fb !important;color:#0f172a !important;}.web-wrap{max-width:900px;margin:0 auto;padding:30px 24px;}.web-header{background:linear-gradient(135deg,#16417C,#2a5b9e);border-radius:20px;padding:28px 32px;color:#fff;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;}.hd-l h1{font-size:22px;font-weight:800;margin-bottom:4px;}.hd-l p{font-size:13px;opacity:.8;}.hd-r{text-align:right;}.s-name{font-size:28px;font-weight:800;}.date{font-size:13px;opacity:.8;margin-top:4px;}.badge{display:inline-block;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.4);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;margin-top:8px;}.rpt-mark-hl{background:linear-gradient(transparent 48%,#fef08a 48%);font-weight:800;padding:0 2px;border-radius:3px;}.rpt-mark-em{background:#dbeafe;color:#1e40af;font-weight:900;padding:1px 5px;border-radius:6px;}.rpt-mark-star{color:#c2410c;font-weight:900;}${photoStyle}@media print{html,body{background:#fff !important;} .web-wrap{max-width:none;padding:0;} .photo-carousel{display:grid !important;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;overflow:visible !important;padding:0 !important;perspective:none !important;} .photo-card-view,.photo-card-view.active,.photo-card-view.prev,.photo-card-view.next{transform:none !important;opacity:1 !important;box-shadow:none !important;break-inside:avoid;page-break-inside:avoid;} .photo-card-view img{aspect-ratio:3/4;object-fit:contain;background:#fff;} .photo-viewer,.photo-viewer-close,.photo-viewer-caption{display:none !important;} .today-hw-item button{display:none !important;} }@media(max-width:640px){.web-wrap{padding:18px 12px;}.web-header{padding:20px 16px;display:block;}.hd-r{text-align:left;margin-top:10px;}.s-name{font-size:24px;}}</style></head><body><div class="web-wrap"><div class="web-header"><div class="hd-l"><h1>지필드 영재교육 학습 리포트</h1><p>G-Field Gifted Education</p><div class="badge">${classType}</div></div><div class="hd-r"><div class="s-name">${esc(n)} 학생</div><div class="date">${d}${crs?' · '+esc(crs):''}</div></div></div>${nt?`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:16px;padding:16px;margin-bottom:16px;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#451a03;">📢 ${renderMarkedText(nt)}</div>`:''}${sr('과제 확인','✅',hwR+hwPH)}${sr('학습 요약','📖',subH)}${sr('수업 사진','📸',classPH)}${sr('동영상 강의','🎬',vidH?`<div style=\"display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;align-items:start;\">${vidH}</div>`:'')}${sr('추가 자료','🔗',resH)}${sr('오늘의 과제','✏️',tHwH)}<div style="margin:10px 0 6px;font-size:11px;color:#64748b;line-height:1.45;text-align:center;">※ PDF 인쇄 시 사진은 4분할(2x2)로 자동 배치됩니다.</div><div style="text-align:center;margin:36px 0;font-size:11px;color:#94a3b8;">© G-Field Gifted Education</div>${hideD}</div>${photoViewerHtml}${photoViewerScript}</body></html>`;
 }
 
 function getSimpleMoneyText(text){
@@ -1999,7 +1995,7 @@ function buildCsConditionalHtml(){
     <a href="${locationUrl}" class="btn btn-full" target="_blank">📍 학원 위치 보기 <span>></span></a>
   </div>
 
-  <div class="footer-notice">
+  <div style="margin:10px 20px 0;font-size:11px;color:#64748b;line-height:1.45;">※ PDF 인쇄 시 사진은 4분할(2x2)로 자동 배치됩니다.</div><div class="footer-notice">
     <span>🛡️</span>
     <div>
       <b>안내 사항</b><br>
@@ -2105,3 +2101,4 @@ function shareKakao(){
 </script>
 </body>
 </html>
+
