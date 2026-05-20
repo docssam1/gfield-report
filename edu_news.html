@@ -118,32 +118,6 @@
       { title:'숙제량보다 피드백 밀도 선호', content:'오개념 재교정 중심 피드백 선호도가 높습니다.', relation:'반복 오개념 집중 교정' },
       { title:'주간 리포트 열람률 상승', content:'카드형 리포트가 모바일 열람에 특히 유리합니다.', relation:'핵심 중심 구성 유지' }
     ];
-    const DEFAULT_ARTICLES = [
-      {
-        id: 'docssam-col-1',
-        category: 'DOCSSAM의 프리미엄 칼럼',
-        title: '서술형 내신에서 감점이 반복될 때: 계산보다 설명력을 먼저 세웁니다',
-        desc: '연산은 빠른데 서술형에서 자주 감점되는 학생은 개념을 모르는 것이 아니라, 조건 해석과 근거 표현 루틴이 약한 경우가 많습니다. DOCSSAM은 정답 속도보다 조건 구조화와 답의 이유를 문장으로 완성하는 훈련을 먼저 진행합니다. 수업에서는 문제의 핵심 조건을 색으로 구분해 정리하고, 풀이 후 1분 구두 설명을 통해 설명 가능한 사고를 습관화합니다.',
-        date: '2026-05-20',
-        sourceUrl: 'https://notebooklm.google.com/'
-      },
-      {
-        id: 'docssam-col-2',
-        category: 'DOCSSAM의 프리미엄 칼럼',
-        title: '아는 것도 시험에서 틀리는 이유: 수행력 루틴을 따로 훈련합니다',
-        desc: '시험에서 반복 실수가 나오는 경우는 지식 부족과 수행 실패를 분리해 점검해야 합니다. DOCSSAM은 시간 배분, 검산 포인트, 조건 재확인 체크리스트를 실전형으로 반복해 시험장에서 흔들리지 않는 수행력을 만듭니다. 아이가 끝까지 문제를 읽고 근거를 확인하는 루틴이 잡히면, 점수의 출렁임이 확실히 줄어듭니다.',
-        date: '2026-05-20',
-        sourceUrl: 'https://notebooklm.google.com/'
-      },
-      {
-        id: 'docssam-col-3',
-        category: 'DOCSSAM의 프리미엄 칼럼',
-        title: '선행의 속도보다 깊이: 중등까지 버티는 학습 체력을 설계합니다',
-        desc: '선행은 빠른데 깊이가 약한 학생은 응용문제에서 급격히 무너집니다. DOCSSAM은 유형 암기 대신 개념 전이 훈련을 통해 응용 내성을 키우고, 기본-연결-심화 질문을 계단식으로 배치해 개념의 층위를 쌓습니다. 학부모님께는 오늘 목표, 수행 결과, 다음 과제를 짧고 명확한 언어로 공유해 수업의 방향이 보이도록 운영합니다.',
-        date: '2026-05-20',
-        sourceUrl: 'https://notebooklm.google.com/'
-      }
-    ];
 
     const esc = (s) => String(s || '').replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
     const safeJson = (k, fb=[]) => { try { return JSON.parse(localStorage.getItem(k) || 'null') || fb; } catch { return fb; } };
@@ -156,10 +130,6 @@
     function ensureDefaultVideos() {
       const current = safeJson(VIDEO_KEY, []);
       if (!Array.isArray(current) || current.length === 0) localStorage.setItem(VIDEO_KEY, JSON.stringify(DEFAULT_VIDEOS));
-    }
-    function ensureDefaultArticles() {
-      const current = safeJson(ARTICLE_KEY, []);
-      if (!Array.isArray(current) || current.length === 0) localStorage.setItem(ARTICLE_KEY, JSON.stringify(DEFAULT_ARTICLES));
     }
     function trafficState() {
       const now = new Date(); const h = now.getHours(); const m = now.getMinutes(); const mins = h * 60 + m;
@@ -229,7 +199,6 @@
 
     ensureDefaultLiveLetter();
     ensureDefaultVideos();
-    ensureDefaultArticles();
     trafficState();
     setInterval(trafficState, 60000);
     renderLive();
