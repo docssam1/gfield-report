@@ -1,0 +1,14 @@
+{
+  "front100m": "확인필요",
+  "inner500m": "확인필요",
+  "main1km": "확인필요",
+  "emRoute": "확인필요",
+  "centerRoute": "확인필요",
+  "northRoute": "확인필요",
+  "emergencyRoute": "확인필요",
+  "recommendation": "현재 교통 상황을 자동으로 확인하지 못했습니다.",
+  "parentMessage": "현재 교통 정보 확인이 원활하지 않습니다. 도착 전 지도 앱을 함께 확인해 주세요.",
+  "updatedAt": "",
+  "source": "naver-traffic-layer-ai-vision",
+  "intervalMinutes": 10
+}
