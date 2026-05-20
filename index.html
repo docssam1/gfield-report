@@ -2545,6 +2545,25 @@ function applyRecoveryBlocks_(){
         }
       });
     } else {
+      // compact single-line format: "과정: ... / 구분: ... / 내용: ... 과정: ..."
+      const compact = [];
+      const re = /과정:\s*([\s\S]*?)\s*\/\s*구분:\s*([\s\S]*?)\s*\/\s*내용:\s*([\s\S]*?)(?=(?:\s+과정:\s*)|$)/g;
+      let mm;
+      while((mm = re.exec(hw)) !== null){
+        compact.push({
+          course: String(mm[1] || '').trim(),
+          type: String(mm[2] || '필수').trim() || '필수',
+          content: String(mm[3] || '').trim()
+        });
+      }
+      if(compact.length){
+        compact.forEach(x=>addTodayHwRow(x.course, x.type, x.content));
+        if(typeof updateMsgBox === 'function') updateMsgBox();
+        if(typeof applyAutoGrow === 'function') applyAutoGrow(document);
+        if(typeof scheduleDraftSave === 'function') scheduleDraftSave();
+        showToast('✅ 공지/오늘의 과제 복구 완료');
+        return;
+      }
       // fallback: plain homework lines with "1. 제목 CH/P..." split
       lines.forEach(line=>{
         const noNum = line.replace(/^\d+\.\s*/, '').trim();
