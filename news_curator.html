@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>G-FIELD 뉴스 큐레이터</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800&display=swap');
+    body { font-family:'Pretendard',sans-serif; background:#0b1220; color:#e2e8f0; }
+    .card { background:#111827; border:1px solid #1f2937; border-radius:14px; }
+  </style>
+</head>
+<body class="p-4 md:p-8">
+  <main class="max-w-4xl mx-auto space-y-4">
+    <section class="card p-4 space-y-3">
+      <h1 class="text-lg font-extrabold text-amber-400">뉴스 큐레이터 (오프라인 복구판)</h1>
+      <input id="hubScriptUrl" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm" placeholder="Apps Script 웹앱 URL (https://script.google.com/macros/s/.../exec)">
+      <div class="flex gap-2">
+        <input id="manualQuery" class="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm" placeholder="키워드 입력 (비워두면 추천 4개)">
+        <button id="recommendBtn" class="px-4 py-2 rounded-lg bg-amber-600 font-bold text-sm">추천 4개</button>
+        <button id="searchBtn" class="px-4 py-2 rounded-lg bg-sky-600 font-bold text-sm">초안 만들기</button>
+      </div>
+      <div id="draftList" class="space-y-2"></div>
+    </section>
+
+    <section class="card p-4 space-y-2">
+      <h2 class="font-bold text-emerald-400">선택/편집 후 게시</h2>
+      <input id="previewCategory" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm" placeholder="카테고리">
+      <input id="previewTitle" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm" placeholder="제목">
+      <textarea id="previewDesc" class="w-full h-40 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm" placeholder="본문"></textarea>
+      <input id="previewSource" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm" placeholder="출처명">
+      <input id="previewSourceUrl" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm" placeholder="출처 링크(URL)">
+      <input id="previewImageUrl" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm" placeholder="대표 이미지 URL">
+      <button id="publishBtn" class="w-full px-4 py-3 rounded-lg bg-emerald-600 font-extrabold">게시</button>
+    </section>
+  </main>
+
+  <script>
+    const state = { drafts: [], selected: null };
+
+    function byId(id){ return document.getElementById(id); }
+    function today(){ return new Date().toISOString().slice(0,10); }
+
+    function saveScriptUrl() {
+      localStorage.setItem('gf_hub_script_url', byId('hubScriptUrl').value.trim());
+    }
+    function loadScriptUrl() {
+      byId('hubScriptUrl').value = localStorage.getItem('gf_hub_script_url') || '';
+    }
+
+    function suggestKeywords() {
+      const arr = [
+        '대치동 초등 수학 입테 일정',
+        '강남엄마카페 대치 학원 후기',
+        '베리타스알파 2028 입시 변화',
+        '대치동 중등 내신 수학 로드맵',
+        '대치동 학원가 이사/전입 흐름',
+        '초등 통합과학 선행 트렌드'
+      ];
+      return arr.sort(()=>Math.random()-0.5).slice(0,4);
+    }
+
+    function buildDrafts(keywords) {
+      return keywords.map((kw, i) => ({
+        id: 'd' + Date.now() + i,
+        category: '대치 학원가 동향',
+        title: kw + ' 핵심 브리핑',
+        desc: kw + ' 관련 최근 흐름을 학부모 관점으로 정리했습니다. 아이 현재 수준과 목표 반을 먼저 고정하고 일정/난이도를 맞춰 준비하세요.',
+        source: '큐레이터 추천',
+        sourceUrl: 'https://www.google.com/search?q=' + encodeURIComponent(kw),
+        imageUrl: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200&q=80',
+        date: today()
+      }));
+    }
+
+    function renderDrafts() {
+      const box = byId('draftList');
+      box.innerHTML = state.drafts.map((d, i) => `
+        <button onclick="selectDraft(${i})" class="w-full text-left p-3 rounded-lg bg-slate-900 border border-slate-700 hover:border-amber-400">
+          <div class="text-amber-400 text-xs font-bold mb-1">${d.category}</div>
+          <div class="font-extrabold text-sm">${d.title}</div>
+          <div class="text-slate-400 text-xs mt-1">${d.desc}</div>
+        </button>
+      `).join('');
+    }
+
+    window.selectDraft = function(i){
+      const d = state.drafts[i];
+      if(!d) return;
+      state.selected = d;
+      byId('previewCategory').value = d.category;
+      byId('previewTitle').value = d.title;
+      byId('previewDesc').value = d.desc;
+      byId('previewSource').value = d.source;
+      byId('previewSourceUrl').value = d.sourceUrl;
+      byId('previewImageUrl').value = d.imageUrl;
+    };
+
+    async function publish() {
+      const article = {
+        id: 'art-' + Date.now(),
+        category: byId('previewCategory').value.trim(),
+        title: byId('previewTitle').value.trim(),
+        desc: byId('previewDesc').value.trim(),
+        source: byId('previewSource').value.trim(),
+        sourceUrl: byId('previewSourceUrl').value.trim(),
+        imageUrl: byId('previewImageUrl').value.trim(),
+        date: today()
+      };
+      if (!article.title || !article.desc) return alert('제목/본문을 입력하세요.');
+
+      const list = JSON.parse(localStorage.getItem('gf_c7d_articles') || '[]');
+      list.unshift(article);
+      localStorage.setItem('gf_c7d_articles', JSON.stringify(list));
+
+      const sUrl = byId('hubScriptUrl').value.trim();
+      if (sUrl) {
+        try {
+          await fetch(sUrl, {
+            method:'POST',
+            body: JSON.stringify({ action:'magazine_save', ...article })
+          });
+        } catch(e) {}
+      }
+      alert('게시 완료');
+    }
+
+    byId('hubScriptUrl').addEventListener('change', saveScriptUrl);
+    byId('recommendBtn').addEventListener('click', () => {
+      state.drafts = buildDrafts(suggestKeywords());
+      renderDrafts();
+    });
+    byId('searchBtn').addEventListener('click', () => {
+      const q = byId('manualQuery').value.trim();
+      if (!q) {
+        state.drafts = buildDrafts(suggestKeywords());
+      } else {
+        state.drafts = buildDrafts([q]);
+      }
+      renderDrafts();
+    });
+    byId('publishBtn').addEventListener('click', publish);
+
+    loadScriptUrl();
+    state.drafts = buildDrafts(suggestKeywords());
+    renderDrafts();
+  </script>
+</body>
+</html>

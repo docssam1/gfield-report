@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>G-FIELD Edu News Magazine</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800&display=swap');
+    body { font-family: 'Pretendard', sans-serif; background:#f8fafc; }
+    .paper-card { background:#fff; border:1px solid #e2e8f0; box-shadow:0 8px 24px rgba(2,6,23,.06); border-radius:14px; }
+    .focus-line { background:#fff7ed; border-left:4px solid #f59e0b; padding:.6rem .75rem; border-radius:8px; }
+  </style>
+</head>
+<body class="text-slate-900 pb-12">
+  <header class="sticky top-0 bg-white/95 backdrop-blur-sm border-b p-4 text-center z-10">
+    <h1 class="text-xl font-extrabold tracking-tight text-[#16417C]">G-FIELD EDUCATIONAL INSIGHT</h1>
+  </header>
+
+  <main class="max-w-2xl mx-auto p-4 space-y-7">
+    <section>
+      <h2 class="text-lg font-bold mb-3 border-l-4 border-[#16417C] pl-3">10:00 AM 라이브 레터</h2>
+      <div id="live-letter-container" class="space-y-3"></div>
+    </section>
+
+    <section>
+      <h2 class="text-2xl md:text-3xl font-extrabold mb-3 border-l-4 border-amber-500 pl-3">주간 타깃 레포트 (1주 이내)</h2>
+      <div id="weekly-report-container" class="space-y-4"></div>
+    </section>
+  </main>
+
+  <script>
+    const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200&q=80';
+
+    function escapeHtml(text) {
+      return String(text || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function prettifyDesc(desc) {
+      const raw = String(desc || '').trim();
+      if (!raw) return { html: '', highlights: [] };
+      const lines = raw
+        .replace(/\s{2,}/g, ' ')
+        .split(/(?<=[.!?]|다\.)\s+/)
+        .map(s => s.trim())
+        .filter(Boolean);
+      const highlights = lines.filter(s => /권장|주의|핵심|반드시|중요|우선/.test(s)).slice(0, 2);
+      const html = lines.map(line => `<p class="leading-7 text-[15px] text-slate-700 mb-2">${escapeHtml(line)}</p>`).join('');
+      return { html, highlights };
+    }
+
+    function renderLiveLetters() {
+      const liveData = JSON.parse(localStorage.getItem('gf_live_letter') || '[]');
+      const container = document.getElementById('live-letter-container');
+      if (!liveData.length) {
+        container.innerHTML = '<div class="paper-card p-4 text-slate-500 text-sm">오늘 레터를 준비 중입니다.</div>';
+        return;
+      }
+      container.innerHTML = liveData.map(item => `
+        <article class="paper-card p-4">
+          <h3 class="font-bold text-[#16417C] text-[15px] mb-1">${escapeHtml(item.title || '')}</h3>
+          <p class="text-slate-600 text-[14px] leading-6">${escapeHtml(item.content || '')}</p>
+          <p class="focus-line mt-3 text-[13px] text-amber-800 font-semibold">${escapeHtml(item.relation || '')}</p>
+        </article>
+      `).join('');
+    }
+
+    async function loadWeeklySource_() {
+      const sUrl = localStorage.getItem('gf_hub_script_url') || '';
+      if (sUrl) {
+        try {
+          const res = await fetch(sUrl + '?action=magazine_list');
+          const data = await res.json();
+          if (data && data.result === 'success' && Array.isArray(data.items) && data.items.length) return data.items;
+        } catch (e) {}
+      }
+      return JSON.parse(localStorage.getItem('gf_c7d_articles') || '[]');
+    }
+
+    async function renderWeeklyReports() {
+      const raw = await loadWeeklySource_();
+      const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const reports = raw.filter(a => {
+        const t = Date.parse(a.date || '');
+        return Number.isFinite(t) ? t >= oneWeekAgo : true;
+      });
+      const container = document.getElementById('weekly-report-container');
+      if (!reports.length) {
+        container.innerHTML = '<div class="paper-card p-4 text-slate-500 text-sm">최근 1주일 기사 데이터가 없습니다.</div>';
+        return;
+      }
+
+      container.innerHTML = reports.map(article => {
+        const desc = prettifyDesc(article.desc);
+        const sourceText = article.source || '지필드 큐레이션';
+        const sourceUrl = article.sourceUrl || '';
+        const imageUrl = article.imageUrl || FALLBACK_IMAGE;
+        const isDaechi = String(article.category || '').includes('대치 학원가 동향');
+
+        return `
+          <article class="paper-card overflow-hidden">
+            <img src="${escapeHtml(imageUrl)}" alt="기사 대표 이미지" class="w-full h-52 object-cover" onerror="this.src='${FALLBACK_IMAGE}'">
+            <div class="p-5">
+              <div class="flex items-center justify-between text-xs mb-2">
+                <span class="font-bold text-[#16417C]">${escapeHtml(article.category || '주간 리포트')}</span>
+                <span class="text-slate-500">${escapeHtml(article.date || '')}</span>
+              </div>
+              <h3 class="text-lg font-extrabold leading-7 mb-3">${escapeHtml(article.title || '')}</h3>
+              ${desc.highlights.map(h => `<div class="focus-line text-[14px] text-amber-900 font-bold mb-2">${escapeHtml(h)}</div>`).join('')}
+              <div>${desc.html}</div>
+              <div class="mt-4 pt-3 border-t border-slate-200 text-xs text-slate-500 flex items-center justify-between gap-3">
+                <span>출처: ${escapeHtml(sourceText)}</span>
+                ${sourceUrl ? `<a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer" class="text-[#16417C] font-bold underline">${isDaechi ? '원문 보기' : '출처 링크'}</a>` : '<span>출처 링크 준비중</span>'}
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    window.addEventListener('load', async () => {
+      renderLiveLetters();
+      await renderWeeklyReports();
+    });
+  </script>
+</body>
+</html>
