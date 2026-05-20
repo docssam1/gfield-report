@@ -1448,6 +1448,8 @@ function addSubjRow(subj='', content='') {
   row.innerHTML = `<div class="subj-row"><div class="subj-cell"><input type="text" class="v-subj" value="${subj}" placeholder="과정명"></div><div class="subj-cell"><textarea class="v-content" placeholder="학습내용...">${content}</textarea></div><button style="border:none;background:none;font-size:16px;color:red;cursor:pointer;position:absolute;right:5px;top:5px;" onclick="this.parentElement.remove(); updateMsgBox();">✕</button></div>`;
   qs('subjectList').appendChild(row); applyAutoGrow(row); updateMsgBox();
 }
+// Backward-compatible alias for older restore/import flows
+function addSubjectRow(subj='', content=''){ return addSubjRow(subj, content); }
 function addTodayHwRow(course='', type='', content='') {
   const row = document.createElement('div'); row.className = 'today-row-pc today-row';
   row.innerHTML = `<div class="td-c1"><input type="text" class="v-course" value="${course}" placeholder="과제명"></div><div class="td-c2"><select class="v-type"><option value="필수" ${type==='필수'?'selected':''}>필수</option><option value="도전" ${type==='도전'?'selected':''}>도전</option></select></div><div class="td-c3"><textarea class="v-content" placeholder="과제내용...">${content}</textarea></div><button style="border:none;background:none;font-size:16px;color:red;cursor:pointer;" onclick="this.parentElement.remove(); updateMsgBox();">✕</button>`;
