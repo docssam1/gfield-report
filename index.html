@@ -932,29 +932,60 @@ function extractReportCopyText_(){
   return '';
 }
 
+function buildFormCopyText_(){
+  const lines = [];
+  const name = val('nameInput').trim();
+  const date = val('dateInput').trim();
+  if(name || date) lines.push(`[리포트] ${name || '학생'} ${date}`.trim());
+
+  const notice = stripMarkTokens(val('noticeArea')).trim();
+  if(notice){
+    lines.push('\n[기타/추가 전달 사항 및 공지]');
+    lines.push(notice);
+  }
+
+  const hwRows = Array.from(document.querySelectorAll('#todayHwList > div.today-row-pc'));
+  if(hwRows.length){
+    const items = hwRows.map(r=>{
+      const c = stripMarkTokens(r.querySelector('.v-course')?.value || '').trim();
+      const t = stripMarkTokens(r.querySelector('.v-type')?.value || '').trim();
+      const d = stripMarkTokens(r.querySelector('.v-content')?.value || '').trim();
+      if(!c && !d) return '';
+      return `- ${c}${t ? ` [${t}]` : ''}${d ? `: ${d}` : ''}`;
+    }).filter(Boolean);
+    if(items.length){
+      lines.push('\n[오늘의 과제]');
+      lines.push(items.join('\n'));
+    }
+  }
+  return lines.join('\n').trim();
+}
+
 function copyReport(){
-  const text = extractReportCopyText_();
-  if(!text){
+  const text = (extractReportCopyText_() || '').trim();
+  const extra = buildFormCopyText_();
+  const merged = [stripMarkTokens(text), extra].filter(Boolean).join('\n\n');
+  if(!merged){
     showToast('복사할 리포트가 없습니다.');
     return;
   }
   if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(text)
+    navigator.clipboard.writeText(merged)
       .then(()=>showToast('📋 전체 리포트가 복사되었습니다.'))
       .catch(()=>{
-        const ok = copyTextFallback_(text);
+        const ok = copyTextFallback_(merged);
         if(ok) showToast('📋 전체 리포트가 복사되었습니다.');
         else alert('복사에 실패했습니다. 브라우저 권한을 확인해 주세요.');
       });
     return;
   }
-  const ok = copyTextFallback_(text);
+  const ok = copyTextFallback_(merged);
   if(ok) showToast('📋 전체 리포트가 복사되었습니다.');
   else alert('복사에 실패했습니다. 브라우저 권한을 확인해 주세요.');
 }
 
 function copyMsg(){
-  const msg = val('msgText');
+  const msg = stripMarkTokens(val('msgText'));
   if(!msg) return showToast('복사할 메시지가 없습니다.');
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(msg)
