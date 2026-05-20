@@ -132,18 +132,20 @@
       if (!Array.isArray(current) || current.length === 0) localStorage.setItem(VIDEO_KEY, JSON.stringify(DEFAULT_VIDEOS));
     }
     function trafficState() {
-      const now = new Date(); const h = now.getHours(); const m = now.getMinutes(); const mins = h * 60 + m;
-      let center = '🚗 원활', em = '🚗 원활';
+      const now = new Date();
+      const h = now.getHours();
+      const m = now.getMinutes();
+      const mins = h * 60 + m;
+      let center = '🚗 원활';
+      let em = '🚗 원활';
       let msg = '오늘 16°C~24°C | 내일 17°C~25°C | 주민센터 🚗 원활 / EM프라자 🚗 원활 | 권장 진입: 정문 드롭존 진입 원활';
-      let advice = '어머님, 오늘은 낮에는 온화하지만 하원 시간대로 갈수록 체감 기온이 내려갈 수 있습니다. 얇은 가디건이나 바람막이를 챙겨 주세요.';
-      if (mins >= 13*60 && mins <= 15*60+30) { center='🚙 서행'; em='🚕 정체'; msg='오늘 16°C~24°C | 내일 17°C~25°C | 주민센터 🚙 서행 / EM프라자 🚕 정체 | 권장 진입: 주민센터 방향 우선 확인'; }
-      else if (mins >= 17*60+30 && mins <= 19*60+30) { center='🚕 정체'; em='🚙 서행'; msg='오늘 16°C~24°C | 내일 17°C~25°C | 주민센터 🚕 정체 / EM프라자 🚙 서행 | 권장 진입: EM프라자 방향 지연 감안'; }
-      else if (mins >= 21*60+30 && mins <= 22*60+30) { center='🚨 매우 혼잡'; em='🚕 정체'; msg='오늘 16°C~24°C | 내일 17°C~25°C | 주민센터 🚨 매우 혼잡 / EM프라자 🚕 정체 | 권장 진입: 이면도로 서행 진입'; }
+      if (mins >= 13 * 60 && mins <= 15 * 60 + 30) { center = '🚙 서행'; em = '🚕 정체'; msg = '오늘 16°C~24°C | 내일 17°C~25°C | 주민센터 🚙 서행 / EM프라자 🚕 정체 | 권장 진입: 주민센터 방향 우선 확인'; }
+      else if (mins >= 17 * 60 + 30 && mins <= 19 * 60 + 30) { center = '🚕 정체'; em = '🚙 서행'; msg = '오늘 16°C~24°C | 내일 17°C~25°C | 주민센터 🚕 정체 / EM프라자 🚙 서행 | 권장 진입: EM프라자 방향 지연 감안'; }
+      else if (mins >= 21 * 60 + 30 && mins <= 22 * 60 + 30) { center = '🚨 매우 혼잡'; em = '🚕 정체'; msg = '오늘 16°C~24°C | 내일 17°C~25°C | 주민센터 🚨 매우 혼잡 / EM프라자 🚕 정체 | 권장 진입: 이면도로 서행 진입'; }
       document.getElementById('centerStatus').textContent = center;
       document.getElementById('emStatus').textContent = em;
       document.getElementById('trafficMessage').textContent = msg;
-      document.getElementById('weatherAdvice').textContent = advice;
-      document.getElementById('clock').textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} 업데이트`;
+      document.getElementById('clock').textContent = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} 업데이트`;
     }
     function renderLive() {
       const items = safeJson(LIVE_KEY, []);
@@ -163,7 +165,11 @@
     function renderArticles() {
       const all = safeJson(ARTICLE_KEY, []);
       const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-      const filtered = all.filter((a) => { const t = Date.parse(a.date || ''); return Number.isFinite(t) ? t >= weekAgo : true; });
+      const filtered = all.filter((a) => {
+        const t = Date.parse(a.date || '');
+        return Number.isFinite(t) ? t >= weekAgo : true;
+      }).filter((a) => /^https?:\/\//.test(String(a.sourceUrl || '').trim()));
+
       document.getElementById('articleCount').textContent = `${filtered.length}건`;
       document.getElementById('articleList').innerHTML = filtered.map((a) => {
         const category = String(a.category || '').trim();
@@ -183,7 +189,7 @@
             <a class="${link.disabled ? 'disabled' : ''}" href="${esc(link.url)}" target="_blank" rel="noopener noreferrer">${link.label}</a>
           </div>
         </article>`;
-      }).join('') || '<div class="news"><p class="news-desc">최근 1주일 리포트가 아직 없습니다.</p></div>';
+      }).join('') || '<div class="news"><p class="news-desc">실제 기사 링크가 등록된 주간 리포트가 아직 없습니다.</p></div>';
     }
     function renderVideos() {
       const videos = safeJson(VIDEO_KEY, []).slice(0, 3);
