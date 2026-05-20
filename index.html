@@ -478,7 +478,6 @@ button:disabled{opacity:.62 !important;cursor:not-allowed !important;}
           <button onclick="runQuickAssistant('상담')" style="padding:8px;background:#ecfeff;color:#155e75;border:1px solid #a5f3fc;border-radius:8px;cursor:pointer;font-weight:700;font-size:12px;">이번주 상담</button>
         </div>
         <button onclick="applyAssistantStructuredInput()" style="padding:9px;background:#0f766e;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:800;font-size:12px;">학습내용/공지/과제 자동 분류 입력</button>
-        <button onclick="applyRecoveryBlocks_()" style="padding:9px;background:#334155;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:800;font-size:12px;">복구 텍스트로 공지/오늘의 과제 복원</button>
         <div style="font-size:12px;font-weight:800;color:#1f2937;">🤖 AI 비서 결과 공유</div>
         <textarea id="aiAssistantResult" style="width:100%;min-height:86px;padding:10px;border-radius:8px;border:1px solid #ddd;outline:none;font-size:12px;line-height:1.5;resize:vertical;" placeholder="여기에 AI 결과 요약이 표시됩니다."></textarea>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
@@ -933,85 +932,30 @@ function extractReportCopyText_(){
   return '';
 }
 
-function buildFormCopyText_(){
-  const lines = [];
-  const name = val('nameInput').trim();
-  const date = val('dateInput').trim();
-  if(name || date) lines.push(`[리포트] ${name || '학생'} ${date}`.trim());
-
-  const notice = stripMarkTokens(val('noticeArea')).trim();
-  if(notice){
-    lines.push('\n[기타/추가 전달 사항 및 공지]');
-    lines.push(notice);
-  }
-
-  const hwRows = Array.from(document.querySelectorAll('#todayHwList > div.today-row-pc, #todayHwList > div.today-row'));
-  if(hwRows.length){
-    const items = hwRows.map(r=>{
-      const c = stripMarkTokens(r.querySelector('.v-course')?.value || '').trim();
-      const t = stripMarkTokens(r.querySelector('.v-type')?.value || '').trim();
-      const d = stripMarkTokens(r.querySelector('.v-content')?.value || '').trim();
-      if(!c && !d) return '';
-      return `- ${c}${t ? ` [${t}]` : ''}${d ? `: ${d}` : ''}`;
-    }).filter(Boolean);
-    if(items.length){
-      lines.push('\n[오늘의 과제]');
-      lines.push(items.join('\n'));
-    }
-  }
-  // fallback: if structured rows not found, try plain text from section
-  if(!hwRows.length){
-    const rawHw = (document.querySelector('#todayHwList')?.innerText || '').trim();
-    if(rawHw){
-      lines.push('\n[오늘의 과제]');
-      lines.push(rawHw);
-    }
-  }
-  return lines.join('\n').trim();
-}
-
-function composeCopyPayload_(baseText){
-  const base = stripMarkTokens(String(baseText || '')).trim();
-  const extra = buildFormCopyText_().trim();
-  const chunks = [];
-  if(base) chunks.push(base);
-  if(extra){
-    // avoid duplicate section blocks if already included
-    const noHeaderExtra = extra
-      .replace(/^\[리포트\].*\n?/m, '')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
-    if(noHeaderExtra) chunks.push(noHeaderExtra);
-  }
-  return chunks.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
-}
-
 function copyReport(){
-  const text = (extractReportCopyText_() || '').trim();
-  const merged = composeCopyPayload_(text);
-  if(!merged){
+  const text = extractReportCopyText_();
+  if(!text){
     showToast('복사할 리포트가 없습니다.');
     return;
   }
   if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(merged)
+    navigator.clipboard.writeText(text)
       .then(()=>showToast('📋 전체 리포트가 복사되었습니다.'))
       .catch(()=>{
-        const ok = copyTextFallback_(merged);
+        const ok = copyTextFallback_(text);
         if(ok) showToast('📋 전체 리포트가 복사되었습니다.');
         else alert('복사에 실패했습니다. 브라우저 권한을 확인해 주세요.');
       });
     return;
   }
-  const ok = copyTextFallback_(merged);
+  const ok = copyTextFallback_(text);
   if(ok) showToast('📋 전체 리포트가 복사되었습니다.');
   else alert('복사에 실패했습니다. 브라우저 권한을 확인해 주세요.');
 }
 
 function copyMsg(){
-  const msg = composeCopyPayload_(val('msgText'));
+  const msg = val('msgText');
   if(!msg) return showToast('복사할 메시지가 없습니다.');
-  if(qs('msgText')) qs('msgText').value = msg;
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(msg)
       .then(()=>showToast('📋 메시지가 복사되었습니다.'))
@@ -1226,6 +1170,30 @@ function fillHomeworkFromSnapshot_(doc){
   return rows.length;
 }
 
+function fillTodayHomeworkFromDoc_(doc){
+  if(qs('todayHwList')) qs('todayHwList').innerHTML = '';
+  const items = Array.from(doc.querySelectorAll('.today-hw-item'));
+  if(items.length){
+    items.forEach(item => {
+      const course = (item.querySelector('.hw-course-title')?.textContent || '').trim();
+      const content = (item.querySelector('.hw-content-text')?.textContent || '').trim();
+      const badge = (item.querySelector('label span[style*="background"]')?.textContent || '').trim();
+      const type = badge === '도전' ? '도전' : '필수';
+      if(course || content) addTodayHwRow(course, type, content);
+    });
+    return items.length;
+  }
+
+  // Fallback: old saved files without today-hw-item section
+  const legacyRows = Array.from(doc.querySelectorAll('.data-today-hw'));
+  legacyRows.forEach(r => {
+    const course = r.getAttribute('data-course') || '';
+    const content = r.getAttribute('data-content') || '';
+    if(course || content) addTodayHwRow(course, '필수', content);
+  });
+  return legacyRows.length;
+}
+
 function extractSectionByTitle_(doc, titleText){
   const sections = Array.from(doc.querySelectorAll('.rpt-sec'));
   for(let i=0;i<sections.length;i++){
@@ -1268,7 +1236,8 @@ function fillSummaryFromSection_(section){
     const subj = (card.querySelector('div')?.textContent || '').replace(/^📘\s*/, '').trim();
     const textBlocks = card.querySelectorAll('div');
     const content = textBlocks.length > 1 ? (textBlocks[1].textContent || '').trim() : '';
-    addSubjectRow(subj, content);
+    if(typeof addSubjectRow === 'function') addSubjectRow(subj, content);
+    else addSubjRow(subj, content);
   });
   return cards.length;
 }
@@ -1292,18 +1261,20 @@ function loadFromFile(event, mode){
 
       if(mode === 'homework'){
         const loaded = fillHomeworkFromSnapshot_(doc);
-        if(!loaded) throw new Error('과제 데이터(.data-today-hw)를 찾지 못했습니다.');
+        const todayLoaded = fillTodayHomeworkFromDoc_(doc);
+        if(!loaded && !todayLoaded) throw new Error('과제 데이터를 찾지 못했습니다.');
         updateMsgBox();
-        showToast('✅ 이전 과제 불러오기 완료');
+        showToast(`✅ 이전 과제 불러오기 완료 (과제:${loaded}, 오늘과제:${todayLoaded})`);
       } else if(mode === 'all'){
         clearReportInputs_();
         const hwLoaded = fillHomeworkFromSnapshot_(doc);
+        const todayHwLoaded = fillTodayHomeworkFromDoc_(doc);
         const summaryLoaded = fillSummaryFromSection_(extractSectionByTitle_(doc, '학습 요약'));
         const hwPhotoLoaded = fillPhotosFromSection_(extractSectionByTitle_(doc, '과제 확인'), 'hwPhotos');
         const classPhotoLoaded = fillPhotosFromSection_(extractSectionByTitle_(doc, '수업 사진'), 'classPhotos');
         fillMsgFromDoc_(doc);
         updateMsgBox();
-        showToast(`✅ 전체 리포트 덮어쓰기 완료 (과제:${hwLoaded}, 요약:${summaryLoaded}, 과제사진:${hwPhotoLoaded}, 수업사진:${classPhotoLoaded})`);
+        showToast(`✅ 전체 리포트 덮어쓰기 완료 (과제:${hwLoaded}, 오늘과제:${todayHwLoaded}, 요약:${summaryLoaded}, 과제사진:${hwPhotoLoaded}, 수업사진:${classPhotoLoaded})`);
       } else {
         throw new Error('지원하지 않는 로드 모드');
       }
@@ -1504,8 +1475,7 @@ function addSubjRow(subj='', content='') {
   row.innerHTML = `<div class="subj-row"><div class="subj-cell"><input type="text" class="v-subj" value="${subj}" placeholder="과정명"></div><div class="subj-cell"><textarea class="v-content" placeholder="학습내용...">${content}</textarea></div><button style="border:none;background:none;font-size:16px;color:red;cursor:pointer;position:absolute;right:5px;top:5px;" onclick="this.parentElement.remove(); updateMsgBox();">✕</button></div>`;
   qs('subjectList').appendChild(row); applyAutoGrow(row); updateMsgBox();
 }
-// Backward-compatible alias for older restore/import flows
-function addSubjectRow(subj='', content=''){ return addSubjRow(subj, content); }
+function addSubjectRow(subj='', content='') { return addSubjRow(subj, content); }
 function addTodayHwRow(course='', type='', content='') {
   const row = document.createElement('div'); row.className = 'today-row-pc today-row';
   row.innerHTML = `<div class="td-c1"><input type="text" class="v-course" value="${course}" placeholder="과제명"></div><div class="td-c2"><select class="v-type"><option value="필수" ${type==='필수'?'selected':''}>필수</option><option value="도전" ${type==='도전'?'selected':''}>도전</option></select></div><div class="td-c3"><textarea class="v-content" placeholder="과제내용...">${content}</textarea></div><button style="border:none;background:none;font-size:16px;color:red;cursor:pointer;" onclick="this.parentElement.remove(); updateMsgBox();">✕</button>`;
@@ -2510,106 +2480,6 @@ function applyAssistantStructuredInput(){
   if(typeof applyAutoGrow === 'function') applyAutoGrow(document);
   if(typeof scheduleDraftSave === 'function') scheduleDraftSave();
   showToast('✅ 공지/과정/과제 자동 분류 입력 완료');
-}
-
-function applyRecoveryBlocks_(){
-  const raw = normalizeAssistantText_(val('aiAssistantRawInput') || val('aiAssistantResult'));
-  if(!raw){ showToast('복구 텍스트를 붙여넣어 주세요.'); return; }
-  const noticeMatch = raw.match(/(?:^\[공지\]|\b공지\b)\s*([\s\S]*?)(?=\n\s*\[오늘의 과제\]|\n\s*오늘의 과제|$)/m);
-  const hwMatch = raw.match(/(?:^\[오늘의 과제\]|\b오늘의 과제\b)\s*([\s\S]*)$/m);
-  let notice = noticeMatch ? normalizeAssistantText_(noticeMatch[1]) : '';
-  let hw = hwMatch ? normalizeAssistantText_(hwMatch[1]) : '';
-
-  // Fallback: no explicit headers, split around "오늘의 과제"
-  if(!notice && !hw){
-    const split = raw.split(/오늘의 과제/);
-    if(split.length >= 2){
-      notice = normalizeAssistantText_(split[0]);
-      hw = normalizeAssistantText_(split.slice(1).join(' '));
-    }
-  }
-
-  if(notice && qs('noticeArea')) qs('noticeArea').value = notice;
-
-  // universal extractor from full raw text (works even when header parsing fails)
-  function extractHomeworkTriples_(text){
-    const found = [];
-    const src = String(text || '');
-    // 1) explicit triple format
-    const re1 = /과정:\s*([\s\S]*?)\s*\/\s*구분:\s*([\s\S]*?)\s*\/\s*내용:\s*([\s\S]*?)(?=(?:\s+과정:\s*)|$)/g;
-    let m1;
-    while((m1 = re1.exec(src)) !== null){
-      found.push({ course:String(m1[1]||'').trim(), type:String(m1[2]||'필수').trim()||'필수', content:String(m1[3]||'').trim() });
-    }
-    if(found.length) return found;
-    // 2) list-ish compact format: "과정명 필수 내용..."
-    const lines = src.split('\n').map(x=>x.trim()).filter(Boolean);
-    lines.forEach(line=>{
-      const t = line.replace(/^\d+\.\s*/,'').replace(/^-+\s*/,'').trim();
-      const mm = t.match(/^(.*?)(필수|도전)\s+(.+)$/);
-      if(mm){
-        found.push({ course:String(mm[1]||'').trim(), type:String(mm[2]||'필수').trim(), content:String(mm[3]||'').trim() });
-      }
-    });
-    return found;
-  }
-
-  if(hw && qs('todayHwList')){
-    const lines = hw.split('\n').map(x=>x.trim()).filter(Boolean);
-    const rows = lines.filter(x => /^-\s*과정:/.test(x) || /^과정:/.test(x));
-    if(rows.length){
-      rows.forEach(line=>{
-        const l = line.replace(/^-+\s*/,'');
-        const m = l.match(/과정:\s*(.*?)\s*\/\s*구분:\s*(.*?)\s*\/\s*내용:\s*(.*)$/);
-        if(m){
-          addTodayHwRow((m[1]||'').trim(), (m[2]||'필수').trim(), (m[3]||'').trim());
-        } else {
-          addTodayHwRow(l, '필수', '');
-        }
-      });
-    } else {
-      // compact single-line format: "과정: ... / 구분: ... / 내용: ... 과정: ..."
-      const compact = [];
-      const re = /과정:\s*([\s\S]*?)\s*\/\s*구분:\s*([\s\S]*?)\s*\/\s*내용:\s*([\s\S]*?)(?=(?:\s+과정:\s*)|$)/g;
-      let mm;
-      while((mm = re.exec(hw)) !== null){
-        compact.push({
-          course: String(mm[1] || '').trim(),
-          type: String(mm[2] || '필수').trim() || '필수',
-          content: String(mm[3] || '').trim()
-        });
-      }
-      if(compact.length){
-        compact.forEach(x=>addTodayHwRow(x.course, x.type, x.content));
-        if(typeof updateMsgBox === 'function') updateMsgBox();
-        if(typeof applyAutoGrow === 'function') applyAutoGrow(document);
-        if(typeof scheduleDraftSave === 'function') scheduleDraftSave();
-        showToast('✅ 공지/오늘의 과제 복구 완료');
-        return;
-      }
-      // fallback: plain homework lines with "1. 제목 CH/P..." split
-      lines.forEach(line=>{
-        const noNum = line.replace(/^\d+\.\s*/, '').trim();
-        if(!noNum) return;
-        const m = noNum.match(/^(.*?)(CH\s*[\w\-.,()]+|P\s*\d+[^\s]*|N\s*[-]?\s*[\w().-]+.*)$/i);
-        if(m) addTodayHwRow((m[1]||'').trim(), '필수', (m[2]||'').trim());
-        else addTodayHwRow(noNum, '필수', '');
-      });
-    }
-  }
-
-  // Final fallback: parse homework triples directly from full raw text
-  if(qs('todayHwList')){
-    const triples = extractHomeworkTriples_(raw);
-    if(triples.length){
-      triples.forEach(x=>addTodayHwRow(x.course, x.type, x.content));
-    }
-  }
-
-  if(typeof updateMsgBox === 'function') updateMsgBox();
-  if(typeof applyAutoGrow === 'function') applyAutoGrow(document);
-  if(typeof scheduleDraftSave === 'function') scheduleDraftSave();
-  showToast('✅ 공지/오늘의 과제 복구 완료');
 }
 </script>
 </body>
