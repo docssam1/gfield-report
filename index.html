@@ -2517,8 +2517,17 @@ function applyRecoveryBlocks_(){
   if(!raw){ showToast('복구 텍스트를 붙여넣어 주세요.'); return; }
   const noticeMatch = raw.match(/(?:^\[공지\]|\b공지\b)\s*([\s\S]*?)(?=\n\s*\[오늘의 과제\]|\n\s*오늘의 과제|$)/m);
   const hwMatch = raw.match(/(?:^\[오늘의 과제\]|\b오늘의 과제\b)\s*([\s\S]*)$/m);
-  const notice = noticeMatch ? normalizeAssistantText_(noticeMatch[1]) : '';
-  const hw = hwMatch ? normalizeAssistantText_(hwMatch[1]) : '';
+  let notice = noticeMatch ? normalizeAssistantText_(noticeMatch[1]) : '';
+  let hw = hwMatch ? normalizeAssistantText_(hwMatch[1]) : '';
+
+  // Fallback: no explicit headers, split around "오늘의 과제"
+  if(!notice && !hw){
+    const split = raw.split(/오늘의 과제/);
+    if(split.length >= 2){
+      notice = normalizeAssistantText_(split[0]);
+      hw = normalizeAssistantText_(split.slice(1).join(' '));
+    }
+  }
 
   if(notice && qs('noticeArea')) qs('noticeArea').value = notice;
 
@@ -2536,8 +2545,14 @@ function applyRecoveryBlocks_(){
         }
       });
     } else {
-      // fallback: plain homework lines
-      lines.forEach(line=>addTodayHwRow(line, '필수', ''));
+      // fallback: plain homework lines with "1. 제목 CH/P..." split
+      lines.forEach(line=>{
+        const noNum = line.replace(/^\d+\.\s*/, '').trim();
+        if(!noNum) return;
+        const m = noNum.match(/^(.*?)(CH\s*[\w\-.,()]+|P\s*\d+[^\s]*|N\s*[-]?\s*[\w().-]+.*)$/i);
+        if(m) addTodayHwRow((m[1]||'').trim(), '필수', (m[2]||'').trim());
+        else addTodayHwRow(noNum, '필수', '');
+      });
     }
   }
 
