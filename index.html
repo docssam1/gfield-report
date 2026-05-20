@@ -985,7 +985,9 @@ function copyReport(){
 }
 
 function copyMsg(){
-  const msg = stripMarkTokens(val('msgText'));
+  const msgBase = stripMarkTokens(val('msgText')).trim();
+  const extra = buildFormCopyText_();
+  const msg = [msgBase, extra].filter(Boolean).join('\n\n');
   if(!msg) return showToast('복사할 메시지가 없습니다.');
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(msg)
