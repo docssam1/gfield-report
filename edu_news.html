@@ -18,6 +18,9 @@
     .title-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
     .title{font-size:24px;font-weight:900;color:#e2e8f0}
     .chip{font-size:13px;font-weight:800;color:#fef3c7;background:rgba(250,204,21,.14);border:1px solid rgba(250,204,21,.35);padding:4px 10px;border-radius:999px}
+    .tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+    .btn{border:1px solid #365073;background:#0b1a30;color:#e2e8f0;border-radius:10px;padding:6px 10px;font-size:12px;font-weight:800;cursor:pointer}
+    .btn.primary{border-color:rgba(250,204,21,.4);color:#fde68a}
     .traffic-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
     .traffic-item{background:#0a1b34;border:1px solid #324766;border-radius:12px;padding:10px}
     .traffic-item h4{font-size:17px;color:#bfdbfe;font-weight:900;margin-bottom:4px}
@@ -39,7 +42,7 @@
     .thumb{width:100%;height:100%;object-fit:cover;display:block}
     .meta{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;color:#cbd5e1;font-size:15px}
     .meta a{color:var(--gold);font-weight:900;text-decoration:none}
-    .meta a.disabled{color:#94a3b8;pointer-events:none}
+    .meta .right{display:flex;gap:6px;align-items:center}
     .videos{display:grid;grid-template-columns:1fr;gap:10px}
     .video{display:flex;gap:10px;text-decoration:none;color:inherit;background:#0a1322;border:1px solid #2b3b55;border-radius:12px;padding:10px}
     .video img{width:120px;height:68px;object-fit:cover;border-radius:8px;border:1px solid #32445f}
@@ -75,7 +78,7 @@
         <div class="tbox"><div class="time">저녁 9:00</div><div class="temp">16°C</div><div class="tip">체감 하락 · 바람막이</div></div>
       </div>
       <p class="note" id="trafficMessage">오늘 16°C~24°C | 내일 17°C~25°C | 주민센터 🚗 원활 / EM프라자 🚗 원활 | 권장 진입: 정문 드롭존 진입 원활</p>
-      <p class="weather-note" id="weatherAdvice">어머님, 오늘은 낮에는 온화하지만 하원 시간대로 갈수록 체감 기온이 내려갈 수 있습니다. 얇은 가디건이나 바람막이를 챙겨 주세요.</p>
+      <p class="weather-note">어머님, 오늘은 낮에는 온화하지만 하원 시간대로 갈수록 체감 기온이 내려갈 수 있습니다. 얇은 가디건이나 바람막이를 챙겨 주세요.</p>
       <p class="source-note">※ 세븐일레븐 · SNT · 대치 스터디타워 방향은 혼잡 시 최후 수단으로만 안내됩니다.</p>
     </section>
 
@@ -85,7 +88,14 @@
     </section>
 
     <section class="card">
-      <div class="title-row"><h2 class="title">📰 주간 타깃 레포트 (1주 이내)</h2><span class="chip" id="articleCount">0건</span></div>
+      <div class="title-row">
+        <h2 class="title">📰 주간 타깃 레포트 (1주 이내)</h2>
+        <div class="tools">
+          <button class="btn primary" id="btnRecommend" type="button">AI 추천 4건</button>
+          <button class="btn" id="btnResetArticles" type="button">기사 비우기</button>
+          <span class="chip" id="articleCount">0건</span>
+        </div>
+      </div>
       <div class="list" id="articleList"></div>
     </section>
 
@@ -132,20 +142,16 @@
       if (!Array.isArray(current) || current.length === 0) localStorage.setItem(VIDEO_KEY, JSON.stringify(DEFAULT_VIDEOS));
     }
     function trafficState() {
-      const now = new Date();
-      const h = now.getHours();
-      const m = now.getMinutes();
-      const mins = h * 60 + m;
-      let center = '🚗 원활';
-      let em = '🚗 원활';
+      const now = new Date(); const h = now.getHours(); const m = now.getMinutes(); const mins = h * 60 + m;
+      let center = '🚗 원활', em = '🚗 원활';
       let msg = '오늘 16°C~24°C | 내일 17°C~25°C | 주민센터 🚗 원활 / EM프라자 🚗 원활 | 권장 진입: 정문 드롭존 진입 원활';
-      if (mins >= 13 * 60 && mins <= 15 * 60 + 30) { center = '🚙 서행'; em = '🚕 정체'; msg = '오늘 16°C~24°C | 내일 17°C~25°C | 주민센터 🚙 서행 / EM프라자 🚕 정체 | 권장 진입: 주민센터 방향 우선 확인'; }
-      else if (mins >= 17 * 60 + 30 && mins <= 19 * 60 + 30) { center = '🚕 정체'; em = '🚙 서행'; msg = '오늘 16°C~24°C | 내일 17°C~25°C | 주민센터 🚕 정체 / EM프라자 🚙 서행 | 권장 진입: EM프라자 방향 지연 감안'; }
-      else if (mins >= 21 * 60 + 30 && mins <= 22 * 60 + 30) { center = '🚨 매우 혼잡'; em = '🚕 정체'; msg = '오늘 16°C~24°C | 내일 17°C~25°C | 주민센터 🚨 매우 혼잡 / EM프라자 🚕 정체 | 권장 진입: 이면도로 서행 진입'; }
+      if (mins >= 13*60 && mins <= 15*60+30) { center='🚙 서행'; em='🚕 정체'; msg='오늘 16°C~24°C | 내일 17°C~25°C | 주민센터 🚙 서행 / EM프라자 🚕 정체 | 권장 진입: 주민센터 방향 우선 확인'; }
+      else if (mins >= 17*60+30 && mins <= 19*60+30) { center='🚕 정체'; em='🚙 서행'; msg='오늘 16°C~24°C | 내일 17°C~25°C | 주민센터 🚕 정체 / EM프라자 🚙 서행 | 권장 진입: EM프라자 방향 지연 감안'; }
+      else if (mins >= 21*60+30 && mins <= 22*60+30) { center='🚨 매우 혼잡'; em='🚕 정체'; msg='오늘 16°C~24°C | 내일 17°C~25°C | 주민센터 🚨 매우 혼잡 / EM프라자 🚕 정체 | 권장 진입: 이면도로 서행 진입'; }
       document.getElementById('centerStatus').textContent = center;
       document.getElementById('emStatus').textContent = em;
       document.getElementById('trafficMessage').textContent = msg;
-      document.getElementById('clock').textContent = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} 업데이트`;
+      document.getElementById('clock').textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} 업데이트`;
     }
     function renderLive() {
       const items = safeJson(LIVE_KEY, []);
@@ -162,6 +168,44 @@
       if (/^https?:\/\//.test(src)) return { url: src, label: '더 궁금하다면 꾹', disabled: false };
       return { url: '#', label: '관련 링크 준비중', disabled: true };
     }
+    function saveArticles(list) {
+      localStorage.setItem(ARTICLE_KEY, JSON.stringify(list));
+      renderArticles();
+    }
+    function autoRecommendArticles() {
+      const today = new Date().toISOString().slice(0, 10);
+      const seeds = [
+        { k: '대치 학원가 동향', t: '대치동 학원가 최신 설명회 및 반편성 동향', q: '대치동 학원가 설명회 반편성 최신' },
+        { k: '입시 및 교육 정책 분석', t: '초등·중등 내신 평가 변화와 학부모 체크 포인트', q: '초등 중등 내신 평가 변화 학부모' },
+        { k: '학년별 시크릿 로드맵', t: '초5~중1 수학 선행과 서술형 대비 로드맵', q: '초5 중1 수학 선행 서술형 대비' },
+        { k: 'DOCSSAM의 프리미엄 칼럼', t: '학습 습관 교정과 피드백 밀도 중심 운영 포인트', q: '학습 습관 교정 피드백 밀도' }
+      ];
+      const made = seeds.map((s, i) => ({
+        id: `auto-${Date.now()}-${i}`,
+        category: s.k,
+        title: s.t,
+        desc: '핵심 이슈를 빠르게 파악할 수 있도록 요약된 추천 기사입니다. 필요 시 수정 버튼으로 제목/본문/링크를 바로 바꿔주세요.',
+        date: today,
+        sourceUrl: `https://www.google.com/search?q=${encodeURIComponent(s.q)}`
+      }));
+      saveArticles(made);
+      alert('AI 추천 4건을 생성했습니다. 각 카드의 수정 버튼으로 바로 편집할 수 있습니다.');
+    }
+    function editArticle(id) {
+      const list = safeJson(ARTICLE_KEY, []);
+      const idx = list.findIndex((x) => String(x.id || '') === String(id || ''));
+      if (idx < 0) return;
+      const item = list[idx];
+      const title = prompt('기사 제목 수정', item.title || '');
+      if (title === null) return;
+      const desc = prompt('기사 본문 요약 수정', item.desc || '');
+      if (desc === null) return;
+      const url = prompt('관련 링크(URL) 수정', item.sourceUrl || '');
+      if (url === null) return;
+      list[idx] = { ...item, title: title.trim(), desc: desc.trim(), sourceUrl: url.trim() };
+      saveArticles(list);
+    }
+    window.editArticle = editArticle;
     function renderArticles() {
       const all = safeJson(ARTICLE_KEY, []);
       const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
@@ -186,7 +230,10 @@
           </div>
           <div class="meta">
             <span>${esc(category || 'DOCSSAM의 프리미엄 칼럼')} · ${esc(a.date || '')}</span>
-            <a class="${link.disabled ? 'disabled' : ''}" href="${esc(link.url)}" target="_blank" rel="noopener noreferrer">${link.label}</a>
+            <div class="right">
+              <button class="btn" type="button" onclick="editArticle('${esc(a.id || '')}')">수정</button>
+              <a href="${esc(link.url)}" target="_blank" rel="noopener noreferrer">${link.label}</a>
+            </div>
           </div>
         </article>`;
       }).join('') || '<div class="news"><p class="news-desc">실제 기사 링크가 등록된 주간 리포트가 아직 없습니다.</p></div>';
@@ -210,6 +257,8 @@
     renderLive();
     renderArticles();
     renderVideos();
+    document.getElementById('btnRecommend').addEventListener('click', autoRecommendArticles);
+    document.getElementById('btnResetArticles').addEventListener('click', function(){ if (confirm('주간 기사 목록을 비울까요?')) saveArticles([]); });
   </script>
 </body>
 </html>
