@@ -944,7 +944,7 @@ function buildFormCopyText_(){
     lines.push(notice);
   }
 
-  const hwRows = Array.from(document.querySelectorAll('#todayHwList > div.today-row-pc'));
+  const hwRows = Array.from(document.querySelectorAll('#todayHwList > div.today-row-pc, #todayHwList > div.today-row'));
   if(hwRows.length){
     const items = hwRows.map(r=>{
       const c = stripMarkTokens(r.querySelector('.v-course')?.value || '').trim();
@@ -958,13 +958,36 @@ function buildFormCopyText_(){
       lines.push(items.join('\n'));
     }
   }
+  // fallback: if structured rows not found, try plain text from section
+  if(!hwRows.length){
+    const rawHw = (document.querySelector('#todayHwList')?.innerText || '').trim();
+    if(rawHw){
+      lines.push('\n[오늘의 과제]');
+      lines.push(rawHw);
+    }
+  }
   return lines.join('\n').trim();
+}
+
+function composeCopyPayload_(baseText){
+  const base = stripMarkTokens(String(baseText || '')).trim();
+  const extra = buildFormCopyText_().trim();
+  const chunks = [];
+  if(base) chunks.push(base);
+  if(extra){
+    // avoid duplicate section blocks if already included
+    const noHeaderExtra = extra
+      .replace(/^\[리포트\].*\n?/m, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+    if(noHeaderExtra) chunks.push(noHeaderExtra);
+  }
+  return chunks.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 
 function copyReport(){
   const text = (extractReportCopyText_() || '').trim();
-  const extra = buildFormCopyText_();
-  const merged = [stripMarkTokens(text), extra].filter(Boolean).join('\n\n');
+  const merged = composeCopyPayload_(text);
   if(!merged){
     showToast('복사할 리포트가 없습니다.');
     return;
@@ -985,10 +1008,9 @@ function copyReport(){
 }
 
 function copyMsg(){
-  const msgBase = stripMarkTokens(val('msgText')).trim();
-  const extra = buildFormCopyText_();
-  const msg = [msgBase, extra].filter(Boolean).join('\n\n');
+  const msg = composeCopyPayload_(val('msgText'));
   if(!msg) return showToast('복사할 메시지가 없습니다.');
+  if(qs('msgText')) qs('msgText').value = msg;
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(msg)
       .then(()=>showToast('📋 메시지가 복사되었습니다.'))
