@@ -478,6 +478,7 @@ button:disabled{opacity:.62 !important;cursor:not-allowed !important;}
           <button onclick="runQuickAssistant('상담')" style="padding:8px;background:#ecfeff;color:#155e75;border:1px solid #a5f3fc;border-radius:8px;cursor:pointer;font-weight:700;font-size:12px;">이번주 상담</button>
         </div>
         <button onclick="applyAssistantStructuredInput()" style="padding:9px;background:#0f766e;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:800;font-size:12px;">학습내용/공지/과제 자동 분류 입력</button>
+        <button onclick="applyRecoveryBlocks_()" style="padding:9px;background:#334155;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:800;font-size:12px;">복구 텍스트로 공지/오늘의 과제 복원</button>
         <div style="font-size:12px;font-weight:800;color:#1f2937;">🤖 AI 비서 결과 공유</div>
         <textarea id="aiAssistantResult" style="width:100%;min-height:86px;padding:10px;border-radius:8px;border:1px solid #ddd;outline:none;font-size:12px;line-height:1.5;resize:vertical;" placeholder="여기에 AI 결과 요약이 표시됩니다."></textarea>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
@@ -2509,6 +2510,41 @@ function applyAssistantStructuredInput(){
   if(typeof applyAutoGrow === 'function') applyAutoGrow(document);
   if(typeof scheduleDraftSave === 'function') scheduleDraftSave();
   showToast('✅ 공지/과정/과제 자동 분류 입력 완료');
+}
+
+function applyRecoveryBlocks_(){
+  const raw = normalizeAssistantText_(val('aiAssistantRawInput') || val('aiAssistantResult'));
+  if(!raw){ showToast('복구 텍스트를 붙여넣어 주세요.'); return; }
+  const noticeMatch = raw.match(/(?:^\[공지\]|\b공지\b)\s*([\s\S]*?)(?=\n\s*\[오늘의 과제\]|\n\s*오늘의 과제|$)/m);
+  const hwMatch = raw.match(/(?:^\[오늘의 과제\]|\b오늘의 과제\b)\s*([\s\S]*)$/m);
+  const notice = noticeMatch ? normalizeAssistantText_(noticeMatch[1]) : '';
+  const hw = hwMatch ? normalizeAssistantText_(hwMatch[1]) : '';
+
+  if(notice && qs('noticeArea')) qs('noticeArea').value = notice;
+
+  if(hw && qs('todayHwList')){
+    const lines = hw.split('\n').map(x=>x.trim()).filter(Boolean);
+    const rows = lines.filter(x => /^-\s*과정:/.test(x) || /^과정:/.test(x));
+    if(rows.length){
+      rows.forEach(line=>{
+        const l = line.replace(/^-+\s*/,'');
+        const m = l.match(/과정:\s*(.*?)\s*\/\s*구분:\s*(.*?)\s*\/\s*내용:\s*(.*)$/);
+        if(m){
+          addTodayHwRow((m[1]||'').trim(), (m[2]||'필수').trim(), (m[3]||'').trim());
+        } else {
+          addTodayHwRow(l, '필수', '');
+        }
+      });
+    } else {
+      // fallback: plain homework lines
+      lines.forEach(line=>addTodayHwRow(line, '필수', ''));
+    }
+  }
+
+  if(typeof updateMsgBox === 'function') updateMsgBox();
+  if(typeof applyAutoGrow === 'function') applyAutoGrow(document);
+  if(typeof scheduleDraftSave === 'function') scheduleDraftSave();
+  showToast('✅ 공지/오늘의 과제 복구 완료');
 }
 </script>
 </body>
