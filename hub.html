@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+  <title>DOCSSAM SMART CRM | VIP 라운지 허브</title>
+  <style>
+    :root{
+      --bg:#060f1f;
+      --panel:#0d1a30;
+      --panel-2:#111f38;
+      --line:#2a3f63;
+      --ink:#f8fafc;
+      --muted:#cbd5e1;
+      --gold:#d4af37;
+      --ok:#22c55e;
+      --slow:#f59e0b;
+      --jam:#ef4444;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:"Pretendard","Noto Sans KR",sans-serif;
+      color:var(--ink);
+      background:radial-gradient(circle at top,#142847 0%,#060f1f 60%);
+    }
+    .wrap{max-width:580px;margin:0 auto;padding:18px 14px 32px}
+    .hero{padding:8px 2px 14px}
+    .eyebrow{
+      display:inline-block;padding:7px 14px;border-radius:999px;
+      border:1px solid rgba(212,175,55,.55);color:#f6df9a;font-size:12px;font-weight:900;letter-spacing:.08em
+    }
+    h1{font-size:34px;line-height:1.2;font-weight:900;margin-top:12px}
+    .sub{font-size:17px;line-height:1.55;color:var(--muted);margin-top:5px}
+
+    .traffic{
+      background:linear-gradient(180deg,var(--panel-2),var(--panel));
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px;
+    }
+    .traffic-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px}
+    .traffic-title{font-size:22px;font-weight:900}
+    .clock{font-size:13px;font-weight:800;color:#fde68a;background:rgba(212,175,55,.14);border:1px solid rgba(212,175,55,.35);padding:4px 10px;border-radius:999px}
+    .traffic-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .traffic-item{background:#0b1b34;border:1px solid #37517a;border-radius:12px;padding:10px}
+    .traffic-item h4{font-size:16px;color:#c6dcff;font-weight:900;margin-bottom:4px}
+    .traffic-item p{font-size:21px;font-weight:900}
+    .route-note{margin-top:8px;padding:10px;border-radius:11px;background:#0a1f3d;border:1px solid #3a567b;font-size:16px;line-height:1.55}
+    .weather-note{margin-top:8px;padding:10px;border-radius:11px;background:#0b1a30;border:1px solid #324a6b;font-size:15px;line-height:1.6;color:#e2e8f0}
+    .final-note{margin-top:8px;font-size:13px;color:#94a3b8}
+
+    .cards{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .card{
+      text-decoration:none;color:inherit;display:block;
+      background:linear-gradient(180deg,#0d1a2f,#0a1528);
+      border:1px solid #2d4366;border-radius:16px;padding:14px;min-height:130px
+    }
+    .card.full{grid-column:1/-1;min-height:116px}
+    .icon{font-size:24px;margin-bottom:8px}
+    .card h3{font-size:24px;line-height:1.2;font-weight:900}
+    .card p{margin-top:6px;font-size:16px;line-height:1.5;color:#cbd5e1}
+    .badge{float:right;background:linear-gradient(135deg,#f59e0b,#ef4444);font-size:12px;font-weight:900;padding:4px 9px;border-radius:999px}
+
+    .gate-modal{position:fixed;inset:0;background:rgba(2,6,23,.72);display:none;align-items:center;justify-content:center;padding:16px;z-index:999}
+    .gate-modal.show{display:flex}
+    .gate-box{width:min(460px,100%);background:#fff;color:#0f172a;border-radius:16px;padding:16px}
+    .gate-box h4{font-size:20px;margin-bottom:10px}
+    .gate-box input{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;margin-bottom:8px;font-size:16px}
+    .gate-box button{width:100%;padding:12px;border:none;border-radius:10px;background:#16417C;color:#fff;font-weight:900;font-size:16px;cursor:pointer}
+    .gate-help{font-size:13px;color:#64748b;margin-top:6px;line-height:1.5}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <span class="eyebrow">DOCSSAM SMART CRM</span>
+      <h1>지필드 영재교육<br>VIP 라운지 허브</h1>
+      <p class="sub">교통 브리핑과 학부모 리포트를 한 화면에서 빠르게 확인하실 수 있습니다.</p>
+    </section>
+
+    <section class="traffic">
+      <div class="traffic-head">
+        <div class="traffic-title">🚦 교통 브리핑</div>
+        <div class="clock" id="liveClock">업데이트</div>
+      </div>
+      <div class="traffic-grid">
+        <div class="traffic-item">
+          <h4>대치4동 주민센터 방향</h4>
+          <p id="statusCenter">🚗 원활</p>
+        </div>
+        <div class="traffic-item">
+          <h4>대치 EM프라자 방향</h4>
+          <p id="statusEm">🚗 원활</p>
+        </div>
+      </div>
+      <div class="route-note" id="routeNote">오늘 16°C~24°C | 내일 17°C~25°C | 주민센터 🚗 원활 / EM프라자 🚗 원활 | 권장 진입: 정문 드롭존 진입 원활</div>
+      <div class="weather-note" id="weatherNote">어머님, 오늘은 낮에는 온화하지만 하원 시간대로 갈수록 체감 기온이 내려갈 수 있습니다. 아이가 수업 후 바로 체온을 지킬 수 있도록 얇은 가디건이나 바람막이를 챙겨 주세요.</div>
+      <div class="final-note">※ 세븐일레븐 · SNT · 대치 스터디타워 방향은 혼잡 시 최후 수단으로만 확인해 주세요.</div>
+    </section>
+
+    <section class="cards">
+      <a class="card full" href="edu_news.html">
+        <span class="badge">NEW</span>
+        <div class="icon">📰</div>
+        <h3>DOCSSAM의 프리미엄 칼럼</h3>
+        <p>주간 타깃 레포트와 라이브 레터를 한눈에 보실 수 있습니다.</p>
+      </a>
+      <a class="card" href="#" onclick="openGate(event)">
+        <div class="icon">🔐</div>
+        <h3>프리미엄 자료실</h3>
+        <p>비밀번호 입력 후 자료실로 바로 이동합니다.</p>
+      </a>
+      <a class="card" href="news_curator.html">
+        <div class="icon">🛠️</div>
+        <h3>큐레이터 관제실</h3>
+        <p>뉴스 발행과 운영 점검을 위한 관리 화면입니다.</p>
+      </a>
+    </section>
+  </main>
+
+  <div class="gate-modal" id="gateModal">
+    <div class="gate-box">
+      <h4>프리미엄 자료실 입장</h4>
+      <input id="gateName" placeholder="학생 이름">
+      <input id="gatePin" placeholder="승인번호 4자리" maxlength="4">
+      <button onclick="enterGate()">자료실 열기</button>
+      <div class="gate-help">현재 기본 승인번호는 <b>2026</b>입니다. 승인번호가 맞으면 자료실 링크로 이동합니다.</div>
+    </div>
+  </div>
+
+  <script>
+    const FIXED_PIN = '2026';
+    const FIXED_URL = 'http://naver.me/GSQDHAIS';
+
+    function setTrafficByTime() {
+      const now = new Date();
+      const h = now.getHours();
+      const m = now.getMinutes();
+      const cur = h * 60 + m;
+      const inRange = (sh, sm, eh, em) => cur >= sh * 60 + sm && cur <= eh * 60 + em;
+
+      let center = '🚗 원활';
+      let em = '🚗 원활';
+      let route = '오늘 16°C~24°C | 내일 17°C~25°C | 주민센터 🚗 원활 / EM프라자 🚗 원활 | 권장 진입: 정문 드롭존 진입 원활';
+      let weather = '어머님, 오늘은 낮에는 온화하지만 하원 시간대로 갈수록 체감 기온이 내려갈 수 있습니다. 아이가 수업 후 바로 체온을 지킬 수 있도록 얇은 가디건이나 바람막이를 챙겨 주세요.';
+
+      if (inRange(13, 0, 15, 30)) {
+        center = '🚙 서행';
+        em = '🚕 정체';
+        route = '오늘 16°C~24°C | 내일 17°C~25°C | 주민센터 🚙 서행 / EM프라자 🚕 정체 | 권장 진입: 주민센터 방향 우선 확인';
+        weather = '어머님, 하교/드롭 시간대라 차량 흐름이 빠르게 막힐 수 있습니다. 주민센터 방향을 먼저 확인해 주시면 도착이 더 수월합니다. 하원 전후에는 얇은 겉옷이 도움이 됩니다.';
+      } else if (inRange(17, 30, 19, 30)) {
+        center = '🚕 정체';
+        em = '🚙 서행';
+        route = '오늘 16°C~24°C | 내일 17°C~25°C | 주민센터 🚕 정체 / EM프라자 🚙 서행 | 권장 진입: EM프라자 방향 지연 감안';
+        weather = '어머님, 대치동 피크 시간대라 정체가 강해지는 구간입니다. 출발을 조금 앞당기시면 훨씬 안정적으로 도착하실 수 있습니다.';
+      } else if (inRange(21, 30, 22, 30)) {
+        center = '🚨 매우 혼잡';
+        em = '🚕 정체';
+        route = '오늘 16°C~24°C | 내일 17°C~25°C | 주민센터 🚨 매우 혼잡 / EM프라자 🚕 정체 | 권장 진입: 이면도로 서행 진입';
+        weather = '어머님, 하원 피크 시간에는 정문 인근 정차가 길어질 수 있습니다. 안전을 위해 짧은 승하차를 부탁드리며, 아이 체온 유지를 위한 겉옷을 꼭 챙겨 주세요.';
+      }
+
+      document.getElementById('statusCenter').textContent = center;
+      document.getElementById('statusEm').textContent = em;
+      document.getElementById('routeNote').textContent = route;
+      document.getElementById('weatherNote').textContent = weather;
+      document.getElementById('liveClock').textContent = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} 업데이트`;
+    }
+
+    function openGate(e) {
+      e.preventDefault();
+      document.getElementById('gateModal').classList.add('show');
+    }
+
+    document.getElementById('gateModal').addEventListener('click', function (e) {
+      if (e.target.id === 'gateModal') this.classList.remove('show');
+    });
+
+    function enterGate() {
+      const pin = (document.getElementById('gatePin').value || '').trim();
+      if (pin !== FIXED_PIN) {
+        alert('승인번호가 맞지 않습니다.');
+        return;
+      }
+      window.open(FIXED_URL, '_blank', 'noopener');
+      document.getElementById('gateModal').classList.remove('show');
+    }
+
+    setTrafficByTime();
+    setInterval(setTrafficByTime, 60000);
+  </script>
+</body>
+</html>
