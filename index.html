@@ -2531,6 +2531,29 @@ function applyRecoveryBlocks_(){
 
   if(notice && qs('noticeArea')) qs('noticeArea').value = notice;
 
+  // universal extractor from full raw text (works even when header parsing fails)
+  function extractHomeworkTriples_(text){
+    const found = [];
+    const src = String(text || '');
+    // 1) explicit triple format
+    const re1 = /과정:\s*([\s\S]*?)\s*\/\s*구분:\s*([\s\S]*?)\s*\/\s*내용:\s*([\s\S]*?)(?=(?:\s+과정:\s*)|$)/g;
+    let m1;
+    while((m1 = re1.exec(src)) !== null){
+      found.push({ course:String(m1[1]||'').trim(), type:String(m1[2]||'필수').trim()||'필수', content:String(m1[3]||'').trim() });
+    }
+    if(found.length) return found;
+    // 2) list-ish compact format: "과정명 필수 내용..."
+    const lines = src.split('\n').map(x=>x.trim()).filter(Boolean);
+    lines.forEach(line=>{
+      const t = line.replace(/^\d+\.\s*/,'').replace(/^-+\s*/,'').trim();
+      const mm = t.match(/^(.*?)(필수|도전)\s+(.+)$/);
+      if(mm){
+        found.push({ course:String(mm[1]||'').trim(), type:String(mm[2]||'필수').trim(), content:String(mm[3]||'').trim() });
+      }
+    });
+    return found;
+  }
+
   if(hw && qs('todayHwList')){
     const lines = hw.split('\n').map(x=>x.trim()).filter(Boolean);
     const rows = lines.filter(x => /^-\s*과정:/.test(x) || /^과정:/.test(x));
@@ -2572,6 +2595,14 @@ function applyRecoveryBlocks_(){
         if(m) addTodayHwRow((m[1]||'').trim(), '필수', (m[2]||'').trim());
         else addTodayHwRow(noNum, '필수', '');
       });
+    }
+  }
+
+  // Final fallback: parse homework triples directly from full raw text
+  if(qs('todayHwList')){
+    const triples = extractHomeworkTriples_(raw);
+    if(triples.length){
+      triples.forEach(x=>addTodayHwRow(x.course, x.type, x.content));
     }
   }
 
