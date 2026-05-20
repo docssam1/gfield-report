@@ -170,7 +170,12 @@ function doPost(e) {
     else if (action === 'search_student') data = searchStudent_(payload);
     else if (action === 'update_student') data = upsertStudent_(payload);
     else if (action === 'update_keys') data = updateKeys_(payload);
+    else if (action === 'todo_list') data = todoList_(payload);
+    else if (action === 'todo_add') data = todoAdd_(payload);
+    else if (action === 'todo_toggle') data = todoToggle_(payload);
+    else if (action === 'todo_delete') data = todoDelete_(payload);
     else if (action === 'notion') data = saveToNotion_(payload);
+    else if (action === 'assistant_query') data = assistantQuery_(payload);
     else if (action === 'list_drive_photos') data = listDrivePhotos_(payload);
     else if (action === 'list_drive_folder') data = listDriveFolder_(payload);
     else if (action === 'delete_record' || action === 'delete_activity' || action === 'dashboard_delete') data = deleteRecord_(payload);
@@ -391,7 +396,8 @@ function updateKeys_(p) {
     DRIVE_ROOT_ID: p.drive_folder_id,
     NOTION_KEY: p.notion_key,
     NOTION_DB: p.notion_db,
-    GOOGLE_CALENDAR_ID: p.google_calendar_id
+    GOOGLE_CALENDAR_ID: p.google_calendar_id,
+    GEMINI_API_KEY: p.gemini_key
   };
   Object.keys(map).forEach(key => {
     if (map[key] !== undefined && map[key] !== null && String(map[key]).trim() !== '') {
@@ -992,4 +998,169 @@ function normalizeGithubPath_(path) {
 function lastPathPart_(path) {
   const parts = String(path || '').split('/');
   return parts[parts.length - 1] || '';
+}
+
+function assistantQuery_(p) {
+  const q = String(p.question || '').trim();
+  if (!q) return { result: 'error', error: 'question is required' };
+  const key = String(
+    p.gemini_key ||
+    PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY') ||
+    ''
+  ).trim();
+  if (!key) return { result: 'error', error: 'GEMINI API KEY가 비어 있습니다.' };
+
+  const todos = Array.isArray(p.todos) ? p.todos.slice(0, 200) : [];
+  const ctx = {
+    now: Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd HH:mm'),
+    currentMode: String(p.currentMode || ''),
+    classType: String(p.classType || ''),
+    name: String(p.name || ''),
+    date: String(p.date || ''),
+    todos: todos
+  };
+
+  const systemPrompt =
+    '너는 학원 운영 비서다. 한국어로 간결하게 답한다. ' +
+    '질문에 답하면서 intent(일반수업|결석|보강|상담|테스트진행)와 confidence(0~1)를 반드시 판단한다. ' +
+    '개인정보는 과도하게 노출하지 말고 필요한 정보만 요약한다. ' +
+    '응답은 반드시 JSON만 출력한다. 형식: {"intent":"...","confidence":0.00,"answer":"..."}';
+  const userPrompt =
+    '질문:\n' + q + '\n\n' +
+    '현재 컨텍스트(JSON):\n' + JSON.stringify(ctx);
+
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + encodeURIComponent(key);
+  const body = {
+    contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userPrompt }] }],
+    generationConfig: { temperature: 0.2, maxOutputTokens: 700 }
+  };
+  const response = UrlFetchApp.fetch(url, {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify(body),
+    muteHttpExceptions: true
+  });
+  const code = response.getResponseCode();
+  if (code < 200 || code >= 300) {
+    throw new Error('Gemini 호출 실패: ' + response.getContentText());
+  }
+  const data = JSON.parse(response.getContentText() || '{}');
+  const answer =
+    (((data.candidates || [])[0] || {}).content || {}).parts &&
+    (((data.candidates || [])[0] || {}).content || {}).parts[0] &&
+    (((data.candidates || [])[0] || {}).content || {}).parts[0].text
+      ? (((data.candidates || [])[0] || {}).content || {}).parts[0].text
+      : '';
+  if (!answer) return { result: 'error', error: 'Gemini 응답이 비어 있습니다.' };
+
+  var parsed = null;
+  try {
+    parsed = JSON.parse(String(answer).trim());
+  } catch (e) {
+    var m = String(answer).match(/\{[\s\S]*\}/);
+    if (m) {
+      try { parsed = JSON.parse(m[0]); } catch (e2) {}
+    }
+  }
+  if (!parsed) {
+    return { result: 'success', intent: '일반수업', confidence: 0.55, answer: String(answer).trim() };
+  }
+  var intent = String(parsed.intent || '일반수업').trim();
+  var confidence = Number(parsed.confidence || 0.6);
+  if (isNaN(confidence)) confidence = 0.6;
+  confidence = Math.max(0, Math.min(1, confidence));
+  var finalAnswer = String(parsed.answer || '').trim() || String(answer).trim();
+  return { result: 'success', intent: intent, confidence: confidence, answer: finalAnswer };
+}
+
+function ensureTodoSheet_(sheetId) {
+  const ss = SpreadsheetApp.openById(getSheetId_(sheetId));
+  const sh = ss.getSheetByName(TODO_SHEET) || ss.insertSheet(TODO_SHEET);
+  const first = sh.getRange(1, 1, 1, TODO_HEADERS.length).getValues()[0];
+  const empty = first.every(function(v) { return String(v || '').trim() === ''; });
+  if (empty) sh.getRange(1, 1, 1, TODO_HEADERS.length).setValues([TODO_HEADERS]);
+  return sh;
+}
+
+function todoList_(p) {
+  const sh = ensureTodoSheet_(p.sheetId);
+  const last = sh.getLastRow();
+  if (last < 2) return { result: 'success', todos: [] };
+
+  const rows = sh.getRange(2, 1, last - 1, TODO_HEADERS.length).getValues();
+  const includeCompleted = p.includeCompleted === true;
+
+  const todos = rows.map(function(r) {
+    return {
+      id: String(r[0] || ''),
+      text: String(r[2] || ''),
+      status: String(r[3] || '진행중'),
+      done: String(r[3] || '') === '완료',
+      writer: String(r[4] || ''),
+      source: String(r[5] || ''),
+      createdAt: String(r[1] || ''),
+      completedAt: String(r[6] || '')
+    };
+  }).filter(function(t) { return t.id && t.text; });
+
+  const filtered = includeCompleted
+    ? todos.filter(function(t) { return t.status !== '삭제'; })
+    : todos.filter(function(t) { return !t.done && t.status !== '삭제'; });
+
+  return { result: 'success', todos: filtered };
+}
+
+function todoAdd_(p) {
+  const text = String(p.text || '').trim();
+  if (!text) return { result: 'error', error: 'text is required' };
+
+  const sh = ensureTodoSheet_(p.sheetId);
+  const now = new Date();
+  const id = Utilities.getUuid();
+  sh.appendRow([
+    id,
+    now,
+    text,
+    '진행중',
+    String(p.writer || '원장'),
+    String(p.source || '수동입력'),
+    ''
+  ]);
+  return { result: 'success', id: id };
+}
+
+function todoToggle_(p) {
+  const id = String(p.id || '').trim();
+  if (!id) return { result: 'error', error: 'id is required' };
+
+  const sh = ensureTodoSheet_(p.sheetId);
+  const last = sh.getLastRow();
+  if (last < 2) return { result: 'error', error: 'todo not found' };
+
+  const ids = sh.getRange(2, 1, last - 1, 1).getValues().map(function(r) { return String(r[0] || ''); });
+  const idx = ids.indexOf(id);
+  if (idx === -1) return { result: 'error', error: 'todo not found' };
+
+  const row = idx + 2;
+  const done = !!p.done;
+  sh.getRange(row, 4).setValue(done ? '완료' : '진행중');
+  sh.getRange(row, 7).setValue(done ? new Date() : '');
+  return { result: 'success' };
+}
+
+function todoDelete_(p) {
+  const id = String(p.id || '').trim();
+  if (!id) return { result: 'error', error: 'id is required' };
+
+  const sh = ensureTodoSheet_(p.sheetId);
+  const last = sh.getLastRow();
+  if (last < 2) return { result: 'error', error: 'todo not found' };
+
+  const ids = sh.getRange(2, 1, last - 1, 1).getValues().map(function(r) { return String(r[0] || ''); });
+  const idx = ids.indexOf(id);
+  if (idx === -1) return { result: 'error', error: 'todo not found' };
+
+  const row = idx + 2;
+  sh.getRange(row, 4).setValue('삭제');
+  return { result: 'success' };
 }

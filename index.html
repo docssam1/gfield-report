@@ -2237,6 +2237,7 @@ function runAssistantQuery(){
       if(res && res.result === 'success' && res.answer){
         const box = qs('aiAssistantResult');
         if(box) box.value = String(res.answer).slice(0, 3000);
+        applyAssistantIntent_(res.intent, Number(res.confidence || 0));
         showToast('✅ AI 비서 응답 완료');
       } else {
         throw new Error((res && res.error) || 'AI 응답 실패');
@@ -2255,6 +2256,38 @@ function runAssistantQueryFallback_(q){
   const box = qs('aiAssistantResult');
   if(box) box.value = `요청: ${q}\n\n현재는 '이번주 보강/결석/상담' 질의에 최적화되어 있습니다.`;
   showToast('⚠️ 현재 지원 질의로 변환해 주세요.');
+}
+function applyAssistantIntent_(intent, confidence){
+  const i = String(intent || '').trim();
+  const c = isNaN(confidence) ? 0 : confidence;
+  if(c < 0.72) return;
+  if(i === '결석'){
+    const modeReport = document.querySelector('input[name="docType"][value="리포트"]');
+    if(modeReport){ modeReport.checked = true; if(typeof toggleMode === 'function') toggleMode(); }
+    const absentTag = Array.from(document.querySelectorAll('.hd-tag')).find(el => (el.dataset.type || '') === '결석');
+    if(absentTag && typeof setType === 'function') setType(absentTag);
+    showToast('🤖 AI 판단으로 결석 모드 전환');
+    return;
+  }
+  if(i === '테스트진행' || i === '상담'){
+    const modeCs = document.querySelector('input[name="docType"][value="상담"]');
+    if(modeCs){ modeCs.checked = true; if(typeof toggleMode === 'function') toggleMode(); }
+    if(i === '테스트진행'){
+      const testTag = Array.from(document.querySelectorAll('.hd-tag')).find(el => (el.dataset.type || '') === '테스트진행');
+      if(testTag && typeof setType === 'function') setType(testTag);
+      showToast('🤖 AI 판단으로 테스트 모드 전환');
+    } else {
+      const csTag = Array.from(document.querySelectorAll('.hd-tag')).find(el => (el.dataset.type || '') === '재원생상담');
+      if(csTag && typeof setType === 'function') setType(csTag);
+      showToast('🤖 AI 판단으로 상담 모드 전환');
+    }
+    return;
+  }
+  if(i === '보강'){
+    const modeReport = document.querySelector('input[name="docType"][value="리포트"]');
+    if(modeReport){ modeReport.checked = true; if(typeof toggleMode === 'function') toggleMode(); }
+    showToast('🤖 AI 판단으로 보강 문맥 반영');
+  }
 }
 
 function normalizeAssistantText_(s){
@@ -2332,7 +2365,8 @@ function applyAssistantStructuredInput(){
 
   // --- 유형 자동 라우팅: 결석 / 테스트 / 보강(보충) ---
   const isAbsent = /결석|휴강|보강 일정|보강\/보충|결석 공지/.test(raw);
-  const isTest = /테스트|모의고사|진단|경시/.test(raw);
+  const isTestContext = /등록|신규|상담|문의|테스트\s*진행|진단\s*테스트|입학\s*테스트|레벨\s*테스트/.test(raw);
+  const isTest = isTestContext;
   const isMakeup = /보충|보강/.test(raw) && !isTest;
 
   if(isAbsent){
