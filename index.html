@@ -2576,9 +2576,9 @@ function parseTodoDate_(text){
 }
 function todoMatchesType_(t, type){
   const text = String((t && t.text) || '');
-  if(type === '보강') return /\[보강|\[보강\/보충/.test(text);
-  if(type === '결석') return /\[결석|\[휴강/.test(text);
-  if(type === '상담') return /\[상담|\[테스트진행|\[대면상담/.test(text);
+  if(type === '보강') return /\[보강|\[보강\/보충|보강|보충/.test(text);
+  if(type === '결석') return /\[결석|\[휴강|결석|휴강/.test(text);
+  if(type === '상담') return /\[상담|\[테스트진행|\[대면상담|상담|테스트/.test(text);
   return false;
 }
 function buildAssistantWeeklySummary_(type){
@@ -2669,17 +2669,20 @@ function runAssistantQuery(){
   if(!q){ showToast('질의를 입력해 주세요.'); return; }
   const sUrl = getKey('script');
   if(sUrl){
-    fetch(sUrl, {
-      method:'POST',
-      body: JSON.stringify({
-        action:'assistant_query',
-        question:q,
-        todos:(todos || []).slice(0, 200),
-        currentMode: (typeof currentMode !== 'undefined' ? currentMode : ''),
-        classType: (typeof classType !== 'undefined' ? classType : ''),
-        name: val('nameInput'),
-        date: val('dateInput')
-      })
+    todoApi_({ action:'todo_list', includeCompleted:true }).then(allRes=>{
+      const allTodos = (allRes && allRes.result === 'success' && Array.isArray(allRes.todos)) ? allRes.todos : (todos || []);
+      return fetch(sUrl, {
+        method:'POST',
+        body: JSON.stringify({
+          action:'assistant_query',
+          question:q,
+          todos:allTodos.slice(0, 500),
+          currentMode: (typeof currentMode !== 'undefined' ? currentMode : ''),
+          classType: (typeof classType !== 'undefined' ? classType : ''),
+          name: val('nameInput'),
+          date: val('dateInput')
+        })
+      });
     }).then(r=>r.json()).then(res=>{
       if(res && res.result === 'success' && res.answer){
         const box = qs('aiAssistantResult');
