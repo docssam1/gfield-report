@@ -2510,6 +2510,57 @@ function runQuickAssistant(type){
   box.value = buildAssistantWeeklySummary_(type);
   showToast(`✅ 이번주 ${type} 요약을 만들었습니다.`);
 }
+function parseAssistantQuerySpec_(q){
+  const text = String(q || '').trim();
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+  let start = null, end = null, label = '전체';
+
+  if(/오늘/.test(text)){ start = today; end = new Date(today); end.setHours(23,59,59,999); label = '오늘'; }
+  else if(/내일/.test(text)){ start = tomorrow; end = new Date(tomorrow); end.setHours(23,59,59,999); label = '내일'; }
+  else if(/다음주/.test(text)){
+    const s = startOfWeek_(today); s.setDate(s.getDate() + 7);
+    start = s; end = new Date(s); end.setDate(end.getDate() + 6); end.setHours(23,59,59,999); label = '다음주';
+  }
+  else if(/이번주|금주/.test(text)){ start = startOfWeek_(today); end = endOfWeek_(today); label = '이번주'; }
+  else if(/이번달|이달|금월/.test(text)){ start = new Date(today.getFullYear(), today.getMonth(), 1); end = new Date(today.getFullYear(), today.getMonth()+1, 0, 23,59,59,999); label = '이번달'; }
+  else {
+    const r = text.match(/(20\d{2})[.\-/](\d{1,2})[.\-/](\d{1,2})\s*(?:~|-|부터)\s*(20\d{2})[.\-/](\d{1,2})[.\-/](\d{1,2})/);
+    if(r){
+      start = new Date(Number(r[1]), Number(r[2])-1, Number(r[3]));
+      end = new Date(Number(r[4]), Number(r[5])-1, Number(r[6]), 23,59,59,999);
+      label = `${r[1]}-${String(r[2]).padStart(2,'0')}-${String(r[3]).padStart(2,'0')}~${r[4]}-${String(r[5]).padStart(2,'0')}-${String(r[6]).padStart(2,'0')}`;
+    }
+  }
+
+  let type = '전체';
+  if(/보강|보충/.test(text)) type = '보강';
+  else if(/결석|휴강/.test(text)) type = '결석';
+  else if(/상담|테스트/.test(text)) type = '상담';
+
+  return { raw: text, type, start, end, label };
+}
+function formatYmd_(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function buildAssistantSmartSummary_(spec){
+  const pool = (todos || []).filter(t => t && t.status !== '삭제');
+  const picked = pool.filter(t => {
+    if(spec.type !== '전체' && !todoMatchesType_(t, spec.type)) return false;
+    if(!spec.start || !spec.end) return true;
+    const d = parseTodoDate_(t.text);
+    if(!d) return false;
+    return d >= spec.start && d <= spec.end;
+  });
+  const rangeText = (spec.start && spec.end) ? ` (${formatYmd_(spec.start)}~${formatYmd_(spec.end)})` : '';
+  const title = `${spec.label} ${spec.type === '전체' ? '일정' : spec.type} 검색 결과${rangeText}`;
+  if(!picked.length){
+    return `${title}\n- 해당 조건의 항목이 없습니다.\n\n질문: ${spec.raw}`;
+  }
+  const lines = picked.slice(0, 40).map((t, i) => `${i+1}. ${t.text}`);
+  return `${title}\n${lines.join('\n')}`;
+}
 function runAssistantQuery(){
   const q = (val('aiAssistantQuery') || '').trim();
   if(!q){ showToast('질의를 입력해 주세요.'); return; }
@@ -2543,12 +2594,10 @@ function runAssistantQuery(){
   runAssistantQueryFallback_(q);
 }
 function runAssistantQueryFallback_(q){
-  if(/이번주.*보강|이번주.*보충/.test(q)) return runQuickAssistant('보강');
-  if(/이번주.*결석|이번주.*휴강/.test(q)) return runQuickAssistant('결석');
-  if(/이번주.*상담/.test(q)) return runQuickAssistant('상담');
   const box = qs('aiAssistantResult');
-  if(box) box.value = `요청: ${q}\n\n현재는 '이번주 보강/결석/상담' 질의에 최적화되어 있습니다.`;
-  showToast('⚠️ 현재 지원 질의로 변환해 주세요.');
+  const spec = parseAssistantQuerySpec_(q);
+  if(box) box.value = buildAssistantSmartSummary_(spec).slice(0, 3000);
+  showToast('✅ 로컬 지능 검색으로 결과를 만들었습니다.');
 }
 function applyAssistantIntent_(intent, confidence){
   const i = String(intent || '').trim();
