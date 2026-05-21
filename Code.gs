@@ -598,10 +598,22 @@ function createGoogleCalendarEvent_(p, notionUrl) {
   const day = toDateOnly_(dateText);
   if (!day) return { created: false, reason: 'date_parse_failed', raw: dateText };
 
-  const title = '[지필드] ' + String(p.name || p.studentName || '학생') + ' ' + String(p.docType || p.type || '일정');
+  const student = String(p.name || p.studentName || '학생').trim();
+  const rawType = String(p.type || p.cType || p.docType || '일정').trim();
+  const startTime = String(p.start || p.startTime || p.time || '').trim();
+  const typeLabel =
+    (rawType.indexOf('결석') !== -1 || rawType.indexOf('휴강') !== -1) ? '결석' :
+    (rawType.indexOf('보강') !== -1 || rawType.indexOf('보충') !== -1) ? '보강' :
+    (rawType.indexOf('상담') !== -1 || rawType.indexOf('테스트') !== -1) ? '상담' :
+    rawType || '일정';
+  const title = startTime
+    ? ('[' + typeLabel + '] ' + student + ' ' + startTime)
+    : ('[' + typeLabel + '] ' + student);
+
   const desc = [
-    '학생명: ' + String(p.name || p.studentName || ''),
-    '유형: ' + String(p.type || p.cType || p.docType || ''),
+    '학생명: ' + student,
+    '유형: ' + rawType,
+    startTime ? ('시작시간: ' + startTime) : '',
     '학교/유치원: ' + String(p.school || ''),
     '학년/나이: ' + String(p.grade || ''),
     '연락처: ' + String(p.phone || ''),
