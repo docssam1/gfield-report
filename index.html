@@ -1644,12 +1644,10 @@ function todoToCalendarByAi(id){
 
 function addTodo() {
   const input = qs('todoIn'); const v = val('todoIn'); if(!v) return;
-  const tempId = 'tmp_' + Date.now(); const tempTodo = { id: tempId, text: v, status: '진행중', done: false, source: '수동입력', createdAt: new Date().toISOString() };
-  todos.unshift(tempTodo); input.value = ''; todoPendingIds.add(String(tempId)); cacheTodos_(); renderTodos();
-  todoApi_({ action:'todo_add', text: v, writer: '원장', source: '수동입력' }).then(res=>{
-    if(res.result !== 'success') throw new Error(res.error || 'To-Do 저장 실패');
-    showToast('✅ To-Do가 구글 시트에 저장되었습니다.'); todoPendingIds.delete(String(tempId)); syncTodosFromSheet_({silent:true, includeCompleted:showCompletedTodos});
-  }).catch(err=>{ todoPendingIds.delete(String(tempId)); todos = todos.filter(t => String(t.id) !== String(tempId)); cacheTodos_(); renderTodos(); alert('To-Do 저장 오류: '+err.message); });
+  const lines = splitBulkTodoLines_(v);
+  input.value = '';
+  lines.forEach(line => enqueueTodoText_(line, '수동입력'));
+  showToast(`✅ To-Do ${lines.length}건 저장 요청`);
 }
 
 function toggleTodo(id, done) {
@@ -1682,6 +1680,62 @@ function syncTodosFromSheet_(opts = {}) {
 }
 function refreshTodosManually(){ syncTodosFromSheet_({silent:false, includeCompleted:showCompletedTodos}); }
 
+function normalizeTodoDateText_(line){
+  const now = new Date();
+  let s = String(line || '').trim();
+  s = s.replace(/(\d{1,2})\.(\d{1,2})(?!\d)/g, (_, mm, dd) => `${now.getFullYear()}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`);
+  s = s.replace(/(^|[\s,])(\d{1,2})\/(\d{1,2})(?!\d)/g, (_, p, mm, dd) => `${p}${now.getFullYear()}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`);
+  return s;
+}
+function splitBulkTodoLines_(text){
+  const raw = String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+  if(!raw) return [];
+  const chunks = raw.split(/\n|,(?=\s*\d{1,2}[./]\d{1,2})/g).map(x=>normalizeTodoDateText_(x)).map(x=>x.trim()).filter(Boolean);
+  return chunks.length > 1 ? chunks : [normalizeTodoDateText_(raw)];
+}
+function enqueueTodoText_(todoText, source){
+  const t = String(todoText || '').trim();
+  if(!t) return;
+  if((todos || []).some(x => x.text === t && x.status !== '삭제')) return;
+  const tempId = 'auto_' + Date.now() + '_' + Math.floor(Math.random()*1000);
+  todos.unshift({id:tempId,text:t,status:'진행중',done:false,source:source || '자동일정'});
+  todoPendingIds.add(String(tempId)); cacheTodos_(); renderTodos();
+  todoApi_({ action:'todo_add', text: t, writer: '원장', source: source || '자동일정' })
+    .then(()=>{ todoPendingIds.delete(String(tempId)); syncTodosFromSheet_({silent:true, includeCompleted:showCompletedTodos}); })
+    .catch(err=>{ todoPendingIds.delete(String(tempId)); todos = todos.filter(x => String(x.id) !== String(tempId)); cacheTodos_(); renderTodos(); console.warn('자동 To-Do 저장 실패', err); });
+}
+function validateScheduleInputs_(){
+  if(classType !== '결석') return { ok:true };
+  const reasonType = document.querySelector('input[name="absentReasonType"]:checked')?.value || '';
+  const mType = val('absentMakeupType');
+  const dDate = val('dateInput');
+  const mdDate = val('absentMakeupDate');
+  const mdStart = val('absentMakeupStartTime');
+  const mdEnd = val('absentMakeupEndTime');
+  const warns = [];
+  if(mdStart){
+    const h = Number(String(mdStart).split(':')[0] || 0);
+    if(h >= 0 && h <= 6) warns.push(`보강 시작시간이 ${mdStart} 입니다. 새벽 시간 입력 오타 가능성이 큽니다.`);
+  }
+  if(mdStart && mdEnd){
+    const a = Number(mdStart.replace(':',''));
+    const b = Number(mdEnd.replace(':',''));
+    if(b <= a) warns.push(`보강 종료시간(${mdEnd})이 시작시간(${mdStart})보다 이르거나 같습니다.`);
+  }
+  if(mdDate && dDate){
+    const d1 = new Date(dDate + 'T00:00:00');
+    const d2 = new Date(mdDate + 'T00:00:00');
+    if(d2 < d1) warns.push(`보강일(${mdDate})이 공지/결석일(${dDate})보다 빠릅니다. 입력값 확인이 필요합니다.`);
+  }
+  if((mType === 'decided' || mType === 'changed') && !mdDate) warns.push('보강 확정/변경인데 보강 예정일이 비어 있습니다.');
+  if(reasonType !== 'free' && !dDate) warns.push('결석/휴강 선택 시 일정 날짜가 필요합니다.');
+  if(warns.length){
+    const ok = confirm('⚠️ 일정 입력 확인 필요\n\n- ' + warns.join('\n- ') + '\n\n그래도 저장할까요?');
+    return { ok: ok };
+  }
+  return { ok:true };
+}
+
 function autoAddTodoForSchedule() {
   const n = val('nameInput').trim(); const school = val('dbSchool').trim(); const grade = val('dbGrade').trim(); if(!n) return;
   let todoText = ""; const dDate = val('dateInput'); const dStart = val('startTimeInput'); const dEnd = val('endTimeInput'); let dTimeStr = dDate; if(dStart) dTimeStr += ` ${dStart}`; if(dEnd) dTimeStr += `~${dEnd}`;
@@ -1701,14 +1755,21 @@ function autoAddTodoForSchedule() {
     if (classType === '결석') {
       const mdDate = val('absentMakeupDate'); const mdStart = val('absentMakeupStartTime'); const mdEnd = val('absentMakeupEndTime'); const reasonType = document.querySelector('input[name="absentReasonType"]:checked')?.value || ''; const mt = qs('absentMakeupType').options[qs('absentMakeupType').selectedIndex].text;
       let mTimeStr = mdDate; if (mdStart) mTimeStr += ` ${mdStart}`; if (mdEnd) mTimeStr += `~${mdEnd}`; if (!mTimeStr) mTimeStr = '일정미정';
-      if (reasonType === 'free') todoText = `[보강/보충] ${n} / 보강: ${mTimeStr} / ${mt}`; else if (reasonType === 'cancelled') todoText = `[휴강] ${n} / 휴강: ${dTimeStr} / 보강: ${mTimeStr} / ${mt}`; else todoText = `[결석] ${n} / 결석: ${dTimeStr} / 보강: ${mTimeStr} / ${mt}`;
+      if (reasonType === 'free') {
+        enqueueTodoText_(`[보강/보충] ${n} / 보강: ${mTimeStr} / ${mt}`, '자동일정');
+      } else if (reasonType === 'cancelled') {
+        enqueueTodoText_(`[휴강] ${n} / 휴강: ${dTimeStr}`, '자동일정');
+      } else {
+        enqueueTodoText_(`[결석] ${n} / 결석: ${dTimeStr}`, '자동일정');
+      }
+      const mType = val('absentMakeupType');
+      if (mType === 'decided' && mdDate) enqueueTodoText_(`[보강확정] ${n} / ${mTimeStr}`, '자동일정');
+      else if (mType === 'changed' && mdDate) enqueueTodoText_(`[보강변경] ${n} / ${mTimeStr}`, '자동일정');
+      else if (mType === 'canceled') enqueueTodoText_(`[보강취소] ${n}`, '자동일정');
+      return;
     }
   }
-  if (todoText) {
-    if((todos || []).some(t => t.text === todoText && t.status !== '삭제')) return;
-    const tempId = 'auto_' + Date.now(); todos.unshift({id:tempId,text:todoText,status:'진행중',done:false,source:'자동일정'}); todoPendingIds.add(String(tempId)); cacheTodos_(); renderTodos();
-    todoApi_({ action:'todo_add', text: todoText, writer: '원장', source: '자동일정' }).then(()=>{ todoPendingIds.delete(String(tempId)); syncTodosFromSheet_({silent:true, includeCompleted:showCompletedTodos}); }).catch(err=>{ todoPendingIds.delete(String(tempId)); todos = todos.filter(t => String(t.id) !== String(tempId)); cacheTodos_(); renderTodos(); console.warn('자동 To-Do 저장 실패', err); });
-  }
+  if (todoText) enqueueTodoText_(todoText, '자동일정');
 }
 
 function getDayName(dateStr) {const days=['일','월','화','수','목','금','토']; return days[new Date(dateStr).getDay()];}
@@ -2021,6 +2082,8 @@ async function saveToDrive(e){
   if(e&&e.preventDefault)e.preventDefault(); if(lockAction('saveToDrive', 2500)) return false;
   const btn = (e && e.currentTarget) || qs('saveDriveBtn'); const restore = setButtonBusy(btn, '저장 중...');
   try{
+    const vchk = validateScheduleInputs_();
+    if(!vchk.ok) return false;
     const csRec = typeof getCSRecordSummary === 'function' ? getCSRecordSummary() : {}; const n = requireStudentName(); if(!n) return false;
     const sUrl = getScriptUrlOrAlert(); if(!sUrl) return false; const backendType = getBackendReportType();
     const subjects = Array.from(document.querySelectorAll('#subjectList .subj-row-wrap')).map(row => { const title = row.querySelector('.v-subj')?.value?.trim() || ''; const content = row.querySelector('.v-content')?.value?.trim() || ''; return title ? `${title}${content ? '('+content+')' : ''}` : ''; }).filter(Boolean).slice(0, 3).join(', ');
@@ -2047,6 +2110,8 @@ async function deployToGitHubPages(e){
   if(e&&e.preventDefault)e.preventDefault(); if(lockAction('deployToGitHubPages', 2500)) return false;
   const btn = (e && e.currentTarget) || qs('ghBtn'); const restore = setButtonBusy(btn, '배포 중...');
   try{
+    const vchk = validateScheduleInputs_();
+    if(!vchk.ok) return false;
     const n = requireStudentName(); if(!n) return false; if(typeof warnIfCsHtmlNotNeeded === 'function' && warnIfCsHtmlNotNeeded()) return false;
     const sUrl = getScriptUrlOrAlert(); if(!sUrl) return false;
     const ghU = getKey('ghUser') || 'docssam1'; const ghR = getKey('ghRepo') || 'gfield-report'; const backendType = getBackendReportType();
@@ -2063,6 +2128,8 @@ async function deployToGitHubPages(e){
 
 async function saveToNotion(){
   const sUrl=getKey('script'); if(!sUrl){openKeyModal();return;} const btn = document.getElementById('notionBtn'); const n=val('nameInput').trim()||'학생'; if(!n){showToast('이름 입력 필요!');return;}
+  const vchk = validateScheduleInputs_();
+  if(!vchk.ok) return;
   const mdDate = val('absentMakeupDate');
   if(classType === '결석' && mdDate) { let savedSchedules = JSON.parse(localStorage.getItem('gf_schedules') || '[]'); let conflict = savedSchedules.find(s => s.date === mdDate && s.name !== n); if(conflict && !confirm(`⚠️ 경고: [${mdDate}] 해당 날짜에 이미 [${conflict.name}] 학생의 일정이 등록되어 있습니다. 같이 진행하시겠습니까?`)) return; savedSchedules = savedSchedules.filter(s => !(s.date === mdDate && s.name === n)); savedSchedules.push({date: mdDate, name: n}); localStorage.setItem('gf_schedules', JSON.stringify(savedSchedules)); }
   let backendType = classType; if(classType === '결석') { backendType = document.querySelector('input[name="absentReasonType"]:checked')?.value === 'free' ? '보강' : '결석'; }
