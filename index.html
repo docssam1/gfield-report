@@ -316,7 +316,6 @@ button:disabled{opacity:.62 !important;cursor:not-allowed !important;}
     <div style="display:flex; gap:4px; margin-top:2px; align-items:center;">
       <input type="date" id="dateInput" onchange="updateWeekday();updateMsgBox()" style="flex:2; font-size:12px;"><span id="weekdayView" style="font-size:12px;font-weight:800;color:#16417C;align-self:center;min-width:24px;text-align:center;"></span>
       <input type="time" id="startTimeInput" onchange="updateMsgBox()" style="flex:1; font-size:12px;">
-      <button type="button" onclick="openTimePicker('startTimeInput')" title="시작 시간 선택" style="border:1px solid var(--border);background:#fff;border-radius:8px;padding:6px 8px;cursor:pointer;font-size:14px;">🕒</button>
       <input type="time" id="endTimeInput" onchange="updateMsgBox()" style="flex:1; font-size:12px;">
     </div>
   </div>
@@ -400,7 +399,6 @@ button:disabled{opacity:.62 !important;cursor:not-allowed !important;}
     <div style="display:flex; gap:8px; align-items:center;">
       <input type="date" id="absentMakeupDate" onchange="updateMsgBox()" style="flex:2;">
       <input type="time" id="absentMakeupStartTime" onchange="updateMsgBox()" style="flex:1;">
-      <button type="button" onclick="openTimePicker('absentMakeupStartTime')" title="보강 시작 시간 선택" style="border:1px solid #fca5a5;background:#fff;border-radius:8px;padding:6px 8px;cursor:pointer;font-size:14px;">🕒</button>
       <span style="font-weight:bold;color:#b91c1c;">~</span>
       <input type="time" id="absentMakeupEndTime" onchange="updateMsgBox()" style="flex:1;">
     </div>
