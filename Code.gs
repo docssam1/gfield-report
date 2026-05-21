@@ -1440,3 +1440,8 @@ function mondayOfCurrentWeek_() {
   d.setHours(0, 0, 0, 0);
   return d;
 }
+
+// Manual runner for Apps Script UI (Run button)
+function resync_calendar_from_week_start() {
+  return resyncCalendarFromWeekStart_({});
+}
