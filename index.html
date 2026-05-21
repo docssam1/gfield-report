@@ -2524,6 +2524,16 @@ function parseAssistantQuerySpec_(q){
     start = s; end = new Date(s); end.setDate(end.getDate() + 6); end.setHours(23,59,59,999); label = '다음주';
   }
   else if(/이번주|금주/.test(text)){ start = startOfWeek_(today); end = endOfWeek_(today); label = '이번주'; }
+  else if(/이번달\s*다음달|다음달\s*이번달|이번달과\s*다음달|이번달\+\s*다음달/.test(text)){
+    start = new Date(today.getFullYear(), today.getMonth(), 1);
+    end = new Date(today.getFullYear(), today.getMonth()+2, 0, 23,59,59,999);
+    label = '이번달+다음달';
+  }
+  else if(/다음달/.test(text)){
+    start = new Date(today.getFullYear(), today.getMonth()+1, 1);
+    end = new Date(today.getFullYear(), today.getMonth()+2, 0, 23,59,59,999);
+    label = '다음달';
+  }
   else if(/이번달|이달|금월/.test(text)){ start = new Date(today.getFullYear(), today.getMonth(), 1); end = new Date(today.getFullYear(), today.getMonth()+1, 0, 23,59,59,999); label = '이번달'; }
   else {
     const r = text.match(/(20\d{2})[.\-/](\d{1,2})[.\-/](\d{1,2})\s*(?:~|-|부터)\s*(20\d{2})[.\-/](\d{1,2})[.\-/](\d{1,2})/);
