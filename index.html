@@ -669,6 +669,7 @@ function updateWeekday(){
 }
 
 const GFIELD_DRAFT_KEY = 'gf_report_draft_v1';
+const GFIELD_DRAFT_BACKUP_KEY = 'gf_report_draft_backup_v1';
 let __draftSaveTimer = null;
 let __draftRestoring = false;
 
@@ -705,9 +706,19 @@ function saveDraftNow(){
   if(__draftRestoring) return;
   try{ localStorage.setItem(GFIELD_DRAFT_KEY, JSON.stringify(collectDraftState())); }catch(e){}
 }
+
+function saveDraftBackup_(reason){
+  try{
+    const draft = collectDraftState();
+    draft.backupReason = String(reason || 'manual');
+    draft.backupAt = Date.now();
+    localStorage.setItem(GFIELD_DRAFT_BACKUP_KEY, JSON.stringify(draft));
+  }catch(e){}
+}
 function manualSaveDraft(){
   try{
     saveDraftNow();
+    saveDraftBackup_('manual_save');
     showToast('✅ 오프라인 임시 저장 완료');
   }catch(e){
     alert('임시 저장 실패: ' + (e.message || e));
@@ -762,8 +773,24 @@ function restoreDraftState(){
 function manualRestoreDraft(){
   if(!confirm('현재 입력값 위에 임시 저장본을 복구할까요?')) return;
   const ok = restoreDraftState();
-  if(ok) showToast('✅ 오프라인 임시 복구 완료');
-  else showToast('임시 저장본이 없습니다.');
+  if(ok){
+    showToast('✅ 오프라인 임시 복구 완료');
+    return;
+  }
+  let backup = null;
+  try{ backup = JSON.parse(localStorage.getItem(GFIELD_DRAFT_BACKUP_KEY) || 'null'); }catch(e){ backup = null; }
+  if(!backup || !backup.fields){
+    showToast('임시 저장본이 없습니다.');
+    return;
+  }
+  try{
+    localStorage.setItem(GFIELD_DRAFT_KEY, JSON.stringify(backup));
+    const ok2 = restoreDraftState();
+    if(ok2) showToast('✅ 백업본으로 임시 복구 완료');
+    else showToast('복구 가능한 백업본이 없습니다.');
+  }catch(e){
+    showToast('복구 실패: 백업본을 읽지 못했습니다.');
+  }
 }
 
 window.addEventListener('DOMContentLoaded',()=>{ 
@@ -1252,6 +1279,7 @@ function fillMsgFromDoc_(doc){
 function loadFromFile(event, mode){
   const file = event && event.target && event.target.files ? event.target.files[0] : null;
   if(!file) return;
+  saveDraftBackup_('before_load_file_' + String(mode || 'unknown'));
   const reader = new FileReader();
   reader.onload = function(e){
     try{
@@ -1266,6 +1294,7 @@ function loadFromFile(event, mode){
         updateMsgBox();
         showToast(`✅ 이전 과제 불러오기 완료 (과제:${loaded}, 오늘과제:${todayLoaded})`);
       } else if(mode === 'all'){
+        saveDraftBackup_('before_overwrite_all');
         clearReportInputs_();
         const hwLoaded = fillHomeworkFromSnapshot_(doc);
         const todayHwLoaded = fillTodayHomeworkFromDoc_(doc);
@@ -1743,12 +1772,16 @@ async function saveToDrive(e){
       if(r.result !== 'success') throw new Error(r.error || '시트 기록 실패'); showToast('✅ 시트 기록 완료'); return false;
     }
     const htmlContent = typeof buildSnapshot === 'function' ? buildSnapshot() : '<!doctype html><meta charset="utf-8"><body>내용 없음</body>'; const fName = makeReportFileName(n, backendType);
+    saveDraftBackup_('before_save_drive');
     const payload = { action:'save_drive', mode:currentMode, csRecord:csRec, studentName:n, name:csRec.name || n, type:backendType, school:csRec.school || val('dbSchool'), grade:csRec.grade || val('dbGrade'), phone:csRec.phone || val('dbPhone'), course:csRec.course || val('courseInput').trim(), content:currentMode==='상담' ? (csRec.summaryContent || csRec.content || val('msgText') || val('csMemo')) : undefined, fileName:fName, htmlContent:htmlContent, photoDriveUrls:getReportPhotoDriveUrls(), sheetId:getKey('sheetId') || DEFAULT_SHEET, attendance:{ date:val('dateInput'), type:backendType, course:csRec.course || val('courseInput').trim(), school:csRec.school || val('dbSchool'), grade:csRec.grade || val('dbGrade'), phone:csRec.phone || val('dbPhone'), subjects_merged:subjects, memo:currentMode==='상담' ? (csRec.summaryContent || csRec.content || val('msgText') || val('csMemo')) : '' } };
     const res = await fetch(sUrl,{method:'POST',body:JSON.stringify(payload)}); const r = await res.json();
     if(r.result !== 'success') throw new Error(r.error || '저장 실패');
     if(window.state){ window.state.driveFileId = r.fileId || ''; window.state.lastRowNumber = r.rowNumber || ''; }
     if(window.setLink) window.setLink(r.url, 'drive'); showToast('저장되었습니다.');
-  }catch(err){ alert('❌ 저장 실패: ' + err.message); }finally{ if(typeof updateActionButtonLabels === 'function') updateActionButtonLabels(); restore(); }
+  }catch(err){
+    saveDraftBackup_('save_drive_failed');
+    alert('❌ 저장 실패: ' + err.message + '\n\n현재 입력 내용은 오프라인 백업으로 보존되었습니다. [임시 복구] 버튼으로 복구할 수 있습니다.');
+  }finally{ if(typeof updateActionButtonLabels === 'function') updateActionButtonLabels(); restore(); }
   return false;
 }
 
