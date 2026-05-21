@@ -175,6 +175,7 @@ function doPost(e) {
     else if (action === 'todo_toggle') data = todoToggle_(payload);
     else if (action === 'todo_delete') data = todoDelete_(payload);
     else if (action === 'todo_to_calendar_ai') data = todoToCalendarAi_(payload);
+    else if (action === 'resync_calendar_from_week_start') data = resyncCalendarFromWeekStart_(payload);
     else if (action === 'notion') data = saveToNotion_(payload);
     else if (action === 'assistant_query') data = assistantQuery_(payload);
     else if (action === 'list_drive_photos') data = listDrivePhotos_(payload);
@@ -1335,4 +1336,107 @@ function mergeDateAndTime_(dateText, timeText) {
   var tm = String(timeText || '').match(/^(\d{1,2}):(\d{2})$/);
   if (!dm || !tm) return null;
   return new Date(Number(dm[1]), Number(dm[2]) - 1, Number(dm[3]), Number(tm[1]), Number(tm[2]), 0, 0);
+}
+
+function resyncCalendarFromWeekStart_(p) {
+  var ss = SpreadsheetApp.openById(getSheetId_(p.sheetId));
+  var sheet = ensureSheet_(ss, ACTIVITY_SHEET, ACTIVITY_HEADERS);
+  ensureActivityHeaders_(sheet);
+  var values = sheet.getDataRange().getValues();
+  if (values.length < 2) {
+    return { result: 'success', message: '재동기화할 데이터가 없습니다.', updated: 0 };
+  }
+  var idx = headerIndex_(values[0]);
+  var startDate = p.startDate ? toDateOnly_(String(p.startDate)) : mondayOfCurrentWeek_();
+  if (!startDate) throw new Error('startDate 해석 실패');
+
+  var calendarId = String(
+    p.google_calendar_id ||
+    PropertiesService.getScriptProperties().getProperty('GOOGLE_CALENDAR_ID') ||
+    CONFIG.GOOGLE_CALENDAR_ID ||
+    'primary'
+  ).trim();
+  var cal = CalendarApp.getCalendarById(calendarId);
+  if (!cal) throw new Error('구글 캘린더를 찾을 수 없습니다. calendarId=' + calendarId);
+
+  var updated = 0;
+  var skipped = 0;
+  var errors = [];
+
+  for (var i = 1; i < values.length; i++) {
+    var row = values[i];
+    var dateText = String(row[idx['수업일/상담일']] || row[idx['상담/테스트일']] || '').trim();
+    var day = toDateOnly_(dateText);
+    if (!day) { skipped++; continue; }
+    if (day.getTime() < startDate.getTime()) continue;
+
+    var name = String(row[idx['학생명']] || '').trim() || '학생';
+    var typeRaw = String(row[idx['세부유형']] || row[idx['수업유형']] || row[idx['문서구분']] || '').trim();
+    var content = String(row[idx['내용']] || '').trim();
+    var phone = String(row[idx['연락처']] || '').trim();
+    var schoolOrCourse = String(row[idx['과정']] || '').trim();
+    var reportUrl = String(row[idx['리포트링크']] || '').trim();
+
+    var typeLabel =
+      (typeRaw.indexOf('결석') !== -1 || typeRaw.indexOf('휴강') !== -1) ? '결석' :
+      (typeRaw.indexOf('보강') !== -1 || typeRaw.indexOf('보충') !== -1) ? '보강' :
+      (typeRaw.indexOf('상담') !== -1 || typeRaw.indexOf('테스트') !== -1) ? '상담' :
+      (typeRaw || '일정');
+
+    var title = '[' + typeLabel + '] ' + name;
+    var desc = [
+      '학생명: ' + name,
+      '유형: ' + typeRaw,
+      schoolOrCourse ? ('과정: ' + schoolOrCourse) : '',
+      phone ? ('연락처: ' + phone) : '',
+      content ? ('내용: ' + content) : '',
+      reportUrl ? ('리포트: ' + reportUrl) : ''
+    ].filter(Boolean).join('\n');
+
+    try {
+      var oldCalendarId = String(row[idx['구글캘린더ID']] || calendarId).trim();
+      var oldEventId = String(row[idx['구글캘린더이벤트ID']] || '').trim();
+      if (oldEventId) {
+        var oldCal = CalendarApp.getCalendarById(oldCalendarId || calendarId);
+        if (oldCal) {
+          var oldEv = oldCal.getEventById(oldEventId);
+          if (oldEv) oldEv.deleteEvent();
+        }
+      }
+
+      var newEv = cal.createAllDayEvent(title, day, {
+        description: desc,
+        guestsCanModify: false,
+        guestsCanInviteOthers: false,
+        guestsCanSeeGuests: false
+      });
+      try { newEv.addPopupReminder(30); } catch (eRem) {}
+
+      var rowNum = i + 1;
+      sheet.getRange(rowNum, idx['구글캘린더ID'] + 1).setValue(calendarId);
+      sheet.getRange(rowNum, idx['구글캘린더이벤트ID'] + 1).setValue(newEv.getId());
+      updated++;
+    } catch (rowErr) {
+      errors.push('row ' + (i + 1) + ': ' + (rowErr.message || rowErr));
+    }
+  }
+
+  return {
+    result: 'success',
+    message: '이번 주 시작일 기준 캘린더 재동기화 완료',
+    startDate: Utilities.formatDate(startDate, 'Asia/Seoul', 'yyyy-MM-dd'),
+    updated: updated,
+    skipped: skipped,
+    errors: errors.slice(0, 20)
+  };
+}
+
+function mondayOfCurrentWeek_() {
+  var now = new Date();
+  var d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var day = d.getDay(); // 0=Sun
+  var diff = (day + 6) % 7; // Monday start
+  d.setDate(d.getDate() - diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
 }
