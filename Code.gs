@@ -174,6 +174,7 @@ function doPost(e) {
     else if (action === 'todo_add') data = todoAdd_(payload);
     else if (action === 'todo_toggle') data = todoToggle_(payload);
     else if (action === 'todo_delete') data = todoDelete_(payload);
+    else if (action === 'todo_to_calendar_ai') data = todoToCalendarAi_(payload);
     else if (action === 'notion') data = saveToNotion_(payload);
     else if (action === 'assistant_query') data = assistantQuery_(payload);
     else if (action === 'list_drive_photos') data = listDrivePhotos_(payload);
@@ -1165,4 +1166,161 @@ function todoDelete_(p) {
   const row = idx + 2;
   sh.getRange(row, 4).setValue('삭제');
   return { result: 'success' };
+}
+
+function todoToCalendarAi_(p) {
+  var text = String(p.text || '').trim();
+  if (!text) return { result: 'error', error: 'text is required' };
+
+  var calendarId = String(
+    p.google_calendar_id ||
+    PropertiesService.getScriptProperties().getProperty('GOOGLE_CALENDAR_ID') ||
+    CONFIG.GOOGLE_CALENDAR_ID ||
+    'primary'
+  ).trim();
+  var cal = CalendarApp.getCalendarById(calendarId);
+  if (!cal) throw new Error('구글 캘린더를 찾을 수 없습니다. calendarId=' + calendarId);
+
+  var parsed = parseTodoScheduleByAiOrRegex_(text, p);
+  if (!parsed || !parsed.start) {
+    return { result: 'error', error: '일정 날짜/시간을 해석하지 못했습니다. To-Do 문장에 날짜를 포함해 주세요.' };
+  }
+
+  var title = String(parsed.title || text).trim().slice(0, 120);
+  var desc = String(parsed.description || text).trim();
+  var event;
+
+  if (parsed.allDay) {
+    event = cal.createAllDayEvent(title, parsed.start, { description: desc });
+  } else {
+    var end = parsed.end || new Date(parsed.start.getTime() + 60 * 60 * 1000);
+    if (end.getTime() <= parsed.start.getTime()) end = new Date(parsed.start.getTime() + 60 * 60 * 1000);
+    event = cal.createEvent(title, parsed.start, end, { description: desc });
+  }
+
+  return {
+    result: 'success',
+    calendarId: calendarId,
+    eventId: event.getId(),
+    eventTitle: title,
+    start: parsed.start,
+    end: parsed.end || ''
+  };
+}
+
+function parseTodoScheduleByAiOrRegex_(text, p) {
+  var ai = parseTodoScheduleByAi_(text, p);
+  if (ai && ai.start) return ai;
+  return parseTodoScheduleByRegex_(text);
+}
+
+function parseTodoScheduleByAi_(text, p) {
+  var key = String(
+    p.gemini_key ||
+    PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY') ||
+    ''
+  ).trim();
+  if (!key) return null;
+
+  var now = new Date();
+  var nowYmd = Utilities.formatDate(now, 'Asia/Seoul', 'yyyy-MM-dd');
+  var prompt =
+    '다음 To-Do 문장에서 캘린더 일정을 추출해 JSON으로만 답해라.\n' +
+    '오늘 날짜 기준: ' + nowYmd + '\n' +
+    '필수 키: title, date(yyyy-MM-dd), start(HH:mm or ""), end(HH:mm or ""), allDay(true/false), description\n' +
+    '날짜를 못 찾으면 {"error":"date_missing"} 만 출력.\n' +
+    '문장: ' + text;
+
+  var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + encodeURIComponent(key);
+  var body = {
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    generationConfig: { temperature: 0.1, maxOutputTokens: 300 }
+  };
+  var response = UrlFetchApp.fetch(url, {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify(body),
+    muteHttpExceptions: true
+  });
+  if (response.getResponseCode() < 200 || response.getResponseCode() >= 300) return null;
+  var data = JSON.parse(response.getContentText() || '{}');
+  var answer =
+    (((data.candidates || [])[0] || {}).content || {}).parts &&
+    (((data.candidates || [])[0] || {}).content || {}).parts[0] &&
+    (((data.candidates || [])[0] || {}).content || {}).parts[0].text
+      ? (((data.candidates || [])[0] || {}).content || {}).parts[0].text
+      : '';
+  if (!answer) return null;
+
+  var obj = null;
+  try {
+    obj = JSON.parse(String(answer).trim());
+  } catch (e) {
+    var m = String(answer).match(/\{[\s\S]*\}/);
+    if (m) {
+      try { obj = JSON.parse(m[0]); } catch (e2) {}
+    }
+  }
+  if (!obj || obj.error) return null;
+
+  var dateText = String(obj.date || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateText)) return null;
+  var startText = String(obj.start || '').trim();
+  var endText = String(obj.end || '').trim();
+  var allDay = obj.allDay === true || !startText;
+
+  var start = allDay ? toDateOnly_(dateText) : mergeDateAndTime_(dateText, startText);
+  if (!start) return null;
+  var end = null;
+  if (!allDay && endText) end = mergeDateAndTime_(dateText, endText);
+
+  return {
+    title: String(obj.title || '').trim() || text,
+    description: String(obj.description || '').trim() || text,
+    allDay: allDay,
+    start: start,
+    end: end
+  };
+}
+
+function parseTodoScheduleByRegex_(text) {
+  var s = String(text || '');
+  var now = new Date();
+  var y = now.getFullYear();
+  var m;
+
+  var date = null;
+  if (/오늘/.test(s)) {
+    date = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  } else if (/내일/.test(s)) {
+    date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  } else {
+    m = s.match(/(20\d{2})-(\d{1,2})-(\d{1,2})/);
+    if (m) date = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    if (!date) {
+      m = s.match(/(\d{1,2})\/(\d{1,2})/);
+      if (m) date = new Date(y, Number(m[1]) - 1, Number(m[2]));
+    }
+  }
+  if (!date) return null;
+
+  var tm = s.match(/(\d{1,2}):(\d{2})\s*~\s*(\d{1,2}):(\d{2})/);
+  if (tm) {
+    var start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), Number(tm[1]), Number(tm[2]), 0, 0);
+    var end = new Date(date.getFullYear(), date.getMonth(), date.getDate(), Number(tm[3]), Number(tm[4]), 0, 0);
+    return { title: s.slice(0, 120), description: s, allDay: false, start: start, end: end };
+  }
+  tm = s.match(/(\d{1,2}):(\d{2})/);
+  if (tm) {
+    var st = new Date(date.getFullYear(), date.getMonth(), date.getDate(), Number(tm[1]), Number(tm[2]), 0, 0);
+    return { title: s.slice(0, 120), description: s, allDay: false, start: st, end: null };
+  }
+  return { title: s.slice(0, 120), description: s, allDay: true, start: date, end: null };
+}
+
+function mergeDateAndTime_(dateText, timeText) {
+  var dm = String(dateText || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  var tm = String(timeText || '').match(/^(\d{1,2}):(\d{2})$/);
+  if (!dm || !tm) return null;
+  return new Date(Number(dm[1]), Number(dm[2]) - 1, Number(dm[3]), Number(tm[1]), Number(tm[2]), 0, 0);
 }

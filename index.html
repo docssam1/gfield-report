@@ -1620,8 +1620,29 @@ function renderTodos() {
   if(!visible.length){ list.innerHTML = `<div style="font-size:12px;color:#94a3b8;text-align:center;padding:18px 8px;">${showCompletedTodos ? '완료된 To-Do가 없습니다.' : '진행중인 To-Do가 없습니다.'}</div>`; return; }
   visible.forEach((t) => {
     const isPending = todoPendingIds.has(String(t.id)); const div = document.createElement('div'); div.className = t.done ? 'todo-item done' : 'todo-item'; div.style.opacity = isPending ? '.62' : '1';
-    div.innerHTML = `<input type="checkbox" ${t.done?'checked':''} ${isPending?'disabled':''} onchange="toggleTodo('${t.id}', this.checked)"><span style="flex:1;">${esc(t.text)}${isPending ? ' <small style="color:#64748b;">저장중...</small>' : ''}</span><button ${isPending?'disabled':''} onclick="delTodo('${t.id}')" style="border:none;background:none;color:red;cursor:${isPending?'wait':'pointer'};">✕</button>`;
+    div.innerHTML = `<input type="checkbox" ${t.done?'checked':''} ${isPending?'disabled':''} onchange="toggleTodo('${t.id}', this.checked)"><span style="flex:1;">${esc(t.text)}${isPending ? ' <small style="color:#64748b;">저장중...</small>' : ''}</span><button ${isPending?'disabled':''} onclick="todoToCalendarByAi('${t.id}')" title="AI로 캘린더 등록" style="border:none;background:none;color:#2563eb;cursor:${isPending?'wait':'pointer'};">📅</button><button ${isPending?'disabled':''} onclick="delTodo('${t.id}')" style="border:none;background:none;color:red;cursor:${isPending?'wait':'pointer'};">✕</button>`;
     list.appendChild(div);
+  });
+}
+
+function todoToCalendarByAi(id){
+  const sid = String(id);
+  if(todoPendingIds.has(sid)) return;
+  const target = (todos || []).find(t => String(t.id) === sid);
+  if(!target || !target.text) return;
+  const sUrl = getKey('script');
+  if(!sUrl){ openKeyModal(); return; }
+  showToast('⏳ AI가 To-Do를 일정으로 해석 중...');
+  todoApi_({
+    action: 'todo_to_calendar_ai',
+    id: sid,
+    text: target.text,
+    google_calendar_id: getKey('googleCalendarId') || 'primary'
+  }).then(res=>{
+    if(res.result !== 'success') throw new Error(res.error || '캘린더 등록 실패');
+    showToast('✅ AI 캘린더 등록 완료');
+  }).catch(err=>{
+    alert('AI 일정 등록 오류: ' + err.message);
   });
 }
 
