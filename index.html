@@ -270,10 +270,12 @@ button:disabled{opacity:.62 !important;cursor:not-allowed !important;}
   </div>
   <div class="icard">
     <div class="ilabel" id="dateLabel">일정</div>
-    <div style="display:flex; gap:4px; margin-top:2px;">
+    <div style="display:flex; gap:4px; margin-top:2px; align-items:center;">
       <input type="date" id="dateInput" onchange="updateWeekday();updateMsgBox()" style="flex:2; font-size:12px;"><span id="weekdayView" style="font-size:12px;font-weight:800;color:#16417C;align-self:center;min-width:24px;text-align:center;"></span>
       <input type="time" id="startTimeInput" onchange="updateMsgBox()" style="flex:1; font-size:12px;">
+      <button type="button" onclick="openTimePicker('startTimeInput')" title="시작 시간 선택" style="border:1px solid var(--border);background:#fff;border-radius:8px;padding:6px 8px;cursor:pointer;font-size:14px;">🕒</button>
       <input type="time" id="endTimeInput" onchange="updateMsgBox()" style="flex:1; font-size:12px;">
+      <button type="button" onclick="openTimePicker('endTimeInput')" title="종료 시간 선택" style="border:1px solid var(--border);background:#fff;border-radius:8px;padding:6px 8px;cursor:pointer;font-size:14px;">🕒</button>
     </div>
   </div>
   <div class="icard" id="courseCard"><div class="ilabel">과정</div><input type="text" id="courseInput" placeholder="심화 수학" oninput="updateMsgBox()"></div>
@@ -356,8 +358,10 @@ button:disabled{opacity:.62 !important;cursor:not-allowed !important;}
     <div style="display:flex; gap:8px; align-items:center;">
       <input type="date" id="absentMakeupDate" onchange="updateMsgBox()" style="flex:2;">
       <input type="time" id="absentMakeupStartTime" onchange="updateMsgBox()" style="flex:1;">
+      <button type="button" onclick="openTimePicker('absentMakeupStartTime')" title="보강 시작 시간 선택" style="border:1px solid #fca5a5;background:#fff;border-radius:8px;padding:6px 8px;cursor:pointer;font-size:14px;">🕒</button>
       <span style="font-weight:bold;color:#b91c1c;">~</span>
       <input type="time" id="absentMakeupEndTime" onchange="updateMsgBox()" style="flex:1;">
+      <button type="button" onclick="openTimePicker('absentMakeupEndTime')" title="보강 종료 시간 선택" style="border:1px solid #fca5a5;background:#fff;border-radius:8px;padding:6px 8px;cursor:pointer;font-size:14px;">🕒</button>
     </div>
   </div>
   <div class="absent-field">
@@ -812,6 +816,17 @@ window.setLink = function(url, kind) {
 
 function showToast(msg){ const t=qs('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
 function esc(v){ return String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function openTimePicker(inputId){
+  const el = qs(inputId);
+  if(!el) return;
+  try{
+    if(typeof el.showPicker === 'function') el.showPicker();
+    else { el.focus(); el.click(); }
+  }catch(e){
+    el.focus();
+    try{ el.click(); }catch(_){}
+  }
+}
 function renderMarkedText(v){
   return esc(v)
     .replace(/\[\[hl:([\s\S]*?)\]\]/g, '<span class="rpt-mark-hl">$1</span>')
@@ -1199,6 +1214,17 @@ function fillHomeworkFromSnapshot_(doc){
 
 function fillTodayHomeworkFromDoc_(doc){
   if(qs('todayHwList')) qs('todayHwList').innerHTML = '';
+  const snapshotRows = Array.from(doc.querySelectorAll('.data-next-hw'));
+  if(snapshotRows.length){
+    snapshotRows.forEach(r => {
+      const course = r.getAttribute('data-course') || '';
+      const type = r.getAttribute('data-type') || '필수';
+      const content = r.getAttribute('data-content') || '';
+      if(course || content) addTodayHwRow(course, type === '도전' ? '도전' : '필수', content);
+    });
+    return snapshotRows.length;
+  }
+
   const items = Array.from(doc.querySelectorAll('.today-hw-item'));
   if(items.length){
     items.forEach(item => {
@@ -1211,7 +1237,10 @@ function fillTodayHomeworkFromDoc_(doc){
     return items.length;
   }
 
-  // Fallback: old saved files without today-hw-item section
+  // Fallback: very old saved files that used data-today-hw only for next homework.
+  // Current files also use data-today-hw for homework-check recovery, so avoid
+  // treating those rows as "today homework" when a homework-check section exists.
+  if(extractSectionByTitle_(doc, '과제 확인')) return 0;
   const legacyRows = Array.from(doc.querySelectorAll('.data-today-hw'));
   legacyRows.forEach(r => {
     const course = r.getAttribute('data-course') || '';
@@ -1720,7 +1749,7 @@ function buildSnapshot(){
   document.querySelectorAll('#subjectList .subj-row-wrap').forEach(r=>{const sn=r.querySelector('.v-subj')?.value,t=r.querySelector('textarea.v-content')?.value;if(sn||t) subH+=`<div style="background:#f8fafc;border-radius:12px;padding:15px;margin-bottom:10px;"><div style="font-weight:800;color:#1e293b;margin-bottom:8px;">📘 ${esc(sn)}</div><div style="white-space:pre-wrap;line-height:1.7;">${renderMarkedText(t)}</div></div>`;});
   document.querySelectorAll('#videoList .video-card').forEach(r=>{const img=r.querySelector('img');if(!img)return;const u=img.getAttribute('data-url'),s=img.src,c=r.querySelector('.v-cmt')?.value || r.querySelector('.video-input')?.value || '';vidH+=`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:10px;"><a href="${u}" target="_blank" style="display:block;position:relative;border-radius:12px;overflow:hidden;background:#0f172a;"><img src="${s}" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(220,38,38,.9);color:#fff;width:44px;height:44px;border-radius:50%;text-align:center;line-height:44px;font-size:16px;">▶</div></a>${c?`<div style="text-align:center;margin-top:8px;font-weight:700;color:#334155;">${esc(c)}</div>`:''}</div>`;});
   document.querySelectorAll('#resourceList > div').forEach(r=>{const sn=r.querySelector('.v-name')?.value,l=r.querySelector('.v-link')?.value;if(sn&&l) resH+=`<div style="display:flex;justify-content:space-between;align-items:center;background:#f1f5f9;padding:12px;border-radius:10px;margin-bottom:8px;"><span style="font-weight:700;">${esc(sn)}</span><a href="${l}" target="_blank" style="background:#16417C;color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-size:12px;">연결</a></div>`;});
-  document.querySelectorAll('#todayHwList > div.today-row-pc').forEach(r=>{const c=r.querySelector('.v-course')?.value || '',ty=r.querySelector('.v-type')?.value || '',ct=r.querySelector('.v-content')?.value || '';if(c||ct){tHwH+=`<div class="today-hw-item" style="border-bottom:1px solid #e2e8f0; padding:14px 0;"><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" class="hw-chk" value="${esc(c)}" style="width:18px; height:18px; accent-color:#16417C; cursor:pointer;"><span class="hw-course-title" style="font-weight:700; color:#16417C; font-size:14px;">${esc(c)}</span><span style="background:${ty==='필수'?'#ef4444':'#3b82f6'};color:#fff;font-size:10px;padding:3px 6px;border-radius:4px;font-weight:bold;">${ty}</span></label>${ct ? `<div class="hw-content-text" style="font-size:13px; white-space:pre-wrap; line-height:1.6; color:#333; margin-left:26px; margin-top:8px;">${renderMarkedText(ct)}</div>`:''}</div>`;}});
+  document.querySelectorAll('#todayHwList > div.today-row-pc').forEach(r=>{const c=r.querySelector('.v-course')?.value || '',ty=r.querySelector('.v-type')?.value || '',ct=r.querySelector('.v-content')?.value || '';if(c||ct){tHwH+=`<div class="today-hw-item" style="border-bottom:1px solid #e2e8f0; padding:14px 0;"><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" class="hw-chk" value="${esc(c)}" style="width:18px; height:18px; accent-color:#16417C; cursor:pointer;"><span class="hw-course-title" style="font-weight:700; color:#16417C; font-size:14px;">${esc(c)}</span><span style="background:${ty==='필수'?'#ef4444':'#3b82f6'};color:#fff;font-size:10px;padding:3px 6px;border-radius:4px;font-weight:bold;">${ty}</span></label>${ct ? `<div class="hw-content-text" style="font-size:13px; white-space:pre-wrap; line-height:1.6; color:#333; margin-left:26px; margin-top:8px;">${renderMarkedText(ct)}</div>`:''}</div>`;hideD+=`<div class="data-next-hw" data-course="${esc(c)}" data-type="${esc(ty)}" data-content="${esc(ct)}" style="display:none;"></div>`;}});
   if(tHwH){tHwH=`<div id="hw-container">${tHwH}<div style="margin-top:20px; text-align:center;"><button onclick="sendBulkKakao()" style="background:#FEE500; color:#191919; border:none; padding:14px 20px; border-radius:12px; font-weight:800; font-size:14px; cursor:pointer; width:100%;">💬 지필드 영재교육으로 과제 완료 알리기</button><div style="font-size:11px; color:#64748b; margin-top:10px;">* 완료된 과제에 체크하신 후 버튼을 눌러주세요.</div></div></div><script>function sendBulkKakao(){var c=Array.from(document.querySelectorAll('.hw-chk:checked')).map(function(cb){return cb.value;});if(c.length===0){alert('과제를 먼저 체크해주세요!');return;}var m="[과제완료] ${esc(n)} 학생\\n\\n✅ 완료 내역:\\n"+c.map(function(x){return "- "+x;}).join('\\n');var ta=document.createElement("textarea");ta.value=m;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(m).catch(function(){});}alert('메세지가 복사되었습니다. 붙여넣기 해주세요');window.location.href='https://open.kakao.com/me/gfield';}<\/script>`;}
   
   const photoStyle = `.photo-carousel{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:8px 10px 20px;-webkit-overflow-scrolling:touch;perspective:1100px;scroll-padding:28px;}.photo-carousel::-webkit-scrollbar{height:7px;}.photo-carousel::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:999px;}.photo-card-view{position:relative;flex:0 0 min(72vw,300px);scroll-snap-align:center;border:none;background:#0f172a;border-radius:18px;overflow:hidden;box-shadow:0 12px 26px rgba(15,23,42,.16);padding:0;cursor:pointer;transform-origin:center center;transform:scale(.92) rotateY(18deg);opacity:.72;transition:transform .28s ease,opacity .28s ease,box-shadow .28s ease;}.photo-card-view.active{transform:scale(1) rotateY(0deg);opacity:1;box-shadow:0 18px 34px rgba(15,23,42,.26);}.photo-card-view.prev{transform:scale(.94) rotateY(16deg);opacity:.86;}.photo-card-view.next{transform:scale(.94) rotateY(-16deg);opacity:.86;}.photo-card-view img{width:100%;aspect-ratio:3/4;object-fit:contain;display:block;background:#eef2ff;}.photo-caption-hand{position:absolute;left:12px;right:12px;bottom:12px;background:rgba(15,23,42,.54);color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:14px;padding:9px 10px;text-align:center;font-family:'Comic Sans MS','Segoe Print','Nanum Pen Script','Apple SD Gothic Neo',cursive;font-size:17px;line-height:1.32;text-shadow:0 1px 2px rgba(0,0,0,.35);white-space:pre-wrap;}.photo-viewer{position:fixed;inset:0;background:rgba(2,6,23,.94);display:none;align-items:center;justify-content:center;z-index:9999;padding:18px;}.photo-viewer.show{display:flex;}.photo-viewer img{max-width:100%;max-height:86vh;object-fit:contain;border-radius:14px;background:#fff;}.photo-viewer-caption{position:fixed;left:18px;right:18px;bottom:18px;color:#fff;text-align:center;font-family:'Comic Sans MS','Segoe Print','Nanum Pen Script','Apple SD Gothic Neo',cursive;font-size:19px;line-height:1.35;text-shadow:0 2px 5px rgba(0,0,0,.6);white-space:pre-wrap;}.photo-viewer-close{position:fixed;right:14px;top:14px;width:42px;height:42px;border-radius:999px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.16);color:#fff;font-size:24px;line-height:1;cursor:pointer;}@media print{html,body{background:#fff !important;color:#000 !important;}.web-wrap{max-width:100%;padding:0 !important;}.rpt-sec{break-inside:avoid;page-break-inside:avoid;}.photo-carousel{display:grid !important;grid-template-columns:1fr 1fr !important;gap:8px !important;overflow:visible !important;padding:0 !important;perspective:none !important;scroll-snap-type:none !important;}.photo-card-view,.photo-card-view.active,.photo-card-view.prev,.photo-card-view.next{transform:none !important;opacity:1 !important;box-shadow:none !important;flex:none !important;width:100% !important;border:1px solid #e5e7eb !important;break-inside:avoid;page-break-inside:avoid;}.photo-card-view img{aspect-ratio:3/4;object-fit:cover;}.photo-caption-hand{position:static !important;left:auto !important;right:auto !important;bottom:auto !important;background:#fff !important;color:#111 !important;border:none !important;border-top:1px solid #e5e7eb !important;border-radius:0 !important;padding:6px 8px !important;text-shadow:none !important;font-size:12px !important;line-height:1.35 !important;}.photo-viewer,.photo-viewer-close,.photo-guide{display:none !important;}}`;
