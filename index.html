@@ -147,6 +147,27 @@ textarea{overflow:hidden;}
 .mark-popover .mark-em{background:#dbeafe;color:#1d4ed8;}
 .mark-popover .mark-star{background:#fff7ed;color:#c2410c;}
 .mark-popover .mark-clear{background:#e5e7eb;color:#374151;}
+.time-modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.35);z-index:13000;align-items:center;justify-content:center;padding:14px;}
+.time-modal-overlay.show{display:flex;}
+.time-modal{width:min(420px,96vw);background:#f8f8fc;border-radius:14px;overflow:hidden;box-shadow:0 16px 38px rgba(15,23,42,.3);}
+.time-modal-top{background:#0d9488;color:#fff;display:flex;align-items:center;gap:18px;padding:22px 22px 20px;}
+.time-meridiem{display:flex;flex-direction:column;gap:8px;font-size:24px;font-weight:800;line-height:1.05;}
+.time-meridiem button{border:none;background:transparent;color:rgba(255,255,255,.6);text-align:left;padding:0;font-size:24px;font-weight:800;cursor:pointer;}
+.time-meridiem button.active{color:#fff;}
+.time-big{font-size:78px;line-height:1;font-weight:400;letter-spacing:0;}
+.time-big .muted{color:rgba(255,255,255,.45);}
+.time-picker-dial-wrap{padding:18px 22px 14px;}
+.time-picker-dial{position:relative;width:320px;max-width:100%;aspect-ratio:1/1;margin:0 auto;background:#ececf1;border-radius:50%;}
+.time-hand{position:absolute;left:50%;top:50%;height:4px;background:#1e88e5;border-radius:999px;transform-origin:0 50%;z-index:1;}
+.time-hand-dot{position:absolute;left:50%;top:50%;width:14px;height:14px;background:#1e88e5;border-radius:50%;transform:translate(-50%,-50%);z-index:2;}
+.time-hand-knob{position:absolute;left:50%;top:50%;width:54px;height:54px;background:#1e88e5;border-radius:50%;transform:translate(-50%,-50%);z-index:2;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:700;pointer-events:none;}
+.time-num{position:absolute;left:50%;top:50%;width:38px;height:38px;transform:translate(-50%,-50%);border:none;background:transparent;color:#4b5563;font-size:19px;line-height:38px;text-align:center;border-radius:50%;cursor:pointer;}
+.time-num.active{background:#1e88e5;color:#fff;}
+.time-actions{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 16px;border-top:1px solid #e5e7eb;background:#f8f8fc;}
+.time-keyboard{background:#e5e7eb;border:none;border-radius:8px;padding:8px 10px;color:#6b7280;font-weight:800;cursor:pointer;font-size:12px;}
+.time-btns{display:flex;gap:8px;}
+.time-btn{border:none;background:transparent;color:#0f766e;font-weight:900;font-size:18px;padding:6px 12px;border-radius:8px;cursor:pointer;}
+.time-btn:hover{background:#e6fffa;}
 
 /* 학부모 HTML 템플릿 미리보기 */
 .preview-modal{max-width:960px;width:94%;height:90vh;display:flex;flex-direction:column;}
@@ -203,6 +224,29 @@ button:disabled{opacity:.62 !important;cursor:not-allowed !important;}
   <button type="button" class="mark-star" data-mark="star">별표</button>
   <button type="button" class="mark-clear" data-mark="clear">해제</button>
 </div>
+<div class="time-modal-overlay" id="timePickerModal">
+  <div class="time-modal" role="dialog" aria-modal="true" aria-label="시간 선택">
+    <div class="time-modal-top">
+      <div class="time-meridiem">
+        <button type="button" id="timeMeridiemAm" onclick="selectTimeMeridiem('AM')">오전</button>
+        <button type="button" id="timeMeridiemPm" onclick="selectTimeMeridiem('PM')">오후</button>
+      </div>
+      <div class="time-big"><span id="timeDisplayHour">12</span><span>:</span><span id="timeDisplayMinute" class="muted">00</span></div>
+    </div>
+    <div class="time-picker-dial-wrap">
+      <div class="time-picker-dial" id="timeDial"></div>
+    </div>
+    <div class="time-actions">
+      <button type="button" class="time-keyboard" onclick="closeTimePickerModal()">닫기</button>
+      <div class="time-btns">
+        <button type="button" class="time-btn" onclick="clearTimePickerValue()">삭제</button>
+        <button type="button" class="time-btn" onclick="closeTimePickerModal()">취소</button>
+        <button type="button" class="time-btn" onclick="applyTimePickerValue()">설정</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="quick-links">
   <a href="https://github.com/docssam1/gfield-report" target="_blank">🐱 GitHub 저장소</a>
   <a href="#" id="appsScriptEditorLink" onclick="openAppsScriptEditor(event)">⚙️ Apps Script 편집기</a>
@@ -800,6 +844,11 @@ window.addEventListener('DOMContentLoaded',()=>{
   document.querySelector('.mode-toggle-wrap')?.classList.add('report-active'); initKakao(); 
   if(qs('dateInput')) qs('dateInput').value = new Date().toISOString().split('T')[0]; updateWeekday(); 
   addHwRow(); addSubjRow(); addTodayHwRow(); loadTodos(); updateAppsScriptEditorLink(); applyAutoGrow(document);
+  const timeModal = qs('timePickerModal');
+  if(timeModal){
+    timeModal.addEventListener('click', e => { if(e.target === timeModal) closeTimePickerModal(); });
+  }
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeTimePickerModal(); });
   document.addEventListener('input', scheduleDraftSave, true);
   document.addEventListener('change', scheduleDraftSave, true);
   window.addEventListener('beforeunload', saveDraftNow);
@@ -815,9 +864,131 @@ window.setLink = function(url, kind) {
 
 function showToast(msg){ const t=qs('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
 function esc(v){ return String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+const __timePickerState = { targetId:'', meridiem:'AM', hour12:12, minute:0, mode:'hour' };
+function isMobileViewport_(){ return window.matchMedia('(max-width: 599px)').matches; }
+function parseTimeToState_(value){
+  const m = String(value || '').match(/^(\d{2}):(\d{2})$/);
+  let hour24 = 12;
+  let minute = 0;
+  if(m){
+    hour24 = Math.min(23, Math.max(0, parseInt(m[1], 10)));
+    minute = Math.min(59, Math.max(0, parseInt(m[2], 10)));
+  }
+  const meridiem = hour24 >= 12 ? 'PM' : 'AM';
+  const hour12 = (hour24 % 12) || 12;
+  return { meridiem, hour12, minute };
+}
+function renderTimePickerDial_(){
+  const dial = qs('timeDial');
+  if(!dial) return;
+  dial.innerHTML = '';
+  const nums = __timePickerState.mode === 'hour'
+    ? ['12','1','2','3','4','5','6','7','8','9','10','11']
+    : ['00','05','10','15','20','25','30','35','40','45','50','55'];
+  const radius = 132;
+  const activeValue = __timePickerState.mode === 'hour'
+    ? __timePickerState.hour12
+    : (__timePickerState.minute - (__timePickerState.minute % 5));
+  const activeIndex = nums.findIndex(label => parseInt(label, 10) === activeValue);
+  const handIndex = activeIndex >= 0 ? activeIndex : 0;
+  const handAngle = (handIndex * 30 - 90) * Math.PI / 180;
+  const handLen = radius - 18;
+  const hx = Math.cos(handAngle) * handLen;
+  const hy = Math.sin(handAngle) * handLen;
+
+  const hand = document.createElement('div');
+  hand.className = 'time-hand';
+  hand.style.width = `${handLen}px`;
+  hand.style.transform = `translateY(-50%) rotate(${(handIndex * 30 - 90)}deg)`;
+  dial.appendChild(hand);
+
+  const dot = document.createElement('div');
+  dot.className = 'time-hand-dot';
+  dial.appendChild(dot);
+
+  const knob = document.createElement('div');
+  knob.className = 'time-hand-knob';
+  knob.style.left = `calc(50% + ${hx}px)`;
+  knob.style.top = `calc(50% + ${hy}px)`;
+  knob.textContent = String(activeValue).padStart(2,'0');
+  dial.appendChild(knob);
+
+  nums.forEach((label, idx) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'time-num';
+    btn.textContent = label;
+    const angle = (idx * 30 - 90) * Math.PI / 180;
+    const x = Math.cos(angle) * radius;
+    const y = Math.sin(angle) * radius;
+    btn.style.left = `calc(50% + ${x}px)`;
+    btn.style.top = `calc(50% + ${y}px)`;
+    const active = parseInt(label, 10) === activeValue;
+    if(active) btn.classList.add('active');
+    btn.onclick = () => {
+      if(__timePickerState.mode === 'hour'){
+        __timePickerState.hour12 = parseInt(label, 10);
+        __timePickerState.mode = 'minute';
+      } else {
+        __timePickerState.minute = parseInt(label, 10);
+      }
+      updateTimePickerView_();
+    };
+    dial.appendChild(btn);
+  });
+}
+function updateTimePickerView_(){
+  const am = qs('timeMeridiemAm');
+  const pm = qs('timeMeridiemPm');
+  if(am) am.classList.toggle('active', __timePickerState.meridiem === 'AM');
+  if(pm) pm.classList.toggle('active', __timePickerState.meridiem === 'PM');
+  if(qs('timeDisplayHour')) qs('timeDisplayHour').textContent = String(__timePickerState.hour12).padStart(2,'0');
+  if(qs('timeDisplayMinute')) qs('timeDisplayMinute').textContent = String(__timePickerState.minute).padStart(2,'0');
+  renderTimePickerDial_();
+}
+function openTimePickerModal_(inputId){
+  const el = qs(inputId);
+  if(!el) return;
+  const parsed = parseTimeToState_(el.value);
+  __timePickerState.targetId = inputId;
+  __timePickerState.meridiem = parsed.meridiem;
+  __timePickerState.hour12 = parsed.hour12;
+  __timePickerState.minute = parsed.minute;
+  __timePickerState.mode = 'hour';
+  updateTimePickerView_();
+  qs('timePickerModal')?.classList.add('show');
+}
+function closeTimePickerModal(){
+  qs('timePickerModal')?.classList.remove('show');
+}
+function selectTimeMeridiem(v){
+  __timePickerState.meridiem = v === 'PM' ? 'PM' : 'AM';
+  updateTimePickerView_();
+}
+function applyTimePickerValue(){
+  const el = qs(__timePickerState.targetId);
+  if(!el) return closeTimePickerModal();
+  let hour24 = (__timePickerState.hour12 % 12);
+  if(__timePickerState.meridiem === 'PM') hour24 += 12;
+  const value = `${String(hour24).padStart(2,'0')}:${String(__timePickerState.minute).padStart(2,'0')}`;
+  el.value = value;
+  el.dispatchEvent(new Event('change', { bubbles:true }));
+  closeTimePickerModal();
+}
+function clearTimePickerValue(){
+  const el = qs(__timePickerState.targetId);
+  if(!el) return closeTimePickerModal();
+  el.value = '';
+  el.dispatchEvent(new Event('change', { bubbles:true }));
+  closeTimePickerModal();
+}
 function openTimePicker(inputId){
   const el = qs(inputId);
   if(!el) return;
+  if(!isMobileViewport_()){
+    openTimePickerModal_(inputId);
+    return;
+  }
   try{
     if(typeof el.showPicker === 'function') el.showPicker();
     else { el.focus(); el.click(); }
