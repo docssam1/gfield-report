@@ -1276,6 +1276,38 @@ function fillMsgFromDoc_(doc){
   return true;
 }
 
+function fillNoticeFromDoc_(doc){
+  const noticeEl = qs('noticeArea');
+  if(!noticeEl) return false;
+
+  let text = '';
+
+  // Regular report: top yellow notice block
+  const topNotice = doc.querySelector('div[style*="background:#fffbeb"]');
+  if(topNotice){
+    text = (topNotice.textContent || '').trim().replace(/^📢\s*/, '');
+  }
+
+  // Absent/consult layout fallback
+  if(!text){
+    const noticeBox = doc.querySelector('.notice-box');
+    if(noticeBox) text = (noticeBox.textContent || '').trim().replace(/^📢\s*/, '');
+  }
+
+  // Generic fallback by heading text
+  if(!text){
+    const cards = Array.from(doc.querySelectorAll('div'));
+    const head = cards.find(el => /추가 전달 사항 및 공지|기타\/추가 전달 사항 및 공지/.test((el.textContent || '').trim()));
+    if(head){
+      const box = head.parentElement && head.parentElement.querySelector('.notice-box');
+      if(box) text = (box.textContent || '').trim().replace(/^📢\s*/, '');
+    }
+  }
+
+  noticeEl.value = String(text || '').slice(0, 6000);
+  return !!text;
+}
+
 function loadFromFile(event, mode){
   const file = event && event.target && event.target.files ? event.target.files[0] : null;
   if(!file) return;
@@ -1301,9 +1333,10 @@ function loadFromFile(event, mode){
         const summaryLoaded = fillSummaryFromSection_(extractSectionByTitle_(doc, '학습 요약'));
         const hwPhotoLoaded = fillPhotosFromSection_(extractSectionByTitle_(doc, '과제 확인'), 'hwPhotos');
         const classPhotoLoaded = fillPhotosFromSection_(extractSectionByTitle_(doc, '수업 사진'), 'classPhotos');
+        const noticeLoaded = fillNoticeFromDoc_(doc);
         fillMsgFromDoc_(doc);
         updateMsgBox();
-        showToast(`✅ 전체 리포트 덮어쓰기 완료 (과제:${hwLoaded}, 오늘과제:${todayHwLoaded}, 요약:${summaryLoaded}, 과제사진:${hwPhotoLoaded}, 수업사진:${classPhotoLoaded})`);
+        showToast(`✅ 전체 리포트 덮어쓰기 완료 (과제:${hwLoaded}, 오늘과제:${todayHwLoaded}, 요약:${summaryLoaded}, 공지:${noticeLoaded ? 1 : 0}, 과제사진:${hwPhotoLoaded}, 수업사진:${classPhotoLoaded})`);
       } else {
         throw new Error('지원하지 않는 로드 모드');
       }
