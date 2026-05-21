@@ -1690,8 +1690,17 @@ function autoAddTodoForSchedule() {
   const n = val('nameInput').trim(); const school = val('dbSchool').trim(); const grade = val('dbGrade').trim(); if(!n) return;
   let todoText = ""; const dDate = val('dateInput'); const dStart = val('startTimeInput'); const dEnd = val('endTimeInput'); let dTimeStr = dDate; if(dStart) dTimeStr += ` ${dStart}`; if(dEnd) dTimeStr += `~${dEnd}`;
   if (currentMode === '상담') {
-    if (classType === '테스트진행' || classType === '대면상담') todoText = `[${classType}] ${dTimeStr} / ${n} / ${school} / ${grade}`;
-    else if (classType === '재원생상담') todoText = `[상담] ${n} - ${dTimeStr}`;
+    if (classType === '테스트진행' || classType === '대면상담') {
+      todoText = `[${classType}] ${dTimeStr} / ${n} / ${school} / ${grade}`;
+    } else if (classType === '재원생상담') {
+      todoText = `[상담] ${n} - ${dTimeStr}`;
+    } else if (classType === '수업문의') {
+      todoText = `[수업문의] ${n} / ${school} / ${grade} / ${dTimeStr}`;
+    } else if (classType === '수업안내') {
+      todoText = `[수업안내] ${n} / ${school} / ${grade} / ${dTimeStr}`;
+    } else {
+      todoText = `[${classType || '상담'}] ${n} / ${dTimeStr}`;
+    }
   } else if (currentMode === '리포트') {
     if (classType === '결석') {
       const mdDate = val('absentMakeupDate'); const mdStart = val('absentMakeupStartTime'); const mdEnd = val('absentMakeupEndTime'); const reasonType = document.querySelector('input[name="absentReasonType"]:checked')?.value || ''; const mt = qs('absentMakeupType').options[qs('absentMakeupType').selectedIndex].text;
