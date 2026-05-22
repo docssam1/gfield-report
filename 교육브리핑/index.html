@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>doossam의 교육 브리핑</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --paper: #ffffff;
+      --ink: #111827;
+      --muted: #64748b;
+      --line: #e5e7eb;
+      --brand: #155e75;
+      --brand2: #0f766e;
+      --soft: #ecfeff;
+      --shadow: 0 18px 50px rgba(15, 23, 42, .10);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      letter-spacing: 0;
+    }
+    a { color: inherit; }
+    .shell {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 70px;
+    }
+    .top {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: end;
+      padding: 42px 0 28px;
+      border-bottom: 1px solid var(--line);
+    }
+    .eyebrow {
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--brand);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(38px, 7vw, 86px);
+      line-height: .92;
+      font-weight: 950;
+      letter-spacing: -1.5px;
+    }
+    .lead {
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.8;
+      max-width: 640px;
+    }
+    .top-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .btn {
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 900;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, .04);
+    }
+    .btn.primary {
+      background: var(--brand);
+      border-color: var(--brand);
+      color: white;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 24px;
+      margin-top: 28px;
+      align-items: start;
+    }
+    .composer, .panel {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+    .composer {
+      padding: 22px;
+      position: sticky;
+      top: 18px;
+    }
+    .composer h2, .panel h2 {
+      margin: 0 0 16px;
+      font-size: 18px;
+      letter-spacing: -.2px;
+    }
+    .field { margin-bottom: 12px; }
+    label {
+      display: block;
+      margin-bottom: 7px;
+      color: #334155;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid #d9dee8;
+      border-radius: 14px;
+      padding: 13px 14px;
+      font: inherit;
+      color: var(--ink);
+      background: #fbfcfd;
+      outline: none;
+    }
+    textarea { min-height: 150px; resize: vertical; line-height: 1.7; }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--brand2);
+      box-shadow: 0 0 0 4px rgba(15, 118, 110, .10);
+      background: white;
+    }
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7;
+      margin: 10px 0 0;
+    }
+    .feed {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      overflow: hidden;
+      box-shadow: 0 10px 34px rgba(15, 23, 42, .07);
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .thumb {
+      aspect-ratio: 1 / .78;
+      background:
+        linear-gradient(135deg, rgba(21,94,117,.18), rgba(15,118,110,.06)),
+        radial-gradient(circle at 25% 20%, rgba(255,255,255,.9), transparent 35%),
+        #eaf7f7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--brand);
+      font-size: 15px;
+      font-weight: 950;
+      text-align: center;
+      padding: 18px;
+      line-height: 1.5;
+    }
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .card-body {
+      padding: 18px;
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .badge {
+      color: var(--brand);
+      background: var(--soft);
+      border: 1px solid #cffafe;
+      border-radius: 999px;
+      padding: 4px 9px;
+      white-space: nowrap;
+    }
+    .card h3 {
+      margin: 0 0 10px;
+      font-size: 20px;
+      line-height: 1.35;
+      letter-spacing: -.4px;
+    }
+    .summary {
+      margin: 0;
+      color: #475569;
+      font-size: 14px;
+      line-height: 1.75;
+      flex: 1;
+    }
+    .read {
+      margin-top: 16px;
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      color: var(--brand);
+      font-weight: 950;
+      font-size: 13px;
+      text-decoration: none;
+    }
+    .empty {
+      grid-column: 1 / -1;
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed #cbd5e1;
+      border-radius: 22px;
+      background: #fff;
+    }
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, .58);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 22px;
+      z-index: 50;
+    }
+    .modal.open { display: flex; }
+    .modal-card {
+      width: min(760px, 100%);
+      max-height: 88vh;
+      overflow: auto;
+      background: white;
+      border-radius: 26px;
+      box-shadow: 0 30px 90px rgba(0,0,0,.25);
+    }
+    .modal-hero {
+      min-height: 220px;
+      background: linear-gradient(135deg, #164e63, #0f766e);
+      color: white;
+      padding: 34px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .modal-hero h2 {
+      margin: 0;
+      font-size: clamp(28px, 5vw, 46px);
+      line-height: 1.08;
+    }
+    .modal-content {
+      padding: 28px 34px 34px;
+      line-height: 1.9;
+      color: #334155;
+      white-space: pre-wrap;
+    }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      background: #111827;
+      color: white;
+      padding: 12px 18px;
+      border-radius: 999px;
+      font-weight: 800;
+      display: none;
+      z-index: 80;
+    }
+    .toast.show { display: block; }
+    @media (max-width: 900px) {
+      .top, .board { grid-template-columns: 1fr; }
+      .top-actions { justify-content: flex-start; }
+      .composer { position: static; }
+    }
+    @media (max-width: 640px) {
+      .shell { width: min(100% - 22px, 1120px); padding-top: 10px; }
+      .feed { grid-template-columns: 1fr; }
+      .composer { padding: 16px; border-radius: 20px; }
+      .modal-content, .modal-hero { padding-left: 22px; padding-right: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="top">
+      <div>
+        <div class="eyebrow">doossam education briefing</div>
+        <h1>doossam의<br>교육 브리핑</h1>
+        <p class="lead">입시, 교육 정책, 학원가 흐름을 짧고 선명하게 모아두는 칼럼 보드입니다. 이전 칼럼을 카드로 넘겨보고, 필요한 브리핑을 직접 등록할 수 있습니다.</p>
+      </div>
+      <div class="top-actions">
+        <button class="btn" type="button" onclick="loadPosts()">새로고침</button>
+        <a class="btn primary" href="#composer">브리핑 등록</a>
+      </div>
+    </header>
+
+    <section class="board">
+      <aside class="composer" id="composer">
+        <h2>게시판 등록</h2>
+        <div class="field">
+          <label for="apiUrl">Apps Script URL</label>
+          <input id="apiUrl" placeholder="https://script.google.com/macros/s/.../exec">
+        </div>
+        <div class="field">
+          <label for="token">관리자 토큰</label>
+          <input id="token" type="password" placeholder="Apps Script 속성 BOARD_WRITE_TOKEN">
+        </div>
+        <div class="field">
+          <label for="title">제목</label>
+          <input id="title" placeholder="예: 이번 주 대치동 교육 뉴스">
+        </div>
+        <div class="field">
+          <label for="category">분류</label>
+          <select id="category">
+            <option>교육 브리핑</option>
+            <option>입시 뉴스</option>
+            <option>대치동 리포트</option>
+            <option>학원가 트렌드</option>
+            <option>정책 분석</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="summary">요약</label>
+          <textarea id="summary" placeholder="카드에 보일 짧은 요약"></textarea>
+        </div>
+        <div class="field">
+          <label for="body">본문</label>
+          <textarea id="body" placeholder="자세히 보기에 들어갈 전체 내용"></textarea>
+        </div>
+        <div class="field">
+          <label for="imageUrl">이미지 URL</label>
+          <input id="imageUrl" placeholder="선택 사항">
+        </div>
+        <div class="field">
+          <label for="sourceUrl">자세히 보기 링크</label>
+          <input id="sourceUrl" placeholder="선택 사항">
+        </div>
+        <button class="btn primary" type="button" style="width:100%" onclick="submitPost()">등록하기</button>
+        <p class="hint">Apps Script URL과 관리자 토큰은 이 브라우저에만 저장됩니다. GitHub 코드에는 저장하지 않습니다.</p>
+      </aside>
+
+      <section>
+        <div class="feed" id="feed"></div>
+      </section>
+    </section>
+  </main>
+
+  <div class="modal" id="modal" onclick="closeModal(event)">
+    <article class="modal-card">
+      <div class="modal-hero">
+        <div class="eyebrow" id="modalCategory" style="color:#a7f3d0">education briefing</div>
+        <h2 id="modalTitle"></h2>
+      </div>
+      <div class="modal-content">
+        <div id="modalBody"></div>
+        <p id="modalSource"></p>
+      </div>
+    </article>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const APPS_SCRIPT_URL = "";
+    const samplePosts = [
+      {
+        id: "sample-1",
+        createdAt: new Date().toISOString(),
+        title: "이번 주 대치동 교육 뉴스 핵심 요약",
+        category: "대치동 리포트",
+        summary: "메디컬 유학, 연휴 특강, 심야 스터디카페 이동, 사교육비 부담까지 이번 주 교육 이슈를 한눈에 정리했습니다.",
+        body: "Apps Script URL을 연결하면 Google Sheet에 저장된 실제 브리핑 목록이 이곳에 표시됩니다. 등록 폼을 통해 새 칼럼도 추가할 수 있습니다.",
+        imageUrl: "",
+        sourceUrl: "",
+      },
+      {
+        id: "sample-2",
+        createdAt: new Date(Date.now() - 86400000).toISOString(),
+        title: "학부모가 봐야 할 입시 변화 체크포인트",
+        category: "입시 뉴스",
+        summary: "정책 변화는 headline보다 실제 준비 일정에 미치는 영향을 중심으로 읽어야 합니다.",
+        body: "카드형 피드는 짧게 훑고, 자세히 보기에서 전체 칼럼을 읽는 흐름으로 설계했습니다.",
+        imageUrl: "",
+        sourceUrl: "",
+      }
+    ];
+
+    let posts = [];
+
+    function getApiUrl() {
+      return (document.getElementById("apiUrl").value || localStorage.getItem("briefing_api_url") || APPS_SCRIPT_URL || "").trim();
+    }
+
+    function getToken() {
+      return (document.getElementById("token").value || localStorage.getItem("briefing_token") || "").trim();
+    }
+
+    function boot() {
+      document.getElementById("apiUrl").value = localStorage.getItem("briefing_api_url") || APPS_SCRIPT_URL || "";
+      document.getElementById("token").value = localStorage.getItem("briefing_token") || "";
+      loadPosts();
+    }
+
+    function loadPosts() {
+      const url = getApiUrl();
+      if (!url) {
+        posts = samplePosts;
+        renderPosts();
+        return;
+      }
+
+      localStorage.setItem("briefing_api_url", url);
+      const callback = "briefingCallback_" + Date.now();
+      window[callback] = function(data) {
+        delete window[callback];
+        script.remove();
+        if (data && data.ok) {
+          posts = data.posts || [];
+          renderPosts();
+        } else {
+          showToast("목록을 불러오지 못했습니다");
+        }
+      };
+      const script = document.createElement("script");
+      script.src = url + "?action=list&callback=" + callback;
+      script.onerror = function() {
+        delete window[callback];
+        showToast("Apps Script URL을 확인해주세요");
+      };
+      document.body.appendChild(script);
+    }
+
+    function renderPosts() {
+      const feed = document.getElementById("feed");
+      if (!posts.length) {
+        feed.innerHTML = '<div class="empty">아직 등록된 브리핑이 없습니다.</div>';
+        return;
+      }
+      feed.innerHTML = posts.map((post, index) => cardTemplate(post, index)).join("");
+    }
+
+    function cardTemplate(post, index) {
+      const image = post.imageUrl
+        ? '<img src="' + escapeAttr(post.imageUrl) + '" alt="">'
+        : '<span>' + escapeHtml(post.category || "교육 브리핑") + '<br>doossam briefing</span>';
+      return [
+        '<article class="card">',
+        '  <div class="thumb">' + image + '</div>',
+        '  <div class="card-body">',
+        '    <div class="meta"><span class="badge">' + escapeHtml(post.category || "교육 브리핑") + '</span><span>' + formatDate(post.createdAt) + '</span></div>',
+        '    <h3>' + escapeHtml(post.title) + '</h3>',
+        '    <p class="summary">' + escapeHtml(post.summary || "") + '</p>',
+        '    <button class="read" type="button" onclick="openPost(' + index + ')">이전 칼럼 보기</button>',
+        '  </div>',
+        '</article>'
+      ].join("");
+    }
+
+    async function submitPost() {
+      const url = getApiUrl();
+      if (!url) {
+        showToast("Apps Script URL을 먼저 입력해주세요");
+        return;
+      }
+
+      const token = getToken();
+      localStorage.setItem("briefing_api_url", url);
+      if (token) localStorage.setItem("briefing_token", token);
+
+      const payload = {
+        token,
+        title: value("title"),
+        category: value("category"),
+        summary: value("summary"),
+        body: value("body"),
+        imageUrl: value("imageUrl"),
+        sourceUrl: value("sourceUrl")
+      };
+
+      if (!payload.title || (!payload.summary && !payload.body)) {
+        showToast("제목과 내용을 입력해주세요");
+        return;
+      }
+
+      try {
+        await fetch(url, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+        showToast("등록 요청을 보냈습니다");
+        ["title", "summary", "body", "imageUrl", "sourceUrl"].forEach(id => document.getElementById(id).value = "");
+        setTimeout(loadPosts, 1600);
+      } catch (err) {
+        showToast("등록 실패: Apps Script URL을 확인해주세요");
+      }
+    }
+
+    function openPost(index) {
+      const post = posts[index];
+      if (!post) return;
+      document.getElementById("modalCategory").textContent = post.category || "교육 브리핑";
+      document.getElementById("modalTitle").textContent = post.title || "";
+      document.getElementById("modalBody").textContent = post.body || post.summary || "";
+      document.getElementById("modalSource").innerHTML = post.sourceUrl
+        ? '<a class="read" href="' + escapeAttr(post.sourceUrl) + '" target="_blank" rel="noopener">자세히 보기 링크 열기</a>'
+        : "";
+      document.getElementById("modal").classList.add("open");
+    }
+
+    function closeModal(event) {
+      if (event.target.id === "modal") {
+        document.getElementById("modal").classList.remove("open");
+      }
+    }
+
+    function value(id) {
+      return (document.getElementById(id).value || "").trim();
+    }
+
+    function formatDate(value) {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "";
+      return date.toLocaleDateString("ko-KR", { month: "short", day: "numeric" });
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => toast.classList.remove("show"), 2400);
+    }
+
+    function escapeHtml(value) {
+      return String(value || "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[char]));
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value).replace(/`/g, "&#096;");
+    }
+
+    boot();
+  </script>
+</body>
+</html>
