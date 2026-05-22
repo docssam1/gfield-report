@@ -847,6 +847,11 @@ window.addEventListener('DOMContentLoaded',()=>{
   document.addEventListener('keydown', e => { if(e.key === 'Escape') closeTimePickerModal(); });
   document.addEventListener('input', scheduleDraftSave, true);
   document.addEventListener('change', scheduleDraftSave, true);
+  ['startTimeInput','endTimeInput','absentMakeupStartTime','absentMakeupEndTime'].forEach(id=>{
+    const el = qs(id);
+    if(!el) return;
+    el.addEventListener('change', ()=>{ checkClassTimePolicy_(id, false); });
+  });
   window.addEventListener('beforeunload', saveDraftNow);
 });
 
@@ -1705,18 +1710,33 @@ function enqueueTodoText_(todoText, source){
     .catch(err=>{ todoPendingIds.delete(String(tempId)); todos = todos.filter(x => String(x.id) !== String(tempId)); cacheTodos_(); renderTodos(); console.warn('자동 To-Do 저장 실패', err); });
 }
 function validateScheduleInputs_(){
-  if(classType !== '결석') return { ok:true };
+  const timeChecks = [
+    { id:'startTimeInput', label:'수업 시작시간' },
+    { id:'endTimeInput', label:'수업 종료시간' },
+    { id:'absentMakeupStartTime', label:'보강 시작시간' },
+    { id:'absentMakeupEndTime', label:'보강 종료시간' }
+  ];
+  const warns = [];
+  timeChecks.forEach(t => {
+    const msg = checkClassTimePolicy_(t.id, true, t.label);
+    if(msg) warns.push(msg);
+  });
+
+  if(classType !== '결석'){
+    if(warns.length){
+      alert('⚠️ 수업 가능 시간은 08:00~23:00 입니다.\n\n- ' + warns.join('\n- '));
+      return { ok:false };
+    }
+    return { ok:true };
+  }
+
   const reasonType = document.querySelector('input[name="absentReasonType"]:checked')?.value || '';
   const mType = val('absentMakeupType');
   const dDate = val('dateInput');
   const mdDate = val('absentMakeupDate');
   const mdStart = val('absentMakeupStartTime');
   const mdEnd = val('absentMakeupEndTime');
-  const warns = [];
-  if(mdStart){
-    const h = Number(String(mdStart).split(':')[0] || 0);
-    if(h >= 0 && h <= 6) warns.push(`보강 시작시간이 ${mdStart} 입니다. 새벽 시간 입력 오타 가능성이 큽니다.`);
-  }
+
   if(mdStart && mdEnd){
     const a = Number(mdStart.replace(':',''));
     const b = Number(mdEnd.replace(':',''));
@@ -1734,6 +1754,36 @@ function validateScheduleInputs_(){
     return { ok: ok };
   }
   return { ok:true };
+}
+
+function parseHHMM_(text){
+  const m = String(text || '').match(/^(\d{1,2}):(\d{2})$/);
+  if(!m) return null;
+  return Number(m[1]) * 100 + Number(m[2]);
+}
+function checkClassTimePolicy_(inputId, silent, customLabel){
+  const el = qs(inputId);
+  if(!el) return '';
+  const v = String(el.value || '').trim();
+  const label = customLabel || el.getAttribute('title') || inputId;
+  if(!v){
+    el.style.outline = '';
+    return '';
+  }
+  const n = parseHHMM_(v);
+  if(n === null){
+    el.style.outline = '2px solid #ef4444';
+    return `${label} 형식이 올바르지 않습니다(${v}).`;
+  }
+  const ok = n >= 800 && n <= 2300;
+  if(ok){
+    el.style.outline = '';
+    return '';
+  }
+  el.style.outline = '2px solid #ef4444';
+  const msg = `${label} ${v} 은(는) 허용 범위(08:00~23:00)를 벗어납니다.`;
+  if(!silent) showToast('⚠️ ' + msg);
+  return msg;
 }
 
 function autoAddTodoForSchedule() {
