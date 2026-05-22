@@ -303,6 +303,7 @@
       </div>
       <div class="top-actions">
         <button class="btn" type="button" onclick="loadPosts()">새로고침</button>
+        <a class="btn" href="./html-storage.html">HTML 저장소</a>
         <a class="btn primary" href="#composer">브리핑 등록</a>
       </div>
     </header>
@@ -515,9 +516,16 @@
       document.getElementById("modalCategory").textContent = post.category || "교육 브리핑";
       document.getElementById("modalTitle").textContent = post.title || "";
       document.getElementById("modalBody").textContent = post.body || post.summary || "";
-      document.getElementById("modalSource").innerHTML = post.sourceUrl
-        ? '<a class="read" href="' + escapeAttr(post.sourceUrl) + '" target="_blank" rel="noopener">자세히 보기 링크 열기</a>'
-        : "";
+      const links = [];
+      if (post.htmlFileId) {
+        links.push('<a class="read" href="./html-viewer.html?id=' + encodeURIComponent(post.htmlFileId) + '" target="_blank" rel="noopener">저장된 HTML 열기</a>');
+      } else if (post.htmlFileUrl) {
+        links.push('<a class="read" href="' + escapeAttr(post.htmlFileUrl) + '" target="_blank" rel="noopener">Drive HTML 열기</a>');
+      }
+      if (post.sourceUrl) {
+        links.push('<a class="read" href="' + escapeAttr(post.sourceUrl) + '" target="_blank" rel="noopener">자세히 보기 링크 열기</a>');
+      }
+      document.getElementById("modalSource").innerHTML = links.join(' &nbsp; ');
       document.getElementById("modal").classList.add("open");
     }
 

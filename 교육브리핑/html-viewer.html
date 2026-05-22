@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>교육 브리핑 HTML 보기</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      font-family: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+      color: #111827;
+    }
+    .bar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      background: rgba(255,255,255,.92);
+      border-bottom: 1px solid #e5e7eb;
+      backdrop-filter: blur(16px);
+    }
+    .brand {
+      font-weight: 950;
+      color: #155e75;
+    }
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    a, button {
+      border: 1px solid #d9dee8;
+      background: #fff;
+      color: #111827;
+      border-radius: 999px;
+      padding: 9px 13px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 900;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .wrap {
+      width: min(960px, calc(100% - 24px));
+      margin: 24px auto 70px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 22px;
+      min-height: 60vh;
+      overflow: hidden;
+      box-shadow: 0 18px 50px rgba(15, 23, 42, .10);
+    }
+    iframe {
+      width: 100%;
+      min-height: 78vh;
+      border: 0;
+      display: block;
+      background: #fff;
+    }
+    .state {
+      padding: 44px 22px;
+      text-align: center;
+      color: #64748b;
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+  <header class="bar">
+    <div class="brand">doossam의 교육 브리핑</div>
+    <nav class="actions">
+      <a href="./index.html">게시판</a>
+      <a href="./html-storage.html">HTML 저장소</a>
+      <button type="button" onclick="loadHtml()">새로고침</button>
+    </nav>
+  </header>
+
+  <main class="wrap" id="wrap">
+    <div class="state">HTML 콘텐츠를 불러오는 중입니다.</div>
+  </main>
+
+  <script>
+    const APPS_SCRIPT_URL = "";
+
+    function getApiUrl() {
+      return (localStorage.getItem("briefing_api_url") || APPS_SCRIPT_URL || "").trim();
+    }
+
+    function getId() {
+      return new URLSearchParams(location.search).get("id") || "";
+    }
+
+    function loadHtml() {
+      const url = getApiUrl();
+      const id = getId();
+      const wrap = document.getElementById("wrap");
+
+      if (!url) {
+        wrap.innerHTML = '<div class="state">Apps Script URL이 없습니다.<br>먼저 HTML 저장소 페이지에서 URL을 입력해주세요.</div>';
+        return;
+      }
+      if (!id) {
+        wrap.innerHTML = '<div class="state">HTML 파일 ID가 없습니다.</div>';
+        return;
+      }
+
+      wrap.innerHTML = '<div class="state">HTML 콘텐츠를 불러오는 중입니다.</div>';
+      const callback = "htmlViewCallback_" + Date.now();
+      window[callback] = function(data) {
+        delete window[callback];
+        script.remove();
+        if (!data || !data.ok || !data.file) {
+          wrap.innerHTML = '<div class="state">HTML 콘텐츠를 불러오지 못했습니다.</div>';
+          return;
+        }
+        document.title = data.file.title || "교육 브리핑 HTML 보기";
+        const iframe = document.createElement("iframe");
+        iframe.setAttribute("sandbox", "allow-popups allow-popups-to-escape-sandbox");
+        iframe.srcdoc = data.file.html || "";
+        wrap.innerHTML = "";
+        wrap.appendChild(iframe);
+      };
+
+      const script = document.createElement("script");
+      script.src = url + "?action=getHtml&id=" + encodeURIComponent(id) + "&callback=" + callback;
+      script.onerror = function() {
+        delete window[callback];
+        wrap.innerHTML = '<div class="state">Apps Script URL을 확인해주세요.</div>';
+      };
+      document.body.appendChild(script);
+    }
+
+    loadHtml();
+  </script>
+</body>
+</html>

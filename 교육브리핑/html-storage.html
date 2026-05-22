@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>doossam HTML 저장소</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --paper: #ffffff;
+      --ink: #111827;
+      --muted: #64748b;
+      --line: #e5e7eb;
+      --brand: #155e75;
+      --brand2: #0f766e;
+      --soft: #ecfeff;
+      --shadow: 0 18px 50px rgba(15, 23, 42, .10);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 34px 0 80px;
+    }
+    .top {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 22px;
+      align-items: end;
+      padding: 34px 0 26px;
+      border-bottom: 1px solid var(--line);
+    }
+    .eyebrow {
+      font-size: 12px;
+      font-weight: 950;
+      color: var(--brand);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(36px, 6vw, 72px);
+      line-height: .98;
+      letter-spacing: -1.2px;
+      font-weight: 950;
+    }
+    .lead {
+      margin: 16px 0 0;
+      color: var(--muted);
+      line-height: 1.8;
+      font-size: 16px;
+      max-width: 680px;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .btn {
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 900;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, .04);
+    }
+    .btn.primary {
+      background: var(--brand);
+      border-color: var(--brand);
+      color: white;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: .92fr 1.08fr;
+      gap: 24px;
+      margin-top: 28px;
+      align-items: start;
+    }
+    .panel {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .panel.sticky {
+      position: sticky;
+      top: 18px;
+    }
+    h2 {
+      margin: 0 0 16px;
+      font-size: 18px;
+    }
+    .field { margin-bottom: 12px; }
+    label {
+      display: block;
+      margin-bottom: 7px;
+      color: #334155;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid #d9dee8;
+      border-radius: 14px;
+      padding: 13px 14px;
+      font: inherit;
+      color: var(--ink);
+      background: #fbfcfd;
+      outline: none;
+    }
+    textarea {
+      min-height: 180px;
+      resize: vertical;
+      line-height: 1.7;
+      font-family: "SF Mono", Consolas, ui-monospace, monospace;
+      font-size: 13px;
+    }
+    textarea.body-text {
+      min-height: 110px;
+      font-family: inherit;
+      font-size: 14px;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--brand2);
+      box-shadow: 0 0 0 4px rgba(15, 118, 110, .10);
+      background: white;
+    }
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7;
+      margin: 10px 0 0;
+    }
+    .list {
+      display: grid;
+      gap: 14px;
+    }
+    .item {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      background: #fff;
+    }
+    .item-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .item h3 {
+      margin: 0 0 9px;
+      line-height: 1.35;
+    }
+    .item p {
+      margin: 0;
+      color: #475569;
+      line-height: 1.7;
+      font-size: 14px;
+    }
+    .item-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .small {
+      padding: 9px 13px;
+      font-size: 13px;
+    }
+    .empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed #cbd5e1;
+      border-radius: 22px;
+      background: #fff;
+    }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      background: #111827;
+      color: white;
+      padding: 12px 18px;
+      border-radius: 999px;
+      font-weight: 800;
+      display: none;
+      z-index: 80;
+    }
+    .toast.show { display: block; }
+    @media (max-width: 900px) {
+      .top, .grid { grid-template-columns: 1fr; }
+      .actions { justify-content: flex-start; }
+      .panel.sticky { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="top">
+      <div>
+        <div class="eyebrow">drive html archive</div>
+        <h1>교육 브리핑<br>HTML 저장소</h1>
+        <p class="lead">GFIELD 매거진으로 만든 결과 HTML을 Google Drive에 저장하고, 필요한 글은 게시판에도 같이 공개합니다.</p>
+      </div>
+      <div class="actions">
+        <a class="btn" href="./index.html">게시판 보기</a>
+        <button class="btn" type="button" onclick="loadFiles()">새로고침</button>
+      </div>
+    </header>
+
+    <section class="grid">
+      <aside class="panel sticky">
+        <h2>HTML 저장</h2>
+        <div class="field">
+          <label for="apiUrl">Apps Script URL</label>
+          <input id="apiUrl" placeholder="https://script.google.com/macros/s/.../exec">
+        </div>
+        <div class="field">
+          <label for="token">관리자 토큰</label>
+          <input id="token" type="password" placeholder="BOARD_WRITE_TOKEN">
+        </div>
+        <div class="field">
+          <label for="title">제목</label>
+          <input id="title" placeholder="예: 대치동 교육 트렌드 분석">
+        </div>
+        <div class="field">
+          <label for="summary">요약</label>
+          <textarea class="body-text" id="summary" placeholder="저장 목록과 게시판 카드에 보일 요약"></textarea>
+        </div>
+        <div class="field">
+          <label for="html">HTML 코드</label>
+          <textarea id="html" placeholder="GFIELD 매거진 결과 HTML을 붙여넣으세요"></textarea>
+        </div>
+        <div class="field">
+          <label for="category">게시판 분류</label>
+          <select id="category">
+            <option>교육 브리핑</option>
+            <option>입시 뉴스</option>
+            <option>대치동 리포트</option>
+            <option>학원가 트렌드</option>
+            <option>정책 분석</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="sourceUrl">출처/자세히 보기 링크</label>
+          <input id="sourceUrl" placeholder="선택 사항">
+        </div>
+        <div class="field">
+          <label for="imageUrl">게시판 카드 이미지 URL</label>
+          <input id="imageUrl" placeholder="선택 사항">
+        </div>
+        <div class="field">
+          <label>
+            <input id="publishToBoard" type="checkbox" style="width:auto;margin-right:8px" checked>
+            저장 후 게시판에도 공개
+          </label>
+        </div>
+        <button class="btn primary" type="button" style="width:100%" onclick="saveHtml()">Google Drive에 저장</button>
+        <p class="hint">Apps Script URL과 토큰은 현재 브라우저에만 저장됩니다. HTML 파일은 Apps Script가 만든 Google Drive 폴더에 저장됩니다.</p>
+      </aside>
+
+      <section class="panel">
+        <h2>저장된 HTML</h2>
+        <div class="list" id="list"></div>
+      </section>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const APPS_SCRIPT_URL = "";
+    let files = [];
+
+    function boot() {
+      document.getElementById("apiUrl").value = localStorage.getItem("briefing_api_url") || APPS_SCRIPT_URL || "";
+      document.getElementById("token").value = localStorage.getItem("briefing_token") || "";
+      loadFiles();
+    }
+
+    function getApiUrl() {
+      return (document.getElementById("apiUrl").value || localStorage.getItem("briefing_api_url") || APPS_SCRIPT_URL || "").trim();
+    }
+
+    function getToken() {
+      return (document.getElementById("token").value || localStorage.getItem("briefing_token") || "").trim();
+    }
+
+    function loadFiles() {
+      const url = getApiUrl();
+      if (!url) {
+        document.getElementById("list").innerHTML = '<div class="empty">Apps Script URL을 입력하면 Drive 저장 목록이 표시됩니다.</div>';
+        return;
+      }
+
+      localStorage.setItem("briefing_api_url", url);
+      const callback = "htmlFilesCallback_" + Date.now();
+      window[callback] = function(data) {
+        delete window[callback];
+        script.remove();
+        if (data && data.ok) {
+          files = data.files || [];
+          renderFiles();
+        } else {
+          showToast("저장 목록을 불러오지 못했습니다");
+        }
+      };
+      const script = document.createElement("script");
+      script.src = url + "?action=listHtml&callback=" + callback;
+      script.onerror = function() {
+        delete window[callback];
+        showToast("Apps Script URL을 확인해주세요");
+      };
+      document.body.appendChild(script);
+    }
+
+    function renderFiles() {
+      const list = document.getElementById("list");
+      if (!files.length) {
+        list.innerHTML = '<div class="empty">아직 저장된 HTML이 없습니다.</div>';
+        return;
+      }
+      list.innerHTML = files.map(file => [
+        '<article class="item">',
+        '  <div class="item-meta"><span>HTML</span><span>' + formatDate(file.createdAt) + '</span></div>',
+        '  <h3>' + escapeHtml(file.title) + '</h3>',
+        '  <p>' + escapeHtml(file.summary || "저장된 HTML 콘텐츠") + '</p>',
+        '  <div class="item-actions">',
+        '    <a class="btn small primary" href="./html-viewer.html?id=' + encodeURIComponent(file.fileId) + '" target="_blank" rel="noopener">HTML 보기</a>',
+        '    <a class="btn small" href="' + escapeAttr(file.fileUrl) + '" target="_blank" rel="noopener">Drive 파일</a>',
+        file.sourceUrl ? '    <a class="btn small" href="' + escapeAttr(file.sourceUrl) + '" target="_blank" rel="noopener">출처 보기</a>' : '',
+        '  </div>',
+        '</article>'
+      ].join("")).join("");
+    }
+
+    async function saveHtml() {
+      const url = getApiUrl();
+      if (!url) {
+        showToast("Apps Script URL을 먼저 입력해주세요");
+        return;
+      }
+      const token = getToken();
+      localStorage.setItem("briefing_api_url", url);
+      if (token) localStorage.setItem("briefing_token", token);
+
+      const payload = {
+        action: "saveHtml",
+        token,
+        title: value("title"),
+        summary: value("summary"),
+        html: value("html"),
+        category: value("category"),
+        sourceUrl: value("sourceUrl"),
+        imageUrl: value("imageUrl"),
+        publishToBoard: document.getElementById("publishToBoard").checked ? "Y" : "N"
+      };
+
+      if (!payload.title || !payload.html) {
+        showToast("제목과 HTML 코드를 입력해주세요");
+        return;
+      }
+
+      try {
+        await fetch(url, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+        showToast("저장 요청을 보냈습니다");
+        ["title", "summary", "html", "sourceUrl", "imageUrl"].forEach(id => document.getElementById(id).value = "");
+        setTimeout(loadFiles, 1800);
+      } catch (err) {
+        showToast("저장 실패: Apps Script URL을 확인해주세요");
+      }
+    }
+
+    function value(id) {
+      return (document.getElementById(id).value || "").trim();
+    }
+
+    function formatDate(value) {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "";
+      return date.toLocaleDateString("ko-KR", { month: "short", day: "numeric" });
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => toast.classList.remove("show"), 2400);
+    }
+
+    function escapeHtml(value) {
+      return String(value || "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[char]));
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value).replace(/`/g, "&#096;");
+    }
+
+    boot();
+  </script>
+</body>
+</html>
