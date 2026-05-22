@@ -57,28 +57,38 @@ const TODO_HEADERS = [
 
 const MASTER_SHEET = '일정_마스터';
 const MASTER_HEADERS = [
-  '마스터ID',
+  'ID',
   '관련그룹ID',
-  '원본출처',
-  '원본키',
+  '생성일',
+  '수정일',
   '학생명',
-  '일정유형',
+  '연락처',
+  '과정',
+  '업무유형',
   '상태',
-  '기준일',
-  '시작일시',
-  '종료일시',
-  '요약',
-  '상세',
-  '확인필요',
-  '캘린더이벤트ID',
-  '노션페이지ID',
-  '드라이브링크',
+  '공지일',
+  '원수업일',
+  '결석일',
+  '휴강일',
+  '실제일정일',
+  '시작시간',
+  '종료시간',
+  '변경전일정일',
+  '변경전시작시간',
+  '변경전종료시간',
+  '사유',
+  '추가공지',
   '리포트링크',
-  '동기화상태',
-  '실패단계',
-  '오류로그',
-  '생성시각',
-  '수정시각'
+  '드라이브링크',
+  '출처',
+  '출처행번호',
+  '캘린더이벤트ID',
+  '캘린더동기화상태',
+  '노션페이지ID',
+  '노션페이지URL',
+  '노션동기화상태',
+  '확인필요',
+  '비고'
 ];
 const SYNC_LOG_SHEET = '동기화_로그';
 const SYNC_LOG_HEADERS = ['시간', '작업', '단계', '상태', '메시지', '상세JSON'];
@@ -210,6 +220,10 @@ function doPost(e) {
     else if (action === 'backup_core_sheets') data = backupCoreSheets_(payload);
     else if (action === 'sync_master_preview') data = syncMasterPreview_(payload);
     else if (action === 'sync_master_execute') data = syncMasterExecute_(payload);
+    else if (action === 'schedule_workflow_preview') data = scheduleWorkflowPreview_(payload);
+    else if (action === 'schedule_workflow_execute') data = scheduleWorkflowExecute_(payload);
+    else if (action === 'sync_calendar_from_master') data = syncCalendarFromMaster_(payload);
+    else if (action === 'master_query') data = masterQuery_(payload);
     else if (action === 'ai_op_preview') data = aiOperationPreview_(payload);
     else if (action === 'ai_op_execute') data = aiOperationExecute_(payload);
     else if (action === 'resync_calendar_from_week_start') data = resyncCalendarFromWeekStart_(payload);
@@ -259,6 +273,8 @@ function resolveFailureStage_(action) {
   if (a === 'save_drive') return 'Drive';
   if (a === 'deploy_github') return 'GitHub';
   if (a === 'notion') return 'Notion/Calendar';
+  if (a === 'schedule_workflow_preview' || a === 'schedule_workflow_execute') return 'Workflow';
+  if (a === 'sync_calendar_from_master') return 'Calendar';
   if (a.indexOf('todo_') === 0) return 'To-Do';
   if (a === 'sync_master_preview' || a === 'sync_master_execute' || a === 'backup_core_sheets') return 'Sync';
   return 'General';
@@ -481,6 +497,8 @@ function updateKeys_(p) {
 }
 
 function saveToNotion_(p) {
+  const ss = SpreadsheetApp.openById(getSheetId_(p.sheetId));
+  ensureMasterInfra_(ss);
   const token = String(
     p.notion_key ||
     PropertiesService.getScriptProperties().getProperty('NOTION_KEY') ||
@@ -497,24 +515,14 @@ function saveToNotion_(p) {
 
   const schema = getNotionDatabaseSchema_(token, databaseId);
   const properties = buildNotionProperties_(schema, p);
-  const body = {
-    parent: { database_id: databaseId },
-    properties: properties
-  };
-
-  const response = UrlFetchApp.fetch('https://api.notion.com/v1/pages', {
-    method: 'post',
-    contentType: 'application/json',
-    headers: notionHeaders_(token),
-    payload: JSON.stringify(body),
-    muteHttpExceptions: true
-  });
-  const code = response.getResponseCode();
-  if (code < 200 || code >= 300) {
-    throw new Error('Notion 저장 실패: ' + response.getContentText());
+  const existingNotionId = findExistingNotionPageForPayload_(ss, p);
+  let data;
+  if (existingNotionId) {
+    data = updateNotionPage_(token, existingNotionId, properties);
+  } else {
+    data = createNotionPage_(token, databaseId, properties);
   }
-  const data = JSON.parse(response.getContentText());
-  const calendarResult = createGoogleCalendarEvent_(p, data.url);
+  const calendarResult = createGoogleCalendarEvent_(p, data.url || '');
   linkNotionCalendarToLatestActivity_(
     p.sheetId,
     String(p.name || p.studentName || ''),
@@ -525,6 +533,13 @@ function saveToNotion_(p) {
     calendarResult.calendarId || '',
     calendarResult.eventId || ''
   );
+  const opResult = syncOperationalScheduleFromPayload_(ss, Object.assign({}, p, {
+    notionPageId: data.id || '',
+    notionPageUrl: data.url || '',
+    notionSyncStatus: '완료',
+    syncTriggeredBy: 'notion'
+  }), { dryRun: false, withApproval: false });
+
   const message = calendarResult.created
     ? '노션 + 구글 캘린더 전송 완료'
     : '노션 전송 완료 (구글 캘린더는 일정일이 없어 생성 생략)';
@@ -533,7 +548,8 @@ function saveToNotion_(p) {
     id: data.id,
     url: data.url,
     message: message,
-    googleCalendar: calendarResult
+    googleCalendar: calendarResult,
+    operationalSync: opResult
   };
 }
 
@@ -1088,49 +1104,46 @@ function lastPathPart_(path) {
 function assistantQuery_(p) {
   const q = String(p.question || '').trim();
   if (!q) return { result: 'error', error: 'question is required' };
-  const key = String(
-    p.gemini_key ||
-    PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY') ||
-    ''
-  ).trim();
-  if (!key) return { result: 'error', error: 'GEMINI API KEY가 비어 있습니다.' };
+  const key = String(p.gemini_key || PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY') || '').trim();
+  const period = parseAssistantPeriod_(q);
+  const targetTypes = parseAssistantTargetTypes_(q);
+  const ctx = buildAssistantContext_(p, q, period, targetTypes);
 
-  const todos = Array.isArray(p.todos) ? p.todos.slice(0, 200) : [];
-  const ctx = {
-    now: Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd HH:mm'),
-    currentMode: String(p.currentMode || ''),
-    classType: String(p.classType || ''),
-    name: String(p.name || ''),
-    date: String(p.date || ''),
-    todos: todos
-  };
-
-  const systemPrompt =
-    '너는 학원 운영 비서다. 한국어로 간결하게 답한다. ' +
-    '질문에 답하면서 intent(일반수업|결석|보강|상담|테스트진행)와 confidence(0~1)를 반드시 판단한다. ' +
-    '질문에서 기간(오늘|내일|이번주|다음주|이번달|날짜범위)과 대상유형(보강|결석|상담|테스트)을 우선 해석해 todos에서 근거를 찾아 답한다. ' +
-    '근거가 없으면 없다고 명확히 말하고, 추정하지 않는다. ' +
-    '개인정보는 과도하게 노출하지 말고 필요한 정보만 요약한다. ' +
-    '응답은 반드시 JSON만 출력한다. 형식: {"intent":"...","confidence":0.00,"answer":"..."}';
-  const userPrompt =
-    '질문:\n' + q + '\n\n' +
-    '현재 컨텍스트(JSON):\n' + JSON.stringify(ctx);
-
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + encodeURIComponent(key);
-  const body = {
-    contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userPrompt }] }],
-    generationConfig: { temperature: 0.2, maxOutputTokens: 700 }
-  };
-  const response = UrlFetchApp.fetch(url, {
-    method: 'post',
-    contentType: 'application/json',
-    payload: JSON.stringify(body),
-    muteHttpExceptions: true
-  });
-  const code = response.getResponseCode();
-  if (code < 200 || code >= 300) {
-    throw new Error('Gemini 호출 실패: ' + response.getContentText());
+  if (!key) {
+    return {
+      result: 'success',
+      intent: targetTypes.length ? targetTypes[0] : '일반수업',
+      confidence: 0.66,
+      answer: buildAssistantLocalAnswer_(ctx)
+    };
   }
+
+  const systemPrompt = [
+    '너는 지필드 운영 비서다. 반드시 한국어 JSON만 답한다.',
+    '형식: {"intent":"...","confidence":0.00,"answer":"...","need_confirm":[...]}',
+    '파일명은 후보 검색용, HTML 본문은 실제 발송 내용, 일정_마스터는 실제 일정 기준표, 대시보드는 문서기록, To-Do는 처리 확인용이다.',
+    '파일명 또는 To-Do만으로 일정을 확정하지 말라. 근거가 부족하면 확인필요로 표시하라.',
+    '확정 일정과 확인 필요 일정을 분리해 간결히 답하라.'
+  ].join(' ');
+  const userPrompt =
+    '질문: ' + q + '\n\n' +
+    '컨텍스트(JSON):\n' + JSON.stringify(ctx);
+
+  const response = UrlFetchApp.fetch(
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + encodeURIComponent(key),
+    {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userPrompt }] }],
+        generationConfig: { temperature: 0.15, maxOutputTokens: 900 }
+      }),
+      muteHttpExceptions: true
+    }
+  );
+  const code = response.getResponseCode();
+  if (code < 200 || code >= 300) throw new Error('Gemini 호출 실패: ' + response.getContentText());
+
   const data = JSON.parse(response.getContentText() || '{}');
   const answer =
     (((data.candidates || [])[0] || {}).content || {}).parts &&
@@ -1141,23 +1154,33 @@ function assistantQuery_(p) {
   if (!answer) return { result: 'error', error: 'Gemini 응답이 비어 있습니다.' };
 
   var parsed = null;
-  try {
-    parsed = JSON.parse(String(answer).trim());
-  } catch (e) {
+  try { parsed = JSON.parse(String(answer).trim()); } catch (e) {
     var m = String(answer).match(/\{[\s\S]*\}/);
     if (m) {
       try { parsed = JSON.parse(m[0]); } catch (e2) {}
     }
   }
   if (!parsed) {
-    return { result: 'success', intent: '일반수업', confidence: 0.55, answer: String(answer).trim() };
+    return {
+      result: 'success',
+      intent: targetTypes.length ? targetTypes[0] : '일반수업',
+      confidence: 0.58,
+      answer: String(answer).trim()
+    };
   }
-  var intent = String(parsed.intent || '일반수업').trim();
+  var intent = String(parsed.intent || (targetTypes[0] || '일반수업')).trim();
   var confidence = Number(parsed.confidence || 0.6);
   if (isNaN(confidence)) confidence = 0.6;
   confidence = Math.max(0, Math.min(1, confidence));
-  var finalAnswer = String(parsed.answer || '').trim() || String(answer).trim();
-  return { result: 'success', intent: intent, confidence: confidence, answer: finalAnswer };
+  var finalAnswer = String(parsed.answer || '').trim() || buildAssistantLocalAnswer_(ctx);
+  return {
+    result: 'success',
+    intent: intent,
+    confidence: confidence,
+    answer: finalAnswer,
+    period: period,
+    targetTypes: targetTypes
+  };
 }
 
 function ensureTodoSheet_(sheetId) {
@@ -1712,7 +1735,10 @@ function ensureMasterInfra_(ss) {
 
 function ensureMasterSheet_(ss) {
   const sh = ensureSheet_(ss, MASTER_SHEET, MASTER_HEADERS);
-  applySheetLayout_(sh, MASTER_HEADERS, '#334155', [180, 180, 110, 180, 120, 100, 100, 110, 140, 140, 260, 360, 100, 180, 180, 120, 260, 120, 120, 260, 150, 150]);
+  applySheetLayout_(sh, MASTER_HEADERS, '#334155', [
+    170, 170, 150, 150, 120, 130, 120, 120, 120, 120, 120, 120, 120, 120, 90, 90,
+    120, 110, 110, 220, 300, 240, 240, 110, 110, 220, 150, 220, 260, 150, 90, 220
+  ]);
   return sh;
 }
 
@@ -1997,9 +2023,11 @@ function getExistingMasterKeyMap_(masterSheet) {
   const vals = masterSheet.getDataRange().getValues();
   if (vals.length < 2) return map;
   const idx = headerIndex_(vals[0]);
+  const sourceCol = idx['출처'] !== undefined ? idx['출처'] : idx['원본출처'];
+  const keyCol = idx['출처행번호'] !== undefined ? idx['출처행번호'] : idx['원본키'];
   for (var i = 1; i < vals.length; i++) {
-    const source = String(vals[i][idx['원본출처']] || '').trim();
-    const key = String(vals[i][idx['원본키']] || '').trim();
+    const source = sourceCol === undefined ? '' : String(vals[i][sourceCol] || '').trim();
+    const key = keyCol === undefined ? '' : String(vals[i][keyCol] || '').trim();
     if (!source || !key) continue;
     map[source + '|' + key] = true;
   }
@@ -2009,28 +2037,38 @@ function getExistingMasterKeyMap_(masterSheet) {
 function buildMasterRow_(x) {
   const now = new Date();
   return [
-    Utilities.getUuid(),
-    x.groupId || '',
-    x.source || '',
-    x.sourceKey || '',
-    x.student || '',
-    x.type || '',
-    x.state || '진행중',
-    x.baseDate || '',
-    x.startAt || '',
-    x.endAt || '',
-    x.summary || '',
-    x.detail || '',
-    x.confirmNeeded === false ? false : true,
-    x.calendarEventId || '',
-    x.notionPageId || '',
-    x.driveLink || '',
-    x.reportLink || '',
-    x.syncStatus || '대기',
-    x.failStage || '',
-    x.errorLog || '',
-    now,
-    now
+    x.id || Utilities.getUuid(),                                  // ID
+    x.groupId || '',                                              // 관련그룹ID
+    x.createdAt || now,                                           // 생성일
+    x.updatedAt || now,                                           // 수정일
+    x.student || '',                                              // 학생명
+    x.phone || '',                                                // 연락처
+    x.course || '',                                               // 과정
+    x.type || '정규수업',                                         // 업무유형
+    x.state || '진행중',                                          // 상태
+    x.noticeDate || x.baseDate || '',                             // 공지일
+    x.originalDate || '',                                         // 원수업일
+    x.absentDate || '',                                           // 결석일
+    x.cancelDate || '',                                           // 휴강일
+    x.actualDate || x.baseDate || '',                             // 실제일정일
+    x.startAt || '',                                              // 시작시간
+    x.endAt || '',                                                // 종료시간
+    x.prevDate || '',                                             // 변경전일정일
+    x.prevStart || '',                                            // 변경전시작시간
+    x.prevEnd || '',                                              // 변경전종료시간
+    x.reason || '',                                               // 사유
+    x.notice || x.summary || '',                                  // 추가공지
+    x.reportLink || '',                                           // 리포트링크
+    x.driveLink || '',                                            // 드라이브링크
+    x.source || '',                                               // 출처
+    x.sourceKey || '',                                            // 출처행번호
+    x.calendarEventId || '',                                      // 캘린더이벤트ID
+    x.calendarSyncStatus || '',                                   // 캘린더동기화상태
+    x.notionPageId || '',                                         // 노션페이지ID
+    x.notionPageUrl || '',                                        // 노션페이지URL
+    x.notionSyncStatus || '',                                     // 노션동기화상태
+    x.confirmNeeded === false ? false : true,                     // 확인필요
+    x.note || [x.failStage, x.errorLog].filter(Boolean).join(' / ') // 비고
   ];
 }
 
@@ -2042,11 +2080,17 @@ function masterRowToObject_(row) {
 
 function inferTypeFromText_(text) {
   const t = String(text || '');
-  if (/퇴원/.test(t)) return '퇴원';
+  if (/퇴원취소/.test(t)) return '퇴원취소';
+  if (/퇴원확정|퇴원 완료/.test(t)) return '퇴원확정';
+  if (/퇴원예정/.test(t)) return '퇴원예정';
+  if (/보강취소/.test(t)) return '보강취소';
+  if (/보강변경/.test(t)) return '보강변경';
+  if (/보강확정|보강일 확정/.test(t)) return '보강확정';
   if (/결석|휴강/.test(t)) return '결석';
-  if (/보강|보충/.test(t)) return '보강';
+  if (/보강|보충/.test(t)) return '보강확정';
   if (/상담|테스트|문의/.test(t)) return '상담';
-  return '일반수업';
+  if (/추가수업/.test(t)) return '추가수업';
+  return '정규수업';
 }
 
 function guessStudentFromText_(text) {
@@ -2116,4 +2160,735 @@ function makeUniqueSheetName_(ss, base) {
     if (!ss.getSheetByName(n)) return n;
   }
   return name.slice(0, 90) + '_' + new Date().getTime();
+}
+
+function parseAssistantPeriod_(text) {
+  const q = String(text || '');
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const out = { label: '전체', start: '', end: '' };
+  if (/오늘/.test(q)) {
+    out.label = '오늘';
+    out.start = formatDateYmd_(today);
+    out.end = formatDateYmd_(today);
+    return out;
+  }
+  if (/내일/.test(q)) {
+    const t = new Date(today); t.setDate(t.getDate() + 1);
+    out.label = '내일';
+    out.start = formatDateYmd_(t);
+    out.end = formatDateYmd_(t);
+    return out;
+  }
+  if (/다음주/.test(q)) {
+    const s = mondayOfWeek_(today); s.setDate(s.getDate() + 7);
+    const e = new Date(s); e.setDate(e.getDate() + 6);
+    out.label = '다음주';
+    out.start = formatDateYmd_(s);
+    out.end = formatDateYmd_(e);
+    return out;
+  }
+  if (/이번주|금주/.test(q)) {
+    const s2 = mondayOfWeek_(today);
+    const e2 = new Date(s2); e2.setDate(e2.getDate() + 6);
+    out.label = '이번주';
+    out.start = formatDateYmd_(s2);
+    out.end = formatDateYmd_(e2);
+    return out;
+  }
+  if (/이번달\s*다음달|다음달\s*이번달|이번달과\s*다음달|이번달\+\s*다음달/.test(q)) {
+    const s3 = new Date(today.getFullYear(), today.getMonth(), 1);
+    const e3 = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+    out.label = '이번달+다음달';
+    out.start = formatDateYmd_(s3);
+    out.end = formatDateYmd_(e3);
+    return out;
+  }
+  if (/다음달/.test(q)) {
+    const s4 = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    const e4 = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+    out.label = '다음달';
+    out.start = formatDateYmd_(s4);
+    out.end = formatDateYmd_(e4);
+    return out;
+  }
+  if (/이번달|금월|이달/.test(q)) {
+    const s5 = new Date(today.getFullYear(), today.getMonth(), 1);
+    const e5 = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    out.label = '이번달';
+    out.start = formatDateYmd_(s5);
+    out.end = formatDateYmd_(e5);
+    return out;
+  }
+  const r = q.match(/(20\d{2})[.\-/](\d{1,2})[.\-/](\d{1,2})\s*(?:~|-|부터)\s*(20\d{2})[.\-/](\d{1,2})[.\-/](\d{1,2})/);
+  if (r) {
+    const s6 = new Date(Number(r[1]), Number(r[2]) - 1, Number(r[3]));
+    const e6 = new Date(Number(r[4]), Number(r[5]) - 1, Number(r[6]));
+    out.label = formatDateYmd_(s6) + '~' + formatDateYmd_(e6);
+    out.start = formatDateYmd_(s6);
+    out.end = formatDateYmd_(e6);
+  }
+  return out;
+}
+
+function parseAssistantTargetTypes_(text) {
+  const q = String(text || '');
+  const arr = [];
+  if (/보강|보충/.test(q)) arr.push('보강확정', '보강변경', '보강취소');
+  if (/결석|휴강/.test(q)) arr.push('결석', '휴강');
+  if (/상담/.test(q)) arr.push('상담');
+  if (/테스트/.test(q)) arr.push('테스트');
+  if (/퇴원/.test(q)) arr.push('퇴원예정', '퇴원확정', '퇴원취소');
+  return uniqueStrings_(arr);
+}
+
+function buildAssistantContext_(p, question, period, targetTypes) {
+  const ss = SpreadsheetApp.openById(getSheetId_(p.sheetId));
+  ensureMasterInfra_(ss);
+  const masterRecords = queryMasterRecords_(ss, period, targetTypes, 250);
+  const dashboardRecords = queryDashboardRecords_(ss, period, targetTypes, 160);
+  const parseReports = /본문|내용|리포트|공지|발송/.test(String(question || ''));
+  const parsedReports = parseReports ? parseLinkedReports_(dashboardRecords, 8) : [];
+  const todoRes = todoList_({ sheetId: getSheetId_(p.sheetId), includeCompleted: true });
+  const todos = (todoRes && todoRes.result === 'success' ? (todoRes.todos || []) : []).slice(0, 400);
+  return {
+    now: Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd HH:mm'),
+    question: String(question || ''),
+    period: period,
+    targetTypes: targetTypes,
+    scheduleMasterRecords: masterRecords,
+    dashboardRecords: dashboardRecords,
+    parsedReports: parsedReports,
+    todos: todos,
+    calendarSyncStatus: masterRecords.map(function(r) {
+      return { id: r.ID || '', type: r['업무유형'] || '', status: r['캘린더동기화상태'] || '', needConfirm: r['확인필요'] === true };
+    }),
+    notionSyncStatus: masterRecords.map(function(r) {
+      return { id: r.ID || '', type: r['업무유형'] || '', status: r['노션동기화상태'] || '', pageId: r['노션페이지ID'] || '' };
+    })
+  };
+}
+
+function buildAssistantLocalAnswer_(ctx) {
+  const rows = Array.isArray(ctx.scheduleMasterRecords) ? ctx.scheduleMasterRecords : [];
+  const confirmed = rows.filter(function(r) { return r['확인필요'] !== true; });
+  const needs = rows.filter(function(r) { return r['확인필요'] === true; });
+  const lines = [];
+  lines.push('질문: ' + String(ctx.question || ''));
+  lines.push('기간: ' + (ctx.period && ctx.period.label ? ctx.period.label : '전체'));
+  lines.push('');
+  lines.push('[확정 일정]');
+  if (!confirmed.length) lines.push('- 없음');
+  else {
+    confirmed.slice(0, 20).forEach(function(r) {
+      lines.push('- ' + [r['업무유형'], r['학생명'], r['실제일정일'] || r['결석일'] || r['공지일'], formatTimeRange_(r['시작시간'], r['종료시간'])].filter(Boolean).join(' / '));
+    });
+  }
+  lines.push('');
+  lines.push('[확인 필요]');
+  if (!needs.length) lines.push('- 없음');
+  else {
+    needs.slice(0, 20).forEach(function(r) {
+      lines.push('- ' + [r['업무유형'], r['학생명'], r['실제일정일'] || r['결석일'] || r['공지일'], '확인필요'].filter(Boolean).join(' / '));
+    });
+  }
+  return lines.join('\n');
+}
+
+function queryMasterRecords_(ss, period, targetTypes, limit) {
+  const rows = getMasterRowsAsObjects_(ss);
+  const start = period && period.start ? String(period.start) : '';
+  const end = period && period.end ? String(period.end) : '';
+  const types = Array.isArray(targetTypes) ? targetTypes : [];
+  const filtered = rows.filter(function(r) {
+    const type = String(r['업무유형'] || '');
+    if (types.length && types.indexOf(type) === -1) return false;
+    if (start && end) {
+      const d = chooseMasterDate_(r);
+      if (!d) return false;
+      if (d < start || d > end) return false;
+    }
+    return true;
+  });
+  return filtered.slice(0, Number(limit || 200));
+}
+
+function queryDashboardRecords_(ss, period, targetTypes, limit) {
+  const sh = ensureSheet_(ss, ACTIVITY_SHEET, ACTIVITY_HEADERS);
+  const vals = sh.getDataRange().getValues();
+  if (vals.length < 2) return [];
+  const idx = headerIndex_(vals[0]);
+  const start = period && period.start ? String(period.start) : '';
+  const end = period && period.end ? String(period.end) : '';
+  const types = Array.isArray(targetTypes) ? targetTypes : [];
+  const out = [];
+  for (var i = vals.length - 1; i >= 1; i--) {
+    const r = vals[i];
+    const dateText = normalizeDateValue_(r[idx['수업일/상담일']] || r[idx['상담/테스트일']]);
+    const typeRaw = String(r[idx['세부유형']] || r[idx['수업유형']] || r[idx['문서구분']] || '').trim();
+    const type = inferTypeFromText_(typeRaw);
+    if (types.length && types.indexOf(type) === -1 && types.indexOf(typeRaw) === -1) continue;
+    if (start && end && dateText) {
+      if (dateText < start || dateText > end) continue;
+    }
+    out.push({
+      date: dateText,
+      student: String(r[idx['학생명']] || ''),
+      type: type,
+      rawType: typeRaw,
+      content: String(r[idx['내용']] || ''),
+      reportUrl: String(r[idx['리포트링크']] || ''),
+      driveUrl: String(r[idx['드라이브링크']] || '')
+    });
+    if (out.length >= Number(limit || 120)) break;
+  }
+  return out;
+}
+
+function parseLinkedReports_(records, limit) {
+  const out = [];
+  const n = Number(limit || 8);
+  for (var i = 0; i < records.length && out.length < n; i++) {
+    const r = records[i];
+    const link = String(r.reportUrl || '');
+    if (!/^https?:\/\//.test(link)) continue;
+    try {
+      const res = UrlFetchApp.fetch(link, { muteHttpExceptions: true });
+      if (res.getResponseCode() < 200 || res.getResponseCode() >= 300) continue;
+      const html = String(res.getContentText() || '');
+      const text = html.replace(/<script[\s\S]*?<\/script>/gi, ' ')
+        .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 1200);
+      out.push({
+        student: r.student || '',
+        date: r.date || '',
+        type: r.type || '',
+        reportUrl: link,
+        excerpt: text
+      });
+    } catch (e) {}
+  }
+  return out;
+}
+
+function chooseMasterDate_(r) {
+  return String(
+    r['실제일정일'] ||
+    r['결석일'] ||
+    r['휴강일'] ||
+    r['원수업일'] ||
+    r['공지일'] ||
+    ''
+  ).trim();
+}
+
+function mondayOfWeek_(d) {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diff = (x.getDay() + 6) % 7;
+  x.setDate(x.getDate() - diff);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+function scheduleWorkflowPreview_(p) {
+  const ss = SpreadsheetApp.openById(getSheetId_(p.sheetId));
+  ensureMasterInfra_(ss);
+  const plan = syncOperationalScheduleFromPayload_(ss, p || {}, { dryRun: true });
+  const summary = {
+    groupId: plan.groupId || '',
+    workflow: plan.workflow || '',
+    rows: (plan.rows || []).length,
+    todos: (plan.todoTexts || []).length,
+    warnings: plan.warnings || []
+  };
+  const token = createApprovalRequest_(ss, 'schedule_workflow_execute', { payload: p || {} }, JSON.stringify(summary));
+  return { result: 'success', token: token, summary: summary, preview: plan.rows || [] };
+}
+
+function scheduleWorkflowExecute_(p) {
+  const token = String((p && p.token) || '').trim();
+  if (!token) return { result: 'error', error: 'token is required' };
+  if (!(p && p.approved === true)) return { result: 'error', error: '승인되지 않았습니다. approved=true 로 호출하세요.' };
+  const ss = SpreadsheetApp.openById(getSheetId_(p.sheetId));
+  ensureMasterInfra_(ss);
+  const req = getApprovalRequest_(ss, token);
+  if (!req) return { result: 'error', error: '승인 요청을 찾을 수 없습니다.' };
+  if (req.status !== 'pending') return { result: 'error', error: '이미 처리된 토큰입니다. status=' + req.status };
+  if (req.action !== 'schedule_workflow_execute') return { result: 'error', error: '토큰 작업이 일치하지 않습니다.' };
+  setApprovalStatus_(ss, token, 'approved', { approvedAt: new Date() });
+  const out = syncOperationalScheduleFromPayload_(ss, req.payload.payload || {}, { dryRun: false });
+  setApprovalStatus_(ss, token, 'executed', out);
+  return out;
+}
+
+function syncOperationalScheduleFromPayload_(ss, p, options) {
+  const opts = options || {};
+  const dryRun = opts.dryRun === true;
+  ensureMasterInfra_(ss);
+  const masterSheet = ensureMasterSheet_(ss);
+  const masterRows = getMasterRowsAsObjects_(ss);
+
+  const name = requireName_(p);
+  const phone = String(p.phone || '').trim();
+  const course = String(p.course || '').trim();
+  const classTypeRaw = String(p.classTypeRaw || p.classType || p.type || '').trim();
+  const reasonType = String(p.absentReasonType || '').trim();
+  const makeupType = String(p.makeupType || 'undecided').trim();
+  const noticeDate = normalizeDateValue_(p.date || p.noticeDate || '');
+  const makeupDate = normalizeDateValue_(p.makeupDate || '');
+  const startTime = toTimeHHmm_(p.startTime || p.start || p.startTimeInput || p.absentMakeupStartTime || '');
+  const endTime = toTimeHHmm_(p.endTime || p.end || p.endTimeInput || p.absentMakeupEndTime || '');
+  const reason = String(p.reason || p.absentReason || p.content || '').trim();
+  const notice = String(p.notice || p.noticeArea || '').trim();
+  const statusAction = normalizeStudentStatusLabel_(p.studentStatus || p.dbStatus || '');
+  const groupId = resolveRelatedGroupId_(masterRows, name, p, noticeDate, makeupDate);
+  const source = String(p.source || p.syncTriggeredBy || 'manual').trim() || 'manual';
+
+  const warnings = [];
+  const rowsToWrite = [];
+  const todoTexts = [];
+  const rowUpdates = [];
+  let workflow = '일반';
+
+  const oldMakeup = findLatestMasterByGroupAndTypes_(masterRows, groupId, ['보강확정', '보강변경']);
+  const oldWithdraw = findLatestMasterByGroupAndTypes_(masterRows, groupId, ['퇴원예정', '퇴원확정']);
+
+  if (isWithdrawalStatus_(statusAction)) {
+    workflow = statusAction;
+    if (!noticeDate) warnings.push('퇴원 상태 전이는 날짜가 필요합니다.');
+    if (statusAction === '퇴원예정') {
+      rowsToWrite.push(buildMasterRow_({
+        groupId: groupId, source: source, sourceKey: 'WF:' + Utilities.getUuid(),
+        student: name, phone: phone, course: course, type: '퇴원예정', state: '예정',
+        noticeDate: noticeDate, actualDate: noticeDate, reason: reason, notice: notice,
+        reportLink: String(p.url || ''), driveLink: String(p.driveUrl || ''),
+        confirmNeeded: false, notionPageId: p.notionPageId || '', notionPageUrl: p.notionPageUrl || '',
+        notionSyncStatus: p.notionSyncStatus || ''
+      }));
+      todoTexts.push('[퇴원예정] ' + name + ' / 퇴원 상담 기록');
+      todoTexts.push('[퇴원예정] ' + name + ' / 퇴원 사유 확인');
+      todoTexts.push('[퇴원예정] ' + name + ' / 정산 확인');
+      todoTexts.push('[퇴원예정] ' + name + ' / 교재/자료 회수 확인');
+      todoTexts.push('[퇴원예정] ' + name + ' / 학부모 안내 확인');
+    } else if (statusAction === '퇴원확정') {
+      rowsToWrite.push(buildMasterRow_({
+        groupId: groupId, source: source, sourceKey: 'WF:' + Utilities.getUuid(),
+        student: name, phone: phone, course: course, type: '퇴원확정', state: '확정',
+        noticeDate: noticeDate, actualDate: noticeDate, reason: reason, notice: notice,
+        reportLink: String(p.url || ''), driveLink: String(p.driveUrl || ''),
+        confirmNeeded: false, notionPageId: p.notionPageId || '', notionPageUrl: p.notionPageUrl || '',
+        notionSyncStatus: p.notionSyncStatus || ''
+      }));
+      todoTexts.push('[퇴원확정] ' + name + ' / 최종 정산 완료');
+      todoTexts.push('[퇴원확정] ' + name + ' / 교재 회수 완료');
+      todoTexts.push('[퇴원확정] ' + name + ' / 자료 전달 완료');
+      todoTexts.push('[퇴원확정] ' + name + ' / 학부모 안내 완료');
+      todoTexts.push('[퇴원확정] ' + name + ' / 대시보드 상태 확인');
+    } else if (statusAction === '퇴원취소') {
+      if (oldWithdraw && oldWithdraw['캘린더이벤트ID']) {
+        rowUpdates.push({ rowNumber: oldWithdraw._rowNumber, status: '취소', deleteEventId: String(oldWithdraw['캘린더이벤트ID'] || '') });
+      }
+      rowsToWrite.push(buildMasterRow_({
+        groupId: groupId, source: source, sourceKey: 'WF:' + Utilities.getUuid(),
+        student: name, phone: phone, course: course, type: '퇴원취소', state: '취소',
+        noticeDate: noticeDate, actualDate: noticeDate,
+        prevDate: String(oldWithdraw && (oldWithdraw['실제일정일'] || oldWithdraw['공지일']) || ''),
+        reason: reason, notice: notice, confirmNeeded: false,
+        notionPageId: p.notionPageId || '', notionPageUrl: p.notionPageUrl || '', notionSyncStatus: p.notionSyncStatus || ''
+      }));
+      todoTexts.push('[퇴원취소] ' + name + ' / 상태 재원으로 복귀');
+    }
+  } else if (classTypeRaw === '결석' || reasonType || makeupType !== 'undecided') {
+    workflow = '결석보강';
+    const absType = reasonType === 'cancelled' ? '휴강' : '결석';
+    if (reasonType !== 'free') {
+      rowsToWrite.push(buildMasterRow_({
+        groupId: groupId, source: source, sourceKey: 'WF:' + Utilities.getUuid(),
+        student: name, phone: phone, course: course, type: absType, state: '등록',
+        noticeDate: noticeDate, originalDate: noticeDate,
+        absentDate: absType === '결석' ? noticeDate : '',
+        cancelDate: absType === '휴강' ? noticeDate : '',
+        actualDate: noticeDate, reason: reason, notice: notice,
+        reportLink: String(p.url || ''), driveLink: String(p.driveUrl || ''),
+        confirmNeeded: false, notionPageId: p.notionPageId || '', notionPageUrl: p.notionPageUrl || '', notionSyncStatus: p.notionSyncStatus || ''
+      }));
+      todoTexts.push('[' + absType + '기록] ' + name + ' / ' + (noticeDate || '날짜미정') + (reason ? (' / ' + reason) : ''));
+    }
+    if (makeupType === 'decided') {
+      rowsToWrite.push(buildMasterRow_({
+        groupId: groupId, source: source, sourceKey: 'WF:' + Utilities.getUuid(),
+        student: name, phone: phone, course: course, type: '보강확정', state: '확정',
+        noticeDate: noticeDate, actualDate: makeupDate, startAt: startTime, endAt: endTime,
+        reason: reason, notice: notice, confirmNeeded: false,
+        notionPageId: p.notionPageId || '', notionPageUrl: p.notionPageUrl || '', notionSyncStatus: p.notionSyncStatus || ''
+      }));
+      todoTexts.push('[보강확정] ' + name + ' / ' + buildDateTimeLabel_(makeupDate, startTime, endTime));
+    } else if (makeupType === 'changed') {
+      if (!oldMakeup) warnings.push('보강변경 대상 기존 보강 일정을 찾지 못했습니다.');
+      rowsToWrite.push(buildMasterRow_({
+        groupId: groupId, source: source, sourceKey: 'WF:' + Utilities.getUuid(),
+        student: name, phone: phone, course: course, type: '보강변경', state: '변경',
+        noticeDate: noticeDate, actualDate: makeupDate, startAt: startTime, endAt: endTime,
+        prevDate: String(oldMakeup && oldMakeup['실제일정일'] || ''), prevStart: String(oldMakeup && oldMakeup['시작시간'] || ''), prevEnd: String(oldMakeup && oldMakeup['종료시간'] || ''),
+        reason: reason, notice: notice, confirmNeeded: false,
+        notionPageId: p.notionPageId || '', notionPageUrl: p.notionPageUrl || '', notionSyncStatus: p.notionSyncStatus || '',
+        note: oldMakeup && oldMakeup['캘린더이벤트ID'] ? ('deleteEvent:' + oldMakeup['캘린더이벤트ID']) : ''
+      }));
+      if (oldMakeup && oldMakeup['캘린더이벤트ID']) rowUpdates.push({ rowNumber: oldMakeup._rowNumber, status: '변경됨', deleteEventId: String(oldMakeup['캘린더이벤트ID'] || '') });
+      todoTexts.push('[보강변경] ' + name + ' / ' + buildDateTimeLabel_(String(oldMakeup && oldMakeup['실제일정일'] || ''), String(oldMakeup && oldMakeup['시작시간'] || ''), String(oldMakeup && oldMakeup['종료시간'] || '')) + ' → ' + buildDateTimeLabel_(makeupDate, startTime, endTime));
+    } else if (makeupType === 'canceled') {
+      if (!oldMakeup) warnings.push('보강취소 대상 기존 보강 일정을 찾지 못했습니다.');
+      rowsToWrite.push(buildMasterRow_({
+        groupId: groupId, source: source, sourceKey: 'WF:' + Utilities.getUuid(),
+        student: name, phone: phone, course: course, type: '보강취소', state: '취소',
+        noticeDate: noticeDate, actualDate: makeupDate || String(oldMakeup && oldMakeup['실제일정일'] || ''),
+        prevDate: String(oldMakeup && oldMakeup['실제일정일'] || ''), prevStart: String(oldMakeup && oldMakeup['시작시간'] || ''), prevEnd: String(oldMakeup && oldMakeup['종료시간'] || ''),
+        reason: reason, notice: notice, confirmNeeded: false,
+        notionPageId: p.notionPageId || '', notionPageUrl: p.notionPageUrl || '', notionSyncStatus: p.notionSyncStatus || '',
+        note: oldMakeup && oldMakeup['캘린더이벤트ID'] ? ('deleteEvent:' + oldMakeup['캘린더이벤트ID']) : ''
+      }));
+      if (oldMakeup && oldMakeup['캘린더이벤트ID']) rowUpdates.push({ rowNumber: oldMakeup._rowNumber, status: '보강취소', deleteEventId: String(oldMakeup['캘린더이벤트ID'] || '') });
+      todoTexts.push('[보강취소] ' + name + ' / ' + buildDateTimeLabel_(String(oldMakeup && oldMakeup['실제일정일'] || ''), String(oldMakeup && oldMakeup['시작시간'] || ''), String(oldMakeup && oldMakeup['종료시간'] || '')) + (reason ? (' / ' + reason) : ''));
+    }
+  } else {
+    workflow = '일반';
+    const opType = normalizeOperationType_(classTypeRaw || p.docType || p.cType || p.type || '');
+    rowsToWrite.push(buildMasterRow_({
+      groupId: groupId, source: source, sourceKey: 'WF:' + Utilities.getUuid(),
+      student: name, phone: phone, course: course, type: opType, state: '등록',
+      noticeDate: noticeDate, actualDate: noticeDate, startAt: startTime, endAt: endTime,
+      reason: reason, notice: notice,
+      reportLink: String(p.url || ''), driveLink: String(p.driveUrl || ''),
+      confirmNeeded: false, notionPageId: p.notionPageId || '', notionPageUrl: p.notionPageUrl || '', notionSyncStatus: p.notionSyncStatus || ''
+    }));
+  }
+
+  if (dryRun) {
+    return {
+      result: 'success',
+      workflow: workflow,
+      groupId: groupId,
+      rows: rowsToWrite.map(masterRowToObject_),
+      todoTexts: uniqueStrings_(todoTexts),
+      warnings: warnings
+    };
+  }
+
+  const outRows = [];
+  const calendarId = String(p.google_calendar_id || PropertiesService.getScriptProperties().getProperty('GOOGLE_CALENDAR_ID') || CONFIG.GOOGLE_CALENDAR_ID || 'primary').trim();
+  rowUpdates.forEach(function(u) {
+    if (u.deleteEventId) deleteGoogleCalendarEventSafe_(calendarId, u.deleteEventId);
+    if (u.rowNumber && u.status) {
+      const headers = masterSheet.getRange(1, 1, 1, MASTER_HEADERS.length).getValues()[0];
+      const idx = headerIndex_(headers);
+      if (idx['상태'] !== undefined) masterSheet.getRange(u.rowNumber, idx['상태'] + 1).setValue(u.status);
+      if (idx['수정일'] !== undefined) masterSheet.getRange(u.rowNumber, idx['수정일'] + 1).setValue(new Date());
+    }
+  });
+
+  rowsToWrite.forEach(function(row) {
+    const rec = masterRowToObject_(row);
+    const typ = String(rec['업무유형'] || '');
+    const needCalendar = ['결석', '휴강', '보강확정', '보강변경', '상담', '테스트', '퇴원예정', '퇴원확정'].indexOf(typ) !== -1;
+    if (needCalendar) {
+      const cRes = createCalendarEventFromMasterRecord_(rec, p);
+      rec['캘린더이벤트ID'] = cRes.eventId || '';
+      rec['캘린더동기화상태'] = cRes.created ? '완료' : '실패';
+      if (!cRes.created) rec['확인필요'] = true;
+      if (!cRes.created && cRes.error) rec['비고'] = [String(rec['비고'] || ''), cRes.error].filter(Boolean).join(' / ');
+    } else {
+      rec['캘린더동기화상태'] = '대기';
+    }
+    rec['노션동기화상태'] = rec['노션페이지ID'] ? (rec['노션동기화상태'] || '완료') : (rec['노션동기화상태'] || '대기');
+    rec['수정일'] = new Date();
+    const rowOut = MASTER_HEADERS.map(function(h) { return rec[h] !== undefined ? rec[h] : ''; });
+    masterSheet.appendRow(rowOut);
+    outRows.push(rec);
+  });
+
+  uniqueStrings_(todoTexts).forEach(function(t) {
+    if (String(t || '').trim()) todoAdd_({ sheetId: getSheetId_(p.sheetId), text: t, writer: '원장', source: '운영자동화' });
+  });
+  if (statusAction) {
+    upsertStudent_({
+      sheetId: getSheetId_(p.sheetId),
+      name: name,
+      phone: phone,
+      course: course,
+      status: statusAction === '퇴원취소' ? '재원' : statusAction
+    });
+  }
+  logSyncStep_('schedule_workflow_execute', 'done', '운영 워크플로우 반영', {
+    workflow: workflow,
+    rows: outRows.length,
+    todos: uniqueStrings_(todoTexts).length
+  });
+  return {
+    result: 'success',
+    workflow: workflow,
+    groupId: groupId,
+    rows: outRows,
+    todoTexts: uniqueStrings_(todoTexts),
+    warnings: warnings
+  };
+}
+
+function createCalendarEventFromMasterRecord_(rec, p) {
+  try {
+    const calendarId = String(p.google_calendar_id || PropertiesService.getScriptProperties().getProperty('GOOGLE_CALENDAR_ID') || CONFIG.GOOGLE_CALENDAR_ID || 'primary').trim();
+    const cal = CalendarApp.getCalendarById(calendarId);
+    if (!cal) return { created: false, error: 'calendar_not_found' };
+    const dateText = String(rec['실제일정일'] || rec['결석일'] || rec['휴강일'] || rec['원수업일'] || rec['공지일'] || '').trim();
+    const day = toDateOnly_(dateText);
+    if (!day) return { created: false, error: 'date_missing' };
+    const title = '[' + String(rec['업무유형'] || '일정') + '] ' + String(rec['학생명'] || '학생');
+    const desc = [
+      '학생명: ' + String(rec['학생명'] || ''),
+      '연락처: ' + String(rec['연락처'] || ''),
+      '과정: ' + String(rec['과정'] || ''),
+      '업무유형: ' + String(rec['업무유형'] || ''),
+      '상태: ' + String(rec['상태'] || ''),
+      '공지일: ' + String(rec['공지일'] || ''),
+      '원수업일: ' + String(rec['원수업일'] || ''),
+      '결석일: ' + String(rec['결석일'] || ''),
+      '휴강일: ' + String(rec['휴강일'] || ''),
+      '실제일정일: ' + String(rec['실제일정일'] || ''),
+      '시작시간: ' + String(rec['시작시간'] || ''),
+      '종료시간: ' + String(rec['종료시간'] || ''),
+      '사유: ' + String(rec['사유'] || ''),
+      '추가공지: ' + String(rec['추가공지'] || ''),
+      '리포트링크: ' + String(rec['리포트링크'] || ''),
+      '드라이브링크: ' + String(rec['드라이브링크'] || ''),
+      '노션페이지: ' + String(rec['노션페이지URL'] || ''),
+      '관련그룹ID: ' + String(rec['관련그룹ID'] || '')
+    ].join('\n');
+    const st = toTimeHHmm_(rec['시작시간']);
+    const et = toTimeHHmm_(rec['종료시간']);
+    let ev;
+    if (st) {
+      const start = mergeDateAndTime_(dateText, st);
+      const end = et ? mergeDateAndTime_(dateText, et) : new Date(start.getTime() + 60 * 60 * 1000);
+      ev = cal.createEvent(title, start, end, { description: desc });
+    } else {
+      ev = cal.createAllDayEvent(title, day, { description: desc });
+    }
+    return { created: true, calendarId: calendarId, eventId: ev.getId() };
+  } catch (e) {
+    return { created: false, error: String((e && e.message) || e || 'calendar_error') };
+  }
+}
+
+function syncCalendarFromMaster_(p) {
+  const ss = SpreadsheetApp.openById(getSheetId_(p.sheetId));
+  const sh = ensureMasterSheet_(ss);
+  const vals = sh.getDataRange().getValues();
+  if (vals.length < 2) return { result: 'success', synced: 0, skipped: 0, errors: [] };
+  const idx = headerIndex_(vals[0]);
+  const period = parseAssistantPeriod_(String(p.periodText || p.period || '이번주'));
+  const start = period.start || '';
+  const end = period.end || '';
+  let synced = 0;
+  let skipped = 0;
+  const errors = [];
+  for (var i = 1; i < vals.length; i++) {
+    const r = vals[i];
+    const rec = {};
+    MASTER_HEADERS.forEach(function(h, ci) { rec[h] = r[ci]; });
+    const d = chooseMasterDate_(rec);
+    if (start && end && d && (d < start || d > end)) continue;
+    const typ = String(rec['업무유형'] || '');
+    if (['보강취소', '퇴원취소'].indexOf(typ) !== -1) {
+      const oldEventId = String(rec['캘린더이벤트ID'] || '');
+      if (oldEventId) deleteGoogleCalendarEventSafe_(String(p.google_calendar_id || CONFIG.GOOGLE_CALENDAR_ID || 'primary'), oldEventId);
+      skipped++;
+      continue;
+    }
+    if (String(rec['캘린더이벤트ID'] || '').trim()) {
+      skipped++;
+      continue;
+    }
+    const cRes = createCalendarEventFromMasterRecord_(rec, p || {});
+    if (cRes.created) {
+      if (idx['캘린더이벤트ID'] !== undefined) sh.getRange(i + 1, idx['캘린더이벤트ID'] + 1).setValue(cRes.eventId || '');
+      if (idx['캘린더동기화상태'] !== undefined) sh.getRange(i + 1, idx['캘린더동기화상태'] + 1).setValue('완료');
+      if (idx['수정일'] !== undefined) sh.getRange(i + 1, idx['수정일'] + 1).setValue(new Date());
+      synced++;
+    } else {
+      if (idx['캘린더동기화상태'] !== undefined) sh.getRange(i + 1, idx['캘린더동기화상태'] + 1).setValue('실패');
+      if (idx['확인필요'] !== undefined) sh.getRange(i + 1, idx['확인필요'] + 1).setValue(true);
+      errors.push({ row: i + 1, error: cRes.error || 'calendar_sync_failed' });
+    }
+  }
+  return { result: 'success', period: period, synced: synced, skipped: skipped, errors: errors.slice(0, 30) };
+}
+
+function masterQuery_(p) {
+  const ss = SpreadsheetApp.openById(getSheetId_(p.sheetId));
+  ensureMasterInfra_(ss);
+  const q = String(p.question || p.query || '').trim();
+  const period = parseAssistantPeriod_(String(p.periodText || q || ''));
+  const types = Array.isArray(p.targetTypes) && p.targetTypes.length ? p.targetTypes : parseAssistantTargetTypes_(q);
+  const rows = queryMasterRecords_(ss, period, types, Number(p.limit || 200));
+  return {
+    result: 'success',
+    period: period,
+    targetTypes: types,
+    count: rows.length,
+    rows: rows
+  };
+}
+
+function getMasterRowsAsObjects_(ss) {
+  const sh = ensureMasterSheet_(ss);
+  const vals = sh.getDataRange().getValues();
+  if (vals.length < 2) return [];
+  const headers = vals[0].map(function(h) { return String(h || '').trim(); });
+  const out = [];
+  for (var i = 1; i < vals.length; i++) {
+    const obj = {};
+    headers.forEach(function(h, c) { obj[h] = vals[i][c]; });
+    obj._rowNumber = i + 1;
+    out.push(obj);
+  }
+  return out;
+}
+
+function findLatestMasterByGroupAndTypes_(rows, groupId, types) {
+  const g = String(groupId || '').trim();
+  const set = {};
+  (types || []).forEach(function(t) { set[String(t)] = true; });
+  for (var i = rows.length - 1; i >= 0; i--) {
+    const r = rows[i];
+    if (String(r['관련그룹ID'] || '').trim() !== g) continue;
+    if (!set[String(r['업무유형'] || '')]) continue;
+    return r;
+  }
+  return null;
+}
+
+function resolveRelatedGroupId_(masterRows, name, p, noticeDate, makeupDate) {
+  const given = String((p && p.relatedGroupId) || '').trim();
+  if (given) return given;
+  const keyDate = String(noticeDate || makeupDate || '').trim();
+  if (keyDate) {
+    for (var i = masterRows.length - 1; i >= 0; i--) {
+      const r = masterRows[i];
+      if (String(r['학생명'] || '').trim() !== String(name || '').trim()) continue;
+      const d = chooseMasterDate_(r);
+      if (d && d === keyDate && String(r['관련그룹ID'] || '').trim()) return String(r['관련그룹ID'] || '').trim();
+    }
+  }
+  return makeGroupId_(name, keyDate || formatDateYmd_(new Date()), 'workflow');
+}
+
+function normalizeStudentStatusLabel_(status) {
+  const s = String(status || '').trim();
+  if (!s) return '';
+  if (s === '재원생') return '재원';
+  if (s === '퇴원생') return '퇴원확정';
+  return s;
+}
+
+function isWithdrawalStatus_(status) {
+  const s = String(status || '').trim();
+  return ['퇴원예정', '퇴원확정', '퇴원취소'].indexOf(s) !== -1;
+}
+
+function normalizeOperationType_(typeText) {
+  const t = String(typeText || '').trim();
+  if (!t) return '정규수업';
+  if (/정규/.test(t)) return '정규수업';
+  if (/추가/.test(t)) return '추가수업';
+  if (/결석/.test(t)) return '결석';
+  if (/휴강/.test(t)) return '휴강';
+  if (/상담/.test(t)) return '상담';
+  if (/테스트/.test(t)) return '테스트';
+  if (/수업안내/.test(t)) return '수업안내';
+  if (/보강/.test(t)) return '보강확정';
+  return t;
+}
+
+function toTimeHHmm_(value) {
+  const s = String(value || '').trim();
+  if (!s) return '';
+  const m = s.match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return '';
+  const h = Number(m[1]);
+  const mm = Number(m[2]);
+  if (isNaN(h) || isNaN(mm) || h < 0 || h > 23 || mm < 0 || mm > 59) return '';
+  return String(h).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+}
+
+function uniqueStrings_(arr) {
+  const out = [];
+  const seen = {};
+  (arr || []).forEach(function(v) {
+    const s = String(v || '').trim();
+    if (!s || seen[s]) return;
+    seen[s] = true;
+    out.push(s);
+  });
+  return out;
+}
+
+function buildDateTimeLabel_(dateText, start, end) {
+  const d = String(dateText || '').trim();
+  const s = toTimeHHmm_(start);
+  const e = toTimeHHmm_(end);
+  if (d && s && e) return d + ' ' + s + '~' + e;
+  if (d && s) return d + ' ' + s;
+  return d || s || '';
+}
+
+function formatTimeRange_(start, end) {
+  const s = toTimeHHmm_(start);
+  const e = toTimeHHmm_(end);
+  if (!s && !e) return '';
+  if (s && e) return s + '~' + e;
+  return s || e;
+}
+
+function findExistingNotionPageForPayload_(ss, p) {
+  const direct = String(p.notionPageId || '').trim();
+  if (direct) return direct;
+  const group = String(p.relatedGroupId || '').trim();
+  const name = String(p.name || p.studentName || '').trim();
+  const rows = getMasterRowsAsObjects_(ss);
+  for (var i = rows.length - 1; i >= 0; i--) {
+    const r = rows[i];
+    const rid = String(r['노션페이지ID'] || '').trim();
+    if (!rid) continue;
+    if (group && String(r['관련그룹ID'] || '').trim() === group) return rid;
+    if (name && String(r['학생명'] || '').trim() === name) return rid;
+  }
+  return '';
+}
+
+function createNotionPage_(token, databaseId, properties) {
+  const response = UrlFetchApp.fetch('https://api.notion.com/v1/pages', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: notionHeaders_(token),
+    payload: JSON.stringify({ parent: { database_id: databaseId }, properties: properties }),
+    muteHttpExceptions: true
+  });
+  const code = response.getResponseCode();
+  if (code < 200 || code >= 300) throw new Error('Notion 저장 실패: ' + response.getContentText());
+  return JSON.parse(response.getContentText() || '{}');
+}
+
+function updateNotionPage_(token, pageId, properties) {
+  const response = UrlFetchApp.fetch('https://api.notion.com/v1/pages/' + encodeURIComponent(pageId), {
+    method: 'patch',
+    contentType: 'application/json',
+    headers: notionHeaders_(token),
+    payload: JSON.stringify({ properties: properties }),
+    muteHttpExceptions: true
+  });
+  const code = response.getResponseCode();
+  if (code < 200 || code >= 300) throw new Error('Notion 업데이트 실패: ' + response.getContentText());
+  return JSON.parse(response.getContentText() || '{}');
 }
