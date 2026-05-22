@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>지필드 영재교육 테스트 안내</title>
+<style>
+  body { background: #fdfbf7; font-family: -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif; color: #333; margin: 0; padding: 0;}
+  .wrap { max-width: 600px; margin: 0 auto; padding-bottom: 40px; }
+  .top-banner { background: linear-gradient(135deg, #dfc27d, #b99042); color: #fff; padding: 40px 20px 30px; text-align: center; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); position: relative;}
+  .top-banner img { max-width: 80px; margin-bottom: 10px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+  .top-banner h1 { font-size: 34px; margin: 0 0 8px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); font-weight: 900;}
+  .top-banner p { margin: 0; font-size: 15px; opacity: 0.95; letter-spacing: -0.5px;}
+  
+  .card { background: #fff; border-radius: 16px; margin: 16px 20px; padding: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #eaddc5; overflow: hidden; display: flex; align-items: stretch;}
+  .card-icon { width: 64px; background: #fcf9f2; display: flex; align-items: center; justify-content: center; font-size: 26px; border-right: 1px solid #eaddc5; color: #b99042; flex-shrink: 0;}
+  .card-content { padding: 18px 16px; flex: 1; }
+  .card-title { font-size: 13px; font-weight: 900; color: #b99042; margin-bottom: 10px; }
+  .card-text { font-size: 14.5px; color: #222; line-height: 1.6; font-weight: 500; word-break: keep-all; }
+  
+  .chip-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+  .chip { background: #fcf9f2; border: 1px solid #eaddc5; padding: 5px 12px; border-radius: 20px; font-size: 13px; color: #555; font-weight: 700;}
+  
+  .quote-mark { font-size: 30px; color: #dfc27d; font-family: serif; line-height: 0; position: relative; top: 10px; margin-right: 5px;}
+  .quote-end { margin-left: 5px; top: 15px; }
+
+  .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 20px; margin-top: 24px; }
+  .btn { min-height: 78px; padding: 14px 13px; border-radius: 14px; text-decoration: none; color: #fff; text-align: left; font-weight: 900; font-size: clamp(13px, 3.4vw, 16px); line-height: 1.22; display: flex; justify-content: space-between; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor:pointer; border:none; letter-spacing: 0; word-break: keep-all; overflow-wrap: anywhere;}
+  .btn:active { transform: scale(0.97); }
+  .btn span { font-size: 18px; opacity: 0.8; font-weight: 300; flex: 0 0 auto;} 
+  
+  .btn-green { background: #0f766e; }
+  .btn-blue { background: #0284c7; }
+  .btn-teal { background: #0f766e; }
+  .btn-purple { background: #4f46e5; }
+  .btn-indigo { background: #6366f1; }
+  .btn-emerald { background: #059669; }
+  .btn-yellow { background: #eab308; color: #333; }
+  .btn-red { background: #e11d48; }
+  .btn-full { grid-column: 1 / -1; background: #65a30d; font-size: clamp(15px, 4vw, 18px); justify-content: center; gap: 10px;}
+  .btn-text-fit { font-size: clamp(12px, 3.15vw, 15px); } 
+  @media(max-width:360px){.btn-grid{gap:9px;padding:0 14px;}.btn{min-height:72px;padding:12px 10px;font-size:12px;}.btn span{font-size:15px;}}
+
+  .footer-notice { margin: 24px 20px; background: #fcf9f2; padding: 18px; border-radius: 14px; font-size: 12.5px; color: #555; display: flex; gap: 12px; align-items: flex-start; line-height: 1.6;}
+  .footer-notice span { font-size: 22px; line-height: 1;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top-banner">
+    <img src="https://docssam1.github.io/gfield-report/logo.png" alt="G-Field" onerror="this.style.display='none'">
+    <h1>테스트 안내</h1>
+    <p>여다인 학생을 위한 지필드 영재교육 안내문입니다.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-icon">👤</div>
+    <div class="card-content">
+      <div class="card-title">학생 안내</div>
+      <div class="chip-group">
+        <div class="chip">학생명: 여다인</div>
+        <div class="chip">학교: 청담 pace 아카데미</div>
+        <div class="chip">학년: 5세</div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="card">
+    <div class="card-icon">📅</div>
+    <div class="card-content">
+      <div class="card-title">일정</div>
+      <div class="card-text"><b>2026-05-23 (토) 10:00~11:00</b></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-icon">💬</div>
+    <div class="card-content">
+      <div class="card-title">안내 메시지</div>
+      <div class="card-text" style="color:#555;"><span class="quote-mark">“</span>안녕하세요<br>성공하는 공부 습관을 만드는 지필드 영재교육입니다.<br>여다인 학생의 상담일정 안내드립니다.<br><br>- 일시: 5/23(토) 10:00~11:00 약 30분 소요<br>- 비용 : 5만원<br>(진단+분석+대면 상담 포함)<br><br>(우리은행 1002-629-797436, 이주연 지필드영재교육)_ 이체 후 문자 부탁드립니다.<br><br>- 상담 일정은 테스트 후 시간을 협의하여 진행합니다.<br>* 테스트 요일 변경을 원할 경우 꼭 전화 부탁드립니다.<br>① 시험 중 부모님은 외부에서 대기하여야 합니다. <br>② 시험 종료 5분전 연락드립니다.<br><br>* 학원건물 1층 출입문 비밀번호는 &lt;종 모양 버튼 누르신 후 0852&gt; 입력해주세요.<br>* 문의사항은 학원으로 연락주세요. 감사합니다.<br>- 02)3453-7772 , 010-2083-7265<br>- 위치: 강남구 역삼로 460-2, 뉴원빌딩 4층<br><br>https://map.naver.com/local/siteview.nhn?code=1125444471<span class="quote-mark quote-end">”</span></div>
+    </div>
+  </div>
+
+  
+  <div class="card">
+    <div class="card-icon">📖</div>
+    <div class="card-content">
+      <div class="card-title">수업 안내</div>
+      <div class="card-text"><div style="margin-bottom:14px;"><b style="color:#b99042;">[수업 1]</b><span style="display:block;margin-top:5px;">• 수업 시작일: 2026-05-23</span><span style="display:block;margin-top:5px;">• 과정: 신입 테스트</span></div></div>
+    </div>
+  </div>
+
+  
+  <div class="card">
+    <div class="card-icon">🎬</div>
+    <div class="card-content">
+      <div class="card-title">동영상 강의</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;"><a href="https://youtu.be/-3zOSDjLPTI?si=DP1bKGqUVOMXLBfN" target="_blank" style="display:block;text-decoration:none;color:inherit;border:1px solid #eaddc5;border-radius:12px;overflow:hidden;background:#fff;"><div style="position:relative;background:#111827;"><img src="https://img.youtube.com/vi/-3zOSDjLPTI/hqdefault.jpg" alt="video" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(220,38,38,.9);color:#fff;width:42px;height:42px;border-radius:50%;text-align:center;line-height:42px;font-weight:900;">▶</div></div></a><a href="https://youtu.be/Zyrt-H5nQhM" target="_blank" style="display:block;text-decoration:none;color:inherit;border:1px solid #eaddc5;border-radius:12px;overflow:hidden;background:#fff;"><div style="position:relative;background:#111827;"><img src="https://img.youtube.com/vi/Zyrt-H5nQhM/hqdefault.jpg" alt="video" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(220,38,38,.9);color:#fff;width:42px;height:42px;border-radius:50%;text-align:center;line-height:42px;font-weight:900;">▶</div></div></a></div>
+    </div>
+  </div>
+
+  
+  <div class="card">
+    <div class="card-icon">₩</div>
+    <div class="card-content">
+      <div class="card-title">결제 안내</div>
+      <div class="card-text">
+        
+        <div>입금 계좌: 우리은행 1002-629-797436, 이주연 지필드영재교육</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-grid">
+    <button class="btn btn-green" onclick="navigator.clipboard?navigator.clipboard.writeText('우리은행 1002-629-797436, 이주연 지필드영재교육').then(()=>alert('계좌가 복사되었습니다.')):alert('우리은행 1002-629-797436, 이주연 지필드영재교육')">계좌 복사하기 <span>></span></button>
+    <a href="sms:01020837265?body=%EC%97%AC%EB%8B%A4%EC%9D%B8%ED%95%99%EC%83%9D%20%EA%B2%B0%EC%A0%9C%20%ED%99%95%EC%9D%B8%20%EC%9A%94%EC%B2%AD%ED%95%A9%EB%8B%88%EB%8B%A4." class="btn btn-blue btn-text-fit">결제 확인 요청 보내기 <span>></span></a>
+    <a href="https://drive.google.com/open?id=18oDp8YjImIu8fCpYpl35gtXxCTkaMW4J&usp=drive_fs" class="btn btn-teal">제로페이 요청하기 <span>></span></a>
+    <a href="sms:01020837265?body=%EC%97%AC%EB%8B%A4%EC%9D%B8%ED%95%99%EC%83%9D%20%EA%B2%B0%EC%A0%9C%20%EC%84%A0%EC%83%9D%EC%9A%94%EC%B2%AD%ED%95%A9%EB%8B%88%EB%8B%A4." class="btn btn-purple btn-text-fit">결제선생 요청하기 <span>></span></a>
+    <a href="sms:01020837265?body=%EC%97%AC%EB%8B%A4%EC%9D%B8%ED%95%99%EC%83%9D%20%EC%88%98%EA%B0%95%20%EB%B3%80%EA%B2%BD%20%EC%9A%94%EC%B2%AD%ED%95%A9%EB%8B%88%EB%8B%A4." class="btn btn-emerald btn-text-fit">수강 변경 요청하기 <span>></span></a>
+    <a href="sms:01020837265?body=%EC%97%AC%EB%8B%A4%EC%9D%B8%ED%95%99%EC%83%9D%20%EC%88%98%EA%B0%95%EB%A3%8C%20%EB%B3%80%EA%B2%BD%EC%9D%B4%20%ED%95%84%EC%9A%94%ED%95%A9%EB%8B%88%EB%8B%A4." class="btn btn-indigo btn-text-fit">수강료 변경 요청하기 <span>></span></a>
+    <a href="https://open.kakao.com/me/gfield" class="btn btn-yellow" target="_blank">오픈톡으로 문의하기 <span>></span></a>
+    <a href="tel:01020837265" class="btn btn-red">전화 걸기 <span>></span></a>
+    <a href="https://pf.kakao.com/_htxhxmn" class="btn btn-teal btn-text-fit" target="_blank">지필드 영재교육 채널 추가 <span>></span></a>
+    <a href="https://naver.me/xyTRpBHo" class="btn btn-full" target="_blank">📍 학원 위치 보기 <span>></span></a>
+  </div>
+
+  <div style="margin:10px 20px 0;font-size:11px;color:#64748b;line-height:1.45;">※ PDF 인쇄 시 사진은 4분할(2x2)로 자동 배치됩니다.</div><div class="footer-notice">
+    <span>🛡️</span>
+    <div>
+      <b>안내 사항</b><br>
+      수업 관련 문의는 위의 연락처로 언제든 편하게 연락 주세요.<br>
+      학생의 성장을 위해 최선을 다하는 지필드 영재교육이 되겠습니다. 감사합니다.
+    </div>
+  </div>
+</div>
+<script>
+function openKakaoChat(message, url){
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(message || '');
+    }else{
+      var ta=document.createElement('textarea');
+      ta.value=message||'';
+      ta.style.position='fixed';
+      ta.style.opacity='0';
+      document.body.appendChild(ta);
+      ta.select();
+      try{document.execCommand('copy');}catch(e){}
+      document.body.removeChild(ta);
+    }
+  }catch(e){}
+  alert('메세지가 복사되었습니다. 붙여넣기 해주세요');
+  window.open(url, '_blank');
+  return false;
+}
+</script>
+</body>
+</html>
