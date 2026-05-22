@@ -1198,6 +1198,9 @@ function todoToCalendarAi_(p) {
   if (!parsed || !parsed.start) {
     return { result: 'error', error: '일정 날짜/시간을 해석하지 못했습니다. To-Do 문장에 날짜를 포함해 주세요.' };
   }
+  if (parsed.needConfirm) {
+    return { result: 'error', error: parsed.needConfirm };
+  }
 
   var title = String(parsed.title || text).trim().slice(0, 120);
   var desc = String(parsed.description || text).trim();
@@ -1328,6 +1331,14 @@ function parseTodoScheduleByRegex_(text) {
     var st = new Date(date.getFullYear(), date.getMonth(), date.getDate(), Number(tm[1]), Number(tm[2]), 0, 0);
     return { title: s.slice(0, 120), description: s, allDay: false, start: st, end: null };
   }
+  var k = parseKoreanClockExpr_(s);
+  if (k && k.needConfirm) {
+    return { needConfirm: k.needConfirm };
+  }
+  if (k) {
+    var st2 = new Date(date.getFullYear(), date.getMonth(), date.getDate(), k.hour, k.minute, 0, 0);
+    return { title: s.slice(0, 120), description: s, allDay: false, start: st2, end: null };
+  }
   return { title: s.slice(0, 120), description: s, allDay: true, start: date, end: null };
 }
 
@@ -1336,6 +1347,37 @@ function mergeDateAndTime_(dateText, timeText) {
   var tm = String(timeText || '').match(/^(\d{1,2}):(\d{2})$/);
   if (!dm || !tm) return null;
   return new Date(Number(dm[1]), Number(dm[2]) - 1, Number(dm[3]), Number(tm[1]), Number(tm[2]), 0, 0);
+}
+
+function parseKoreanClockExpr_(s) {
+  var t = String(s || '');
+  var m = t.match(/(오전|오후)?\s*(\d{1,2})\s*시(?:\s*(\d{1,2})\s*분)?/);
+  if (!m) return null;
+  var mer = String(m[1] || '').trim();
+  var h = Number(m[2]);
+  var mm = Number(m[3] || 0);
+  if (isNaN(h) || h < 1 || h > 12 || isNaN(mm) || mm < 0 || mm > 59) return null;
+
+  if (mer === '오전') {
+    if (h === 12) h = 0;
+    return { hour: h, minute: mm };
+  }
+  if (mer === '오후') {
+    if (h < 12) h += 12;
+    return { hour: h, minute: mm };
+  }
+
+  // no meridiem: custom business rule
+  // 3시 -> 15:00, 12시 -> 12:00, 11시 -> 11:00, 1시30분 -> 13:30
+  // 9시는 모호하므로 확인 요청
+  if (h === 9) {
+    return { needConfirm: '9시는 오전/오후 확인이 필요합니다. 예: 오전 9시 또는 오후 9시' };
+  }
+  if (h === 11) return { hour: 11, minute: mm };
+  if (h === 12) return { hour: 12, minute: mm };
+  if (h >= 1 && h <= 8) return { hour: h + 12, minute: mm };
+  if (h === 10) return { hour: 22, minute: mm };
+  return { hour: h, minute: mm };
 }
 
 function resyncCalendarFromWeekStart_(p) {

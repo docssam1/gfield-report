@@ -852,6 +852,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     if(!el) return;
     el.addEventListener('change', ()=>{ checkClassTimePolicy_(id, false); });
   });
+  initTodoSelectionCalendar_();
   window.addEventListener('beforeunload', saveDraftNow);
 });
 
@@ -1684,6 +1685,56 @@ function syncTodosFromSheet_(opts = {}) {
   }).catch(err=>{ if(!opts.silent && list){ list.innerHTML = '<div style="font-size:12px;color:#ef4444;padding:12px;">To-Do를 불러오지 못했습니다. Apps Script URL을 확인하세요.</div>'; } console.warn(err); }).finally(()=>{ todoLoading = false; });
 }
 function refreshTodosManually(){ syncTodosFromSheet_({silent:false, includeCompleted:showCompletedTodos}); }
+let __todoSelBtn = null;
+let __todoSelText = '';
+function ensureTodoSelBtn_(){
+  if(__todoSelBtn) return __todoSelBtn;
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.textContent = '📅 선택 일정 저장';
+  b.style.cssText = 'position:fixed;display:none;z-index:12010;padding:8px 10px;border:none;border-radius:10px;background:#2563eb;color:#fff;font-weight:800;font-size:12px;box-shadow:0 8px 20px rgba(0,0,0,.2);cursor:pointer;';
+  b.onclick = saveSelectedTodoToCalendar_;
+  document.body.appendChild(b);
+  __todoSelBtn = b;
+  return b;
+}
+function hideTodoSelBtn_(){ const b = ensureTodoSelBtn_(); b.style.display = 'none'; __todoSelText = ''; }
+function showTodoSelBtn_(x,y,text){
+  const b = ensureTodoSelBtn_();
+  __todoSelText = String(text || '').trim();
+  if(!__todoSelText) return hideTodoSelBtn_();
+  b.style.left = Math.max(8, Math.min(window.innerWidth - 160, x)) + 'px';
+  b.style.top = Math.max(8, y - 42) + 'px';
+  b.style.display = 'block';
+}
+function saveSelectedTodoToCalendar_(){
+  const text = String(__todoSelText || '').trim();
+  if(!text) return;
+  todoApi_({ action: 'todo_to_calendar_ai', text: text, google_calendar_id: getKey('googleCalendarId') || 'primary' })
+    .then(res=>{ if(res.result !== 'success') throw new Error(res.error || '캘린더 등록 실패'); showToast('✅ 선택 텍스트를 캘린더에 저장했습니다.'); hideTodoSelBtn_(); try{ window.getSelection()?.removeAllRanges(); }catch(e){}; })
+    .catch(err=>{ alert('AI 일정 등록 오류: ' + err.message); });
+}
+function initTodoSelectionCalendar_(){
+  ensureTodoSelBtn_();
+  document.addEventListener('selectionchange', ()=>{
+    const sel = window.getSelection();
+    if(!sel || sel.rangeCount === 0) return hideTodoSelBtn_();
+    const text = String(sel.toString() || '').trim();
+    if(!text) return hideTodoSelBtn_();
+    const range = sel.getRangeAt(0);
+    const node = range.commonAncestorContainer;
+    const el = node && node.nodeType === 1 ? node : node.parentElement;
+    const todoWrap = qs('todoList');
+    if(!todoWrap || !el || !todoWrap.contains(el)) return hideTodoSelBtn_();
+    const rect = range.getBoundingClientRect();
+    showTodoSelBtn_(rect.left + window.scrollX, rect.top + window.scrollY, text);
+  });
+  document.addEventListener('click', (e)=>{
+    if(__todoSelBtn && (__todoSelBtn === e.target || __todoSelBtn.contains(e.target))) return;
+    if(e.target && e.target.closest && e.target.closest('#todoList')) return;
+    hideTodoSelBtn_();
+  });
+}
 
 function normalizeTodoDateText_(line){
   const now = new Date();
