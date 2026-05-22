@@ -55,6 +55,36 @@ const TODO_HEADERS = [
   '완료시간'
 ];
 
+const MASTER_SHEET = '일정_마스터';
+const MASTER_HEADERS = [
+  '마스터ID',
+  '관련그룹ID',
+  '원본출처',
+  '원본키',
+  '학생명',
+  '일정유형',
+  '상태',
+  '기준일',
+  '시작일시',
+  '종료일시',
+  '요약',
+  '상세',
+  '확인필요',
+  '캘린더이벤트ID',
+  '노션페이지ID',
+  '드라이브링크',
+  '리포트링크',
+  '동기화상태',
+  '실패단계',
+  '오류로그',
+  '생성시각',
+  '수정시각'
+];
+const SYNC_LOG_SHEET = '동기화_로그';
+const SYNC_LOG_HEADERS = ['시간', '작업', '단계', '상태', '메시지', '상세JSON'];
+const APPROVAL_QUEUE_SHEET = '승인_대기';
+const APPROVAL_QUEUE_HEADERS = ['토큰', '작업', '요청JSON', '요약', '상태', '요청시각', '승인시각', '실행시각', '실행결과JSON'];
+
 function authorizeGfieldServices() {
   const root = DriveApp.getFolderById(getDriveRootId_());
   const ss = SpreadsheetApp.openById(getSheetId_());
@@ -159,9 +189,11 @@ function 시트_열행_맞추기() {
 }
 
 function doPost(e) {
+  let payload = {};
+  let action = '';
   try {
-    const payload = parsePayload_(e);
-    const action = String(payload.action || '').trim();
+    payload = parsePayload_(e);
+    action = String(payload.action || '').trim();
     let data;
 
     if (action === 'save_drive') data = saveDrive_(payload);
@@ -174,7 +206,12 @@ function doPost(e) {
     else if (action === 'todo_add') data = todoAdd_(payload);
     else if (action === 'todo_toggle') data = todoToggle_(payload);
     else if (action === 'todo_delete') data = todoDelete_(payload);
-    else if (action === 'todo_to_calendar_ai') data = todoToCalendarAi_(payload);
+    else if (action === 'todo_to_calendar_ai') throw new Error('직접 실행이 차단되었습니다. ai_op_preview -> ai_op_execute 승인 절차를 사용하세요.');
+    else if (action === 'backup_core_sheets') data = backupCoreSheets_(payload);
+    else if (action === 'sync_master_preview') data = syncMasterPreview_(payload);
+    else if (action === 'sync_master_execute') data = syncMasterExecute_(payload);
+    else if (action === 'ai_op_preview') data = aiOperationPreview_(payload);
+    else if (action === 'ai_op_execute') data = aiOperationExecute_(payload);
     else if (action === 'resync_calendar_from_week_start') data = resyncCalendarFromWeekStart_(payload);
     else if (action === 'notion') data = saveToNotion_(payload);
     else if (action === 'assistant_query') data = assistantQuery_(payload);
@@ -185,12 +222,46 @@ function doPost(e) {
 
     return json_(data);
   } catch (err) {
+    safeLogActionFailure_(action, payload, err);
     return json_({ result: 'error', error: err.message || String(err) });
   }
 }
 
 function doGet() {
   return json_({ result: 'success', message: 'G-Field Apps Script is running.' });
+}
+
+function safeLogActionFailure_(action, payload, err) {
+  try {
+    const ss = SpreadsheetApp.openById(getSheetId_(payload && payload.sheetId));
+    ensureMasterInfra_(ss);
+    const stage = resolveFailureStage_(action);
+    const sh = ensureSyncLogSheet_(ss);
+    sh.appendRow([
+      new Date(),
+      String(action || 'unknown'),
+      stage,
+      'error',
+      String((err && err.message) || err || 'unknown error'),
+      JSON.stringify({
+        action: String(action || ''),
+        stage: stage,
+        sheetId: String((payload && payload.sheetId) || ''),
+        payloadKeys: Object.keys(payload || {}),
+        at: Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd HH:mm:ss')
+      })
+    ]);
+  } catch (ignore) {}
+}
+
+function resolveFailureStage_(action) {
+  const a = String(action || '');
+  if (a === 'save_drive') return 'Drive';
+  if (a === 'deploy_github') return 'GitHub';
+  if (a === 'notion') return 'Notion/Calendar';
+  if (a.indexOf('todo_') === 0) return 'To-Do';
+  if (a === 'sync_master_preview' || a === 'sync_master_execute' || a === 'backup_core_sheets') return 'Sync';
+  return 'General';
 }
 
 function saveDrive_(p) {
@@ -1486,4 +1557,563 @@ function mondayOfCurrentWeek_() {
 // Manual runner for Apps Script UI (Run button)
 function resync_calendar_from_week_start() {
   return resyncCalendarFromWeekStart_({});
+}
+
+// Step 0 manual runners
+function step0_backup_core_sheets() {
+  return backupCoreSheets_({});
+}
+
+function step0_sync_master_preview() {
+  const result = syncMasterPreview_({
+    includeDriveHtml: true,
+    maxDriveFiles: 500
+  });
+  if (result && result.token) {
+    PropertiesService.getScriptProperties().setProperty('STEP0_LAST_SYNC_TOKEN', String(result.token));
+  }
+  return result;
+}
+
+function step0_sync_master_execute() {
+  const token = String(PropertiesService.getScriptProperties().getProperty('STEP0_LAST_SYNC_TOKEN') || '').trim();
+  if (!token) throw new Error('STEP0_LAST_SYNC_TOKEN 이 없습니다. step0_sync_master_preview를 먼저 실행하세요.');
+  return syncMasterExecute_({ token: token, approved: true });
+}
+
+function backupCoreSheets_(p) {
+  const ss = SpreadsheetApp.openById(getSheetId_(p.sheetId));
+  ensureMasterInfra_(ss);
+  const ts = Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyyMMdd_HHmmss');
+  const targets = [ACTIVITY_SHEET, TODO_SHEET, STUDENT_SHEET, MASTER_SHEET, SYNC_LOG_SHEET];
+  const created = [];
+  targets.forEach(function(name) {
+    const sh = ss.getSheetByName(name);
+    if (!sh) return;
+    const cp = sh.copyTo(ss);
+    cp.setName(makeUniqueSheetName_(ss, 'bak_' + name + '_' + ts));
+    created.push(cp.getName());
+  });
+  logSyncStep_('backup_core_sheets', 'done', '핵심 시트 백업 완료', { created: created });
+  return { result: 'success', created: created, timestamp: ts };
+}
+
+function syncMasterPreview_(p) {
+  const ss = SpreadsheetApp.openById(getSheetId_(p.sheetId));
+  ensureMasterInfra_(ss);
+  const plan = buildSyncMasterPlan_(ss, p || {});
+  const summary = {
+    totalCandidates: plan.totalCandidates,
+    newRows: plan.newRows.length,
+    existingSkipped: plan.existingSkipped,
+    parseErrors: plan.parseErrors.length,
+    bySource: plan.bySource
+  };
+  const token = createApprovalRequest_(
+    ss,
+    'sync_master_execute',
+    { options: p || {} },
+    JSON.stringify(summary)
+  );
+  logSyncStep_('sync_master_preview', 'done', '초기 동기화 미리보기 생성', summary);
+  return {
+    result: 'success',
+    token: token,
+    summary: summary,
+    sample: plan.newRows.slice(0, 20).map(masterRowToObject_)
+  };
+}
+
+function syncMasterExecute_(p) {
+  const token = String((p && p.token) || '').trim();
+  if (!token) return { result: 'error', error: 'token is required' };
+  if (!(p && p.approved === true)) return { result: 'error', error: '승인되지 않았습니다. approved=true 로 호출하세요.' };
+
+  const ss = SpreadsheetApp.openById(getSheetId_(p.sheetId));
+  ensureMasterInfra_(ss);
+  const req = getApprovalRequest_(ss, token);
+  if (!req) return { result: 'error', error: '승인 요청을 찾을 수 없습니다.' };
+  if (req.status !== 'pending') return { result: 'error', error: '이미 처리된 토큰입니다. status=' + req.status };
+  if (req.action !== 'sync_master_execute') return { result: 'error', error: '토큰 작업이 일치하지 않습니다.' };
+
+  const payload = req.payload || {};
+  const options = payload.options || {};
+  setApprovalStatus_(ss, token, 'approved', { approvedAt: new Date() });
+
+  const plan = buildSyncMasterPlan_(ss, options);
+  const master = ensureMasterSheet_(ss);
+  const rows = plan.newRows;
+  if (rows.length) {
+    master.getRange(master.getLastRow() + 1, 1, rows.length, MASTER_HEADERS.length).setValues(rows);
+  }
+  const result = {
+    inserted: rows.length,
+    existingSkipped: plan.existingSkipped,
+    parseErrors: plan.parseErrors.slice(0, 30),
+    bySource: plan.bySource
+  };
+  setApprovalStatus_(ss, token, 'executed', result);
+  logSyncStep_('sync_master_execute', 'done', '초기 동기화 실행 완료', result);
+  return { result: 'success', message: '일정_마스터 동기화 완료', summary: result };
+}
+
+function aiOperationPreview_(p) {
+  const op = String((p && p.operation) || '').trim();
+  if (!op) return { result: 'error', error: 'operation is required' };
+  const ss = SpreadsheetApp.openById(getSheetId_(p.sheetId));
+  ensureMasterInfra_(ss);
+
+  if (op === 'todo_to_calendar_ai') {
+    const params = p.params || {};
+    const text = String(params.text || '').trim();
+    if (!text) return { result: 'error', error: 'params.text is required' };
+    const parsed = parseTodoScheduleByAiOrRegex_(text, params);
+    if (!parsed || !parsed.start) return { result: 'error', error: '일정 날짜/시간을 해석하지 못했습니다.' };
+    if (parsed.needConfirm) return { result: 'error', error: parsed.needConfirm };
+    const preview = {
+      title: String(parsed.title || text),
+      allDay: !!parsed.allDay,
+      start: parsed.start,
+      end: parsed.end || ''
+    };
+    const token = createApprovalRequest_(ss, op, { params: params }, JSON.stringify(preview));
+    return { result: 'success', token: token, preview: preview };
+  }
+
+  return { result: 'error', error: '지원하지 않는 operation: ' + op };
+}
+
+function aiOperationExecute_(p) {
+  const token = String((p && p.token) || '').trim();
+  if (!token) return { result: 'error', error: 'token is required' };
+  if (!(p && p.approved === true)) return { result: 'error', error: '승인되지 않았습니다. approved=true 로 호출하세요.' };
+
+  const ss = SpreadsheetApp.openById(getSheetId_(p.sheetId));
+  ensureMasterInfra_(ss);
+  const req = getApprovalRequest_(ss, token);
+  if (!req) return { result: 'error', error: '승인 요청을 찾을 수 없습니다.' };
+  if (req.status !== 'pending') return { result: 'error', error: '이미 처리된 토큰입니다. status=' + req.status };
+  setApprovalStatus_(ss, token, 'approved', { approvedAt: new Date() });
+
+  if (req.action === 'todo_to_calendar_ai') {
+    const out = todoToCalendarAi_(req.payload.params || {});
+    setApprovalStatus_(ss, token, 'executed', out);
+    return out;
+  }
+
+  return { result: 'error', error: '지원하지 않는 승인 실행 작업: ' + req.action };
+}
+
+function ensureMasterInfra_(ss) {
+  ensureMasterSheet_(ss);
+  ensureSyncLogSheet_(ss);
+  ensureApprovalQueueSheet_(ss);
+}
+
+function ensureMasterSheet_(ss) {
+  const sh = ensureSheet_(ss, MASTER_SHEET, MASTER_HEADERS);
+  applySheetLayout_(sh, MASTER_HEADERS, '#334155', [180, 180, 110, 180, 120, 100, 100, 110, 140, 140, 260, 360, 100, 180, 180, 120, 260, 120, 120, 260, 150, 150]);
+  return sh;
+}
+
+function ensureSyncLogSheet_(ss) {
+  const sh = ensureSheet_(ss, SYNC_LOG_SHEET, SYNC_LOG_HEADERS);
+  applySheetLayout_(sh, SYNC_LOG_HEADERS, '#0f766e', [150, 150, 120, 100, 260, 520]);
+  return sh;
+}
+
+function ensureApprovalQueueSheet_(ss) {
+  const sh = ensureSheet_(ss, APPROVAL_QUEUE_SHEET, APPROVAL_QUEUE_HEADERS);
+  applySheetLayout_(sh, APPROVAL_QUEUE_HEADERS, '#7c3aed', [190, 150, 420, 260, 100, 150, 150, 150, 420]);
+  return sh;
+}
+
+function logSyncStep_(job, status, message, detail) {
+  const ss = SpreadsheetApp.openById(getSheetId_(''));
+  const sh = ensureSyncLogSheet_(ss);
+  sh.appendRow([new Date(), String(job || ''), '', String(status || ''), String(message || ''), JSON.stringify(detail || {})]);
+}
+
+function createApprovalRequest_(ss, action, payload, summaryText) {
+  const sh = ensureApprovalQueueSheet_(ss);
+  const token = Utilities.getUuid();
+  sh.appendRow([
+    token,
+    String(action || ''),
+    JSON.stringify(payload || {}),
+    String(summaryText || ''),
+    'pending',
+    new Date(),
+    '',
+    '',
+    ''
+  ]);
+  return token;
+}
+
+function getApprovalRequest_(ss, token) {
+  const sh = ensureApprovalQueueSheet_(ss);
+  const last = sh.getLastRow();
+  if (last < 2) return null;
+  const rows = sh.getRange(2, 1, last - 1, APPROVAL_QUEUE_HEADERS.length).getValues();
+  for (var i = rows.length - 1; i >= 0; i--) {
+    if (String(rows[i][0] || '').trim() === token) {
+      var payload = {};
+      try { payload = JSON.parse(String(rows[i][2] || '{}')); } catch (e) {}
+      return {
+        rowNumber: i + 2,
+        token: token,
+        action: String(rows[i][1] || ''),
+        payload: payload,
+        status: String(rows[i][4] || '')
+      };
+    }
+  }
+  return null;
+}
+
+function setApprovalStatus_(ss, token, status, resultObj) {
+  const req = getApprovalRequest_(ss, token);
+  if (!req) return false;
+  const sh = ensureApprovalQueueSheet_(ss);
+  sh.getRange(req.rowNumber, 5).setValue(status);
+  if (status === 'approved') sh.getRange(req.rowNumber, 7).setValue(new Date());
+  if (status === 'executed') sh.getRange(req.rowNumber, 8).setValue(new Date());
+  if (resultObj !== undefined) sh.getRange(req.rowNumber, 9).setValue(JSON.stringify(resultObj || {}));
+  return true;
+}
+
+function buildSyncMasterPlan_(ss, options) {
+  const master = ensureMasterSheet_(ss);
+  const existing = getExistingMasterKeyMap_(master);
+  const candidates = [];
+  const parseErrors = [];
+  const bySource = {};
+
+  pushCandidates_(candidates, parseErrors, bySource, buildCandidatesFromActivity_(ss, options));
+  pushCandidates_(candidates, parseErrors, bySource, buildCandidatesFromTodo_(ss, options));
+  pushCandidates_(candidates, parseErrors, bySource, buildCandidatesFromDriveHtml_(options));
+
+  const out = [];
+  const dedupe = {};
+  let existingSkipped = 0;
+  for (var i = 0; i < candidates.length; i++) {
+    var c = candidates[i];
+    var mapKey = c.source + '|' + c.sourceKey;
+    if (existing[mapKey] || dedupe[mapKey]) {
+      existingSkipped++;
+      continue;
+    }
+    dedupe[mapKey] = true;
+    out.push(buildMasterRow_(c));
+  }
+  return {
+    totalCandidates: candidates.length,
+    newRows: out,
+    existingSkipped: existingSkipped,
+    parseErrors: parseErrors,
+    bySource: bySource
+  };
+}
+
+function pushCandidates_(arr, errs, bySource, pack) {
+  (pack.rows || []).forEach(function(x) { arr.push(x); });
+  (pack.errors || []).forEach(function(e) { errs.push(e); });
+  Object.keys(pack.bySource || {}).forEach(function(k) {
+    bySource[k] = (bySource[k] || 0) + Number(pack.bySource[k] || 0);
+  });
+}
+
+function buildCandidatesFromActivity_(ss) {
+  const sh = ensureSheet_(ss, ACTIVITY_SHEET, ACTIVITY_HEADERS);
+  const vals = sh.getDataRange().getValues();
+  const rows = [];
+  const errors = [];
+  const bySource = { activity: 0 };
+  if (vals.length < 2) return { rows: rows, errors: errors, bySource: bySource };
+  const idx = headerIndex_(vals[0]);
+  for (var i = 1; i < vals.length; i++) {
+    try {
+      const r = vals[i];
+      const student = String(r[idx['학생명']] || '').trim();
+      if (!student) continue;
+      const dateText = normalizeDateValue_(r[idx['수업일/상담일']] || r[idx['상담/테스트일']]);
+      const typeRaw = String(r[idx['세부유형']] || r[idx['수업유형']] || r[idx['문서구분']] || '').trim();
+      const type = inferTypeFromText_(typeRaw);
+      const content = String(r[idx['내용']] || '').trim();
+      const sourceKey = 'ACT:' + makeDigest_([
+        String(r[idx['기록시간']] || ''),
+        student,
+        dateText,
+        typeRaw,
+        content.slice(0, 120)
+      ].join('|'));
+      rows.push({
+        source: 'activity',
+        sourceKey: sourceKey,
+        student: student,
+        type: type,
+        state: String(r[idx['처리상태']] || '진행중').trim() || '진행중',
+        baseDate: dateText,
+        startAt: '',
+        endAt: '',
+        summary: '[' + (typeRaw || type || '일정') + '] ' + student,
+        detail: content,
+        confirmNeeded: true,
+        calendarEventId: String(r[idx['구글캘린더이벤트ID']] || '').trim(),
+        notionPageId: String(r[idx['노션페이지ID']] || '').trim(),
+        driveLink: String(r[idx['드라이브링크']] || '').trim(),
+        reportLink: String(r[idx['리포트링크']] || '').trim(),
+        syncStatus: '대기',
+        failStage: '',
+        errorLog: '',
+        groupId: makeGroupId_(student, dateText, type)
+      });
+      bySource.activity++;
+    } catch (e) {
+      errors.push('activity row ' + (i + 1) + ': ' + (e.message || e));
+    }
+  }
+  return { rows: rows, errors: errors, bySource: bySource };
+}
+
+function buildCandidatesFromTodo_(ss) {
+  const sh = ensureTodoSheet_('');
+  const last = sh.getLastRow();
+  const rows = [];
+  const errors = [];
+  const bySource = { todo: 0 };
+  if (last < 2) return { rows: rows, errors: errors, bySource: bySource };
+  const vals = sh.getRange(2, 1, last - 1, TODO_HEADERS.length).getValues();
+  for (var i = 0; i < vals.length; i++) {
+    try {
+      const r = vals[i];
+      const id = String(r[0] || '').trim();
+      const text = String(r[2] || '').trim();
+      if (!id || !text) continue;
+      const dateObj = parseDateLoose_(text);
+      const range = extractTimeRangeLoose_(text);
+      const student = guessStudentFromText_(text);
+      rows.push({
+        source: 'todo',
+        sourceKey: 'TODO:' + id,
+        student: student,
+        type: inferTypeFromText_(text),
+        state: String(r[3] || '진행중'),
+        baseDate: dateObj ? formatDateYmd_(dateObj) : '',
+        startAt: range.start || '',
+        endAt: range.end || '',
+        summary: text.slice(0, 220),
+        detail: text,
+        confirmNeeded: true,
+        calendarEventId: '',
+        notionPageId: '',
+        driveLink: '',
+        reportLink: '',
+        syncStatus: '대기',
+        failStage: '',
+        errorLog: '',
+        groupId: makeGroupId_(student, dateObj ? formatDateYmd_(dateObj) : '', inferTypeFromText_(text))
+      });
+      bySource.todo++;
+    } catch (e) {
+      errors.push('todo row ' + (i + 2) + ': ' + (e.message || e));
+    }
+  }
+  return { rows: rows, errors: errors, bySource: bySource };
+}
+
+function buildCandidatesFromDriveHtml_(options) {
+  const rows = [];
+  const errors = [];
+  const bySource = { drive_html: 0 };
+  const includeDrive = !(options && options.includeDriveHtml === false);
+  if (!includeDrive) return { rows: rows, errors: errors, bySource: bySource };
+
+  const maxFiles = Number((options && options.maxDriveFiles) || 500);
+  const root = DriveApp.getFolderById(getDriveRootId_());
+  const files = collectDriveHtmlFilesRecursively_(root, maxFiles, 4);
+  for (var i = 0; i < files.length; i++) {
+    try {
+      const f = files[i];
+      const name = String(f.getName() || '');
+      const m = name.match(/지필드_(\d{8})_(.+?)_(.+?)_리포트\.html/);
+      if (!m) continue;
+      const dateText = m[1].slice(0, 4) + '-' + m[1].slice(4, 6) + '-' + m[1].slice(6, 8);
+      const student = String(m[2] || '').trim();
+      const typeRaw = String(m[3] || '').trim();
+      rows.push({
+        source: 'drive_html',
+        sourceKey: 'HTML:' + f.getId(),
+        student: student,
+        type: inferTypeFromText_(typeRaw),
+        state: '초기동기화',
+        baseDate: dateText,
+        startAt: '',
+        endAt: '',
+        summary: '[' + typeRaw + '] ' + student + ' 리포트',
+        detail: name,
+        confirmNeeded: true,
+        calendarEventId: '',
+        notionPageId: '',
+        driveLink: f.getUrl(),
+        reportLink: '',
+        syncStatus: '대기',
+        failStage: '',
+        errorLog: '',
+        groupId: makeGroupId_(student, dateText, inferTypeFromText_(typeRaw))
+      });
+      bySource.drive_html++;
+    } catch (e) {
+      errors.push('drive_html file index ' + i + ': ' + (e.message || e));
+    }
+  }
+  return { rows: rows, errors: errors, bySource: bySource };
+}
+
+function collectDriveHtmlFilesRecursively_(rootFolder, maxFiles, maxDepth) {
+  const out = [];
+  const queue = [{ folder: rootFolder, depth: 0 }];
+  while (queue.length && out.length < maxFiles) {
+    const node = queue.shift();
+    const files = node.folder.getFiles();
+    while (files.hasNext() && out.length < maxFiles) {
+      const f = files.next();
+      const mime = String(f.getMimeType() || '');
+      const nm = String(f.getName() || '');
+      if (mime === MimeType.HTML || /\.html$/i.test(nm)) out.push(f);
+    }
+    if (node.depth >= maxDepth) continue;
+    const folders = node.folder.getFolders();
+    while (folders.hasNext()) {
+      queue.push({ folder: folders.next(), depth: node.depth + 1 });
+    }
+  }
+  return out;
+}
+
+function getExistingMasterKeyMap_(masterSheet) {
+  const map = {};
+  const vals = masterSheet.getDataRange().getValues();
+  if (vals.length < 2) return map;
+  const idx = headerIndex_(vals[0]);
+  for (var i = 1; i < vals.length; i++) {
+    const source = String(vals[i][idx['원본출처']] || '').trim();
+    const key = String(vals[i][idx['원본키']] || '').trim();
+    if (!source || !key) continue;
+    map[source + '|' + key] = true;
+  }
+  return map;
+}
+
+function buildMasterRow_(x) {
+  const now = new Date();
+  return [
+    Utilities.getUuid(),
+    x.groupId || '',
+    x.source || '',
+    x.sourceKey || '',
+    x.student || '',
+    x.type || '',
+    x.state || '진행중',
+    x.baseDate || '',
+    x.startAt || '',
+    x.endAt || '',
+    x.summary || '',
+    x.detail || '',
+    x.confirmNeeded === false ? false : true,
+    x.calendarEventId || '',
+    x.notionPageId || '',
+    x.driveLink || '',
+    x.reportLink || '',
+    x.syncStatus || '대기',
+    x.failStage || '',
+    x.errorLog || '',
+    now,
+    now
+  ];
+}
+
+function masterRowToObject_(row) {
+  const obj = {};
+  MASTER_HEADERS.forEach(function(h, i) { obj[h] = row[i]; });
+  return obj;
+}
+
+function inferTypeFromText_(text) {
+  const t = String(text || '');
+  if (/퇴원/.test(t)) return '퇴원';
+  if (/결석|휴강/.test(t)) return '결석';
+  if (/보강|보충/.test(t)) return '보강';
+  if (/상담|테스트|문의/.test(t)) return '상담';
+  return '일반수업';
+}
+
+function guessStudentFromText_(text) {
+  const t = String(text || '').trim();
+  const m = t.match(/([가-힣]{2,4})\s*(학생)?/);
+  return m ? String(m[1] || '').trim() : '';
+}
+
+function parseDateLoose_(text) {
+  if (text instanceof Date) return new Date(text.getFullYear(), text.getMonth(), text.getDate());
+  const s = String(text || '').trim();
+  if (!s) return null;
+  let m = s.match(/(20\d{2})-(\d{1,2})-(\d{1,2})/);
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  m = s.match(/(20\d{2})\.(\d{1,2})\.(\d{1,2})/);
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  m = s.match(/(20\d{2})(\d{2})(\d{2})/);
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  m = s.match(/(\d{1,2})\/(\d{1,2})/);
+  if (m) {
+    const y = new Date().getFullYear();
+    return new Date(y, Number(m[1]) - 1, Number(m[2]));
+  }
+  m = s.match(/(\d{1,2})\.(\d{1,2})/);
+  if (m) {
+    const y2 = new Date().getFullYear();
+    return new Date(y2, Number(m[1]) - 1, Number(m[2]));
+  }
+  return null;
+}
+
+function normalizeDateValue_(v) {
+  const d = parseDateLoose_(v);
+  return d ? formatDateYmd_(d) : '';
+}
+
+function extractTimeRangeLoose_(text) {
+  const s = String(text || '');
+  let m = s.match(/(\d{1,2}:\d{2})\s*~\s*(\d{1,2}:\d{2})/);
+  if (m) return { start: m[1], end: m[2] };
+  m = s.match(/(\d{1,2}:\d{2})/);
+  if (m) return { start: m[1], end: '' };
+  return { start: '', end: '' };
+}
+
+function makeDigest_(text) {
+  const raw = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, String(text || ''), Utilities.Charset.UTF_8);
+  return raw.map(function(b) {
+    const v = (b < 0 ? b + 256 : b).toString(16);
+    return v.length === 1 ? '0' + v : v;
+  }).join('');
+}
+
+function makeGroupId_(student, dateText, type) {
+  return makeDigest_([String(student || ''), String(dateText || ''), String(type || '')].join('|')).slice(0, 16);
+}
+
+function formatDateYmd_(d) {
+  return Utilities.formatDate(new Date(d), 'Asia/Seoul', 'yyyy-MM-dd');
+}
+
+function makeUniqueSheetName_(ss, base) {
+  let name = String(base || 'backup').slice(0, 95);
+  if (!ss.getSheetByName(name)) return name;
+  for (let i = 1; i < 999; i++) {
+    const n = (name + '_' + i).slice(0, 99);
+    if (!ss.getSheetByName(n)) return n;
+  }
+  return name.slice(0, 90) + '_' + new Date().getTime();
 }

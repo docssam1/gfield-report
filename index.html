@@ -1632,20 +1632,7 @@ function todoToCalendarByAi(id){
   if(todoPendingIds.has(sid)) return;
   const target = (todos || []).find(t => String(t.id) === sid);
   if(!target || !target.text) return;
-  const sUrl = getKey('script');
-  if(!sUrl){ openKeyModal(); return; }
-  showToast('⏳ AI가 To-Do를 일정으로 해석 중...');
-  todoApi_({
-    action: 'todo_to_calendar_ai',
-    id: sid,
-    text: target.text,
-    google_calendar_id: getKey('googleCalendarId') || 'primary'
-  }).then(res=>{
-    if(res.result !== 'success') throw new Error(res.error || '캘린더 등록 실패');
-    showToast('✅ AI 캘린더 등록 완료');
-  }).catch(err=>{
-    alert('AI 일정 등록 오류: ' + err.message);
-  });
+  requestAiCalendarApprovalAndExecute_(target.text);
 }
 
 function addTodo() {
@@ -1710,9 +1697,47 @@ function showTodoSelBtn_(x,y,text){
 function saveSelectedTodoToCalendar_(){
   const text = String(__todoSelText || '').trim();
   if(!text) return;
-  todoApi_({ action: 'todo_to_calendar_ai', text: text, google_calendar_id: getKey('googleCalendarId') || 'primary' })
-    .then(res=>{ if(res.result !== 'success') throw new Error(res.error || '캘린더 등록 실패'); showToast('✅ 선택 텍스트를 캘린더에 저장했습니다.'); hideTodoSelBtn_(); try{ window.getSelection()?.removeAllRanges(); }catch(e){}; })
-    .catch(err=>{ alert('AI 일정 등록 오류: ' + err.message); });
+  requestAiCalendarApprovalAndExecute_(text, true);
+}
+
+function requestAiCalendarApprovalAndExecute_(text, fromSelection){
+  const payload = {
+    operation: 'todo_to_calendar_ai',
+    params: {
+      text: String(text || '').trim(),
+      google_calendar_id: getKey('googleCalendarId') || 'primary'
+    }
+  };
+  showToast('⏳ AI 일정 미리보기 생성 중...');
+  todoApi_({ action: 'ai_op_preview', operation: payload.operation, params: payload.params }).then(pre=>{
+    if(pre.result !== 'success') throw new Error(pre.error || '미리보기 생성 실패');
+    const pv = pre.preview || {};
+    const lines = [
+      '아래 일정으로 저장할까요?',
+      '',
+      '제목: ' + String(pv.title || ''),
+      '종일: ' + (pv.allDay ? '예' : '아니오'),
+      '시작: ' + String(pv.start || ''),
+      pv.end ? ('종료: ' + String(pv.end || '')) : ''
+    ].filter(Boolean).join('\n');
+    if(!confirm(lines)){
+      showToast('취소되었습니다.');
+      return null;
+    }
+    return todoApi_({ action: 'ai_op_execute', token: pre.token, approved: true });
+  }).then(execRes=>{
+    if(!execRes) return;
+    if(execRes.result !== 'success') throw new Error(execRes.error || '승인 실행 실패');
+    if(fromSelection){
+      showToast('✅ 선택 텍스트를 캘린더에 저장했습니다.');
+      hideTodoSelBtn_();
+      try{ window.getSelection()?.removeAllRanges(); }catch(e){}
+    } else {
+      showToast('✅ AI 캘린더 등록 완료');
+    }
+  }).catch(err=>{
+    alert('AI 일정 등록 오류: ' + err.message);
+  });
 }
 function initTodoSelectionCalendar_(){
   ensureTodoSelBtn_();
