@@ -542,8 +542,8 @@ button:disabled{opacity:.62 !important;cursor:not-allowed !important;}
           <button onclick="openGoogleCalendarView()" style="padding:8px;background:#dbeafe;color:#1d4ed8;border:1px solid #93c5fd;border-radius:8px;cursor:pointer;font-weight:700;font-size:12px;">Google Calendar 열기</button>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-          <button onclick="previewAssistantStructuredInput()" style="padding:9px;background:#0f766e;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:800;font-size:12px;">원문 자동 정리(미리보기)</button>
-          <button onclick="applyAssistantStructuredActions()" style="padding:9px;background:#0b5ed7;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:800;font-size:12px;">왼쪽 폼에 적용</button>
+          <button id="aiStructuredPreviewBtn" onclick="previewAssistantStructuredInput()" style="padding:9px;background:#0f766e;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:800;font-size:12px;">원문 자동 정리(미리보기)</button>
+          <button id="aiStructuredApplyBtn" onclick="applyAssistantStructuredActions()" style="padding:9px;background:#0b5ed7;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:800;font-size:12px;">왼쪽 폼에 적용</button>
         </div>
         <button onclick="runMasterCalendarSync()" style="padding:9px;background:#334155;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:800;font-size:12px;">일정_마스터 캘린더 동기화</button>
         <div style="font-size:12px;font-weight:800;color:#1f2937;">🤖 AI 비서 결과 공유</div>
@@ -2896,6 +2896,10 @@ function buildAssistantSmartSummary_(spec){
 function runAssistantQuery(){
   const q = (val('aiAssistantQuery') || '').trim();
   if(!q){ showToast('질의를 입력해 주세요.'); return; }
+  if(isWorkflowCommandText_(q)){
+    previewAssistantWorkflowFromRaw_(q);
+    return;
+  }
   const sUrl = getKey('script');
   if(sUrl){
     todoApi_({ action:'todo_list', includeCompleted:true }).then(allRes=>{
@@ -3024,6 +3028,154 @@ function splitTaskCourseAndContent_(item){
   return { course: s, content: s };
 }
 let __assistantStructuredActions = [];
+let __assistantPreviewMode = 'structured';
+let __assistantWorkflowToken = '';
+let __assistantWorkflowPayload = null;
+
+function isWorkflowCommandText_(text){
+  const t = String(text || '').replace(/\s+/g, ' ').trim();
+  if(!t) return false;
+  const keys = [
+    /테스트\s*등록/i, /테스트\s*진행/i, /입학\s*테스트/i,
+    /상담\s*등록/i, /대면\s*상담\s*등록/i, /수업\s*문의\s*등록/i,
+    /퇴원\s*예정/i, /퇴원\s*확정/i, /퇴원\s*취소/i,
+    /결석\s*등록/i, /보강\s*확정/i, /보강\s*변경/i, /보강\s*취소/i,
+    /보충\s*확정/i, /보충\s*변경/i, /보충\s*취소/i
+  ];
+  return keys.some(rx => rx.test(t));
+}
+
+function setAssistantApplyMode_(mode){
+  __assistantPreviewMode = mode === 'workflow' ? 'workflow' : 'structured';
+  const btn = qs('aiStructuredApplyBtn');
+  if(!btn) return;
+  btn.textContent = __assistantPreviewMode === 'workflow' ? '업무 실행 승인' : '왼쪽 폼에 적용';
+  btn.style.background = __assistantPreviewMode === 'workflow' ? '#b45309' : '#0b5ed7';
+}
+
+function parseWorkflowDateFromText_(text){
+  const t = String(text || '');
+  let m = t.match(/(20\d{2})[.\-/](\d{1,2})[.\-/](\d{1,2})/);
+  if(m) return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+  m = t.match(/(\d{1,2})[\/.](\d{1,2})/);
+  if(m){
+    const y = (new Date()).getFullYear();
+    return `${y}-${String(m[1]).padStart(2,'0')}-${String(m[2]).padStart(2,'0')}`;
+  }
+  return '';
+}
+
+function parseWorkflowTimeFromText_(text){
+  const t = String(text || '').replace(/\s+/g, ' ');
+  const m = t.match(/(오전|오후)?\s*(\d{1,2})(?::(\d{1,2}))?\s*시?/);
+  if(!m) return { startTime:'', endTime:'' };
+  let hh = Number(m[2] || 0), mm = Number(m[3] || 0);
+  if(m[1] === '오후' && hh < 12) hh += 12;
+  if(m[1] === '오전' && hh === 12) hh = 0;
+  const start = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+  const endDate = new Date(2000,0,1,hh,mm,0,0);
+  endDate.setMinutes(endDate.getMinutes() + 60);
+  const end = `${String(endDate.getHours()).padStart(2,'0')}:${String(endDate.getMinutes()).padStart(2,'0')}`;
+  return { startTime:start, endTime:end };
+}
+
+function extractWorkflowPayloadFromText_(raw){
+  const text = String(raw || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+  const compact = text.replace(/\s+/g, ' ');
+  const payload = {
+    sheetId: getKey('sheetId') || '',
+    source: 'ai_workflow_preview',
+    syncTriggeredBy: 'ai-workflow',
+    date: parseWorkflowDateFromText_(compact),
+    noticeDate: parseWorkflowDateFromText_(compact),
+    reason: compact,
+    notice: compact
+  };
+
+  const phoneMatch = compact.match(/(01\d[-\s]?\d{3,4}[-\s]?\d{4,5})/);
+  if(phoneMatch) payload.phone = phoneMatch[1].replace(/\s+/g, '');
+
+  const byPhoneName = compact.match(/01\d[-\s]?\d{3,4}[-\s]?\d{4,5}\s+([가-힣]{2,4})/);
+  const byCourseName = compact.match(/([가-힣]{2,4})\s+(?:청담|PACE|pace|아카데미|학원)/);
+  payload.name = (byPhoneName && byPhoneName[1]) || (byCourseName && byCourseName[1]) || val('nameInput');
+
+  const gradeTokens = compact.match(/(\d+세|\d+학년|\d+월생)/g);
+  if(gradeTokens && gradeTokens.length) payload.grade = gradeTokens.join(' ');
+
+  const timeInfo = parseWorkflowTimeFromText_(compact);
+  if(timeInfo.startTime) payload.startTime = timeInfo.startTime;
+  if(timeInfo.endTime) payload.endTime = timeInfo.endTime;
+
+  let classType = '';
+  if(/테스트\s*등록|테스트\s*진행|입학\s*테스트/i.test(compact)) classType = '테스트진행';
+  else if(/대면\s*상담\s*등록|상담\s*등록/i.test(compact)) classType = '재원생상담';
+  else if(/수업\s*문의\s*등록/i.test(compact)) classType = '수업문의';
+  else if(/결석\s*등록/i.test(compact)) classType = '결석';
+  if(classType) payload.classTypeRaw = classType;
+
+  if(/보강\s*확정|보충\s*확정/i.test(compact)){
+    payload.classTypeRaw = '결석';
+    payload.absentReasonType = 'free';
+    payload.makeupType = 'decided';
+    payload.makeupDate = payload.date || '';
+  } else if(/보강\s*변경|보충\s*변경/i.test(compact)){
+    payload.classTypeRaw = '결석';
+    payload.absentReasonType = 'free';
+    payload.makeupType = 'changed';
+    payload.makeupDate = payload.date || '';
+  } else if(/보강\s*취소|보충\s*취소/i.test(compact)){
+    payload.classTypeRaw = '결석';
+    payload.absentReasonType = 'free';
+    payload.makeupType = 'canceled';
+    payload.makeupDate = payload.date || '';
+  } else if(/결석\s*등록/i.test(compact)){
+    payload.absentReasonType = 'personal';
+    payload.makeupType = 'undecided';
+  }
+
+  if(/퇴원\s*예정/i.test(compact)) payload.studentStatus = '퇴원예정';
+  else if(/퇴원\s*확정/i.test(compact)) payload.studentStatus = '퇴원확정';
+  else if(/퇴원\s*취소/i.test(compact)) payload.studentStatus = '퇴원취소';
+
+  if(!payload.name){
+    throw new Error('학생명을 찾지 못했습니다. 문장에 학생명을 포함해 주세요.');
+  }
+  return payload;
+}
+
+function previewAssistantWorkflowFromRaw_(raw){
+  const sUrl = getKey('script');
+  if(!sUrl){ showToast('Apps Script URL을 먼저 설정해 주세요.'); return; }
+  let payload;
+  try{
+    payload = extractWorkflowPayloadFromText_(raw);
+  } catch(err){
+    if(qs('aiAssistantResult')) qs('aiAssistantResult').value = String(err.message || err);
+    showToast('업무 문장을 해석하지 못했습니다.');
+    return;
+  }
+  showToast('⏳ 업무 실행 미리보기 생성 중...');
+  todoApi_({ action:'schedule_workflow_preview', ...payload }).then(res=>{
+    if(!res || res.result !== 'success') throw new Error((res && res.error) || '업무 미리보기 실패');
+    __assistantWorkflowToken = String(res.token || '');
+    __assistantWorkflowPayload = payload;
+    setAssistantApplyMode_('workflow');
+    const out = {
+      mode: 'workflow_preview',
+      action: 'schedule_workflow_preview',
+      summary: res.summary || {},
+      preview: res.preview || []
+    };
+    if(qs('aiAssistantResult')) qs('aiAssistantResult').value = JSON.stringify(out, null, 2);
+    showToast('✅ 업무 실행 미리보기가 준비되었습니다. 승인 버튼을 눌러 실행하세요.');
+  }).catch(err=>{
+    __assistantWorkflowToken = '';
+    __assistantWorkflowPayload = null;
+    setAssistantApplyMode_('structured');
+    if(qs('aiAssistantResult')) qs('aiAssistantResult').value = '업무 미리보기 실패: ' + (err.message || err);
+    alert('업무 미리보기 오류: ' + (err.message || err));
+  });
+}
 
 function buildAssistantStructuredActionsFromRaw_(raw){
   const text = normalizeAssistantText_(raw);
@@ -3093,6 +3245,10 @@ function buildAssistantStructuredActionsFromRaw_(raw){
 
 function previewAssistantStructuredInput(){
   const raw = val('aiAssistantRawInput');
+  if(isWorkflowCommandText_(raw)){
+    previewAssistantWorkflowFromRaw_(raw);
+    return;
+  }
   const built = buildAssistantStructuredActionsFromRaw_(raw);
   if(!built.actions.length){
     showToast('분류할 데이터가 없습니다.');
@@ -3100,6 +3256,9 @@ function previewAssistantStructuredInput(){
     return;
   }
   __assistantStructuredActions = built.actions;
+  __assistantWorkflowToken = '';
+  __assistantWorkflowPayload = null;
+  setAssistantApplyMode_('structured');
   const preview = {
     mode: 'preview_only',
     actions: built.actions,
@@ -3110,6 +3269,35 @@ function previewAssistantStructuredInput(){
 }
 
 function applyAssistantStructuredActions(){
+  if(__assistantPreviewMode === 'workflow'){
+    if(!__assistantWorkflowToken){
+      showToast('먼저 업무 실행 미리보기를 실행해 주세요.');
+      return;
+    }
+    if(!confirm('업무 실행을 승인할까요?\n승인 후 일정_마스터/캘린더/To-Do/학생DB가 반영됩니다.')) return;
+    todoApi_({ action:'schedule_workflow_execute', token: __assistantWorkflowToken, approved: true, sheetId: getKey('sheetId') || '' }).then(res=>{
+      if(!res || res.result !== 'success') throw new Error((res && res.error) || '업무 실행 실패');
+      if(qs('aiAssistantResult')){
+        const out = {
+          mode: 'workflow_executed',
+          action: 'schedule_workflow_execute',
+          workflow: res.workflow || '',
+          groupId: res.groupId || '',
+          rows: Array.isArray(res.rows) ? res.rows.length : 0,
+          todos: Array.isArray(res.todoTexts) ? res.todoTexts.length : 0,
+          warnings: res.warnings || []
+        };
+        qs('aiAssistantResult').value = JSON.stringify(out, null, 2);
+      }
+      __assistantWorkflowToken = '';
+      __assistantWorkflowPayload = null;
+      setAssistantApplyMode_('structured');
+      showToast('✅ 업무 실행이 완료되었습니다.');
+    }).catch(err=>{
+      alert('업무 실행 오류: ' + (err.message || err));
+    });
+    return;
+  }
   if(!Array.isArray(__assistantStructuredActions) || !__assistantStructuredActions.length){
     showToast('먼저 미리보기를 실행해 주세요.');
     return;
