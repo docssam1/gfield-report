@@ -1493,6 +1493,35 @@ function fillTodayHomeworkFromDoc_(doc){
   return legacyRows.length;
 }
 
+function fillHomeworkFromTodayHomeworkDoc_(doc){
+  const rows = [];
+  const snapshotRows = Array.from(doc.querySelectorAll('.data-next-hw'));
+  if(snapshotRows.length){
+    snapshotRows.forEach(r => {
+      const course = r.getAttribute('data-course') || '';
+      const type = r.getAttribute('data-type') || '필수';
+      const content = r.getAttribute('data-content') || '';
+      if(course || content) rows.push({ course, type, content });
+    });
+  } else {
+    const items = Array.from(doc.querySelectorAll('.today-hw-item'));
+    items.forEach(item => {
+      const course = (item.querySelector('.hw-course-title')?.textContent || '').trim();
+      const content = (item.querySelector('.hw-content-text')?.textContent || '').trim();
+      const badge = (item.querySelector('label span[style*="background"]')?.textContent || '').trim();
+      const type = badge === '도전' ? '도전' : '필수';
+      if(course || content) rows.push({ course, type, content });
+    });
+  }
+  if(!rows.length) return 0;
+  if(qs('hwList')) qs('hwList').innerHTML = '';
+  rows.forEach(x => {
+    const merged = x.content ? `[${x.type}] ${x.content}` : '';
+    addHwRow(x.course || '', 'done', merged);
+  });
+  return rows.length;
+}
+
 function extractSectionByTitle_(doc, titleText){
   const sections = Array.from(doc.querySelectorAll('.rpt-sec'));
   for(let i=0;i<sections.length;i++){
@@ -1592,11 +1621,15 @@ function loadFromFile(event, mode){
       if(!doc || !doc.body) throw new Error('파일 파싱 실패');
 
       if(mode === 'homework'){
-        const loaded = fillHomeworkFromSnapshot_(doc);
-        const todayLoaded = fillTodayHomeworkFromDoc_(doc);
-        if(!loaded && !todayLoaded) throw new Error('과제 데이터를 찾지 못했습니다.');
+        let loaded = fillHomeworkFromSnapshot_(doc);
+        let converted = 0;
+        if(!loaded){
+          converted = fillHomeworkFromTodayHomeworkDoc_(doc);
+          loaded = converted;
+        }
+        if(!loaded) throw new Error('과제 데이터를 찾지 못했습니다.');
         updateMsgBox();
-        showToast(`✅ 이전 과제 불러오기 완료 (과제:${loaded}, 오늘과제:${todayLoaded})`);
+        showToast(`✅ 이전 과제 불러오기 완료 (과제확인:${loaded}${converted ? ', 오늘과제→과제확인 변환 적용' : ''})`);
       } else if(mode === 'all'){
         saveDraftBackup_('before_overwrite_all');
         clearReportInputs_();
