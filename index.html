@@ -138,17 +138,25 @@ textarea, input[type="text"], input[type="number"], select { outline:none; font-
 .drive-photo-adder button{padding:10px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:800;cursor:pointer;}
 textarea{overflow:hidden;}
 .rpt-mark-hl{background:linear-gradient(transparent 48%,#fef08a 48%);font-weight:800;padding:0 2px;border-radius:3px;}
-.rpt-mark-em{background:#dbeafe;color:#1e40af;font-weight:900;padding:1px 5px;border-radius:6px;}
-.rpt-mark-star{color:#c2410c;font-weight:900;}
+.rpt-mark-em{background:#fee2e2;color:#991b1b;font-weight:900;padding:2px 6px;border-radius:6px;border:1px solid #ef4444;}
+.rpt-mark-star{background:#fee2e2;color:#991b1b;font-weight:900;padding:2px 6px;border-radius:6px;border:1px solid #ef4444;}
 .mark-popover{position:fixed;display:none;gap:6px;align-items:center;background:#111827;color:#fff;border-radius:12px;padding:7px;box-shadow:0 12px 28px rgba(15,23,42,.28);z-index:12000;}
 .mark-popover.show{display:flex;}
 .mark-popover button{border:none;border-radius:8px;padding:7px 9px;font-size:12px;font-weight:900;cursor:pointer;white-space:nowrap;}
 .mark-popover .mark-hl{background:#fef08a;color:#713f12;}
-.mark-popover .mark-em{background:#dbeafe;color:#1d4ed8;}
-.mark-popover .mark-star{background:#fff7ed;color:#c2410c;}
+.mark-popover .mark-em{background:#fee2e2;color:#991b1b;}
+.mark-popover .mark-star{background:#fee2e2;color:#991b1b;}
 .mark-popover .mark-clear{background:#e5e7eb;color:#374151;}
-.mark-popover .mark-spell{background:#dcfce7;color:#166534;}
-.mark-popover .mark-tone{background:#ede9fe;color:#5b21b6;}
+.mark-popover .mark-en{background:#dbeafe;color:#1d4ed8;}
+.translate-preview-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.35);z-index:12020;align-items:center;justify-content:center;padding:14px;}
+.translate-preview-overlay.show{display:flex;}
+.translate-preview{width:min(560px,96vw);background:#fff;border-radius:14px;box-shadow:0 16px 38px rgba(15,23,42,.3);padding:14px;}
+.translate-preview h3{font-size:15px;color:#0f172a;margin:0 0 8px;}
+.translate-preview textarea{width:100%;min-height:140px;border:1px solid #cbd5e1;border-radius:10px;padding:10px;font-size:13px;line-height:1.6;resize:vertical;}
+.translate-preview-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px;}
+.translate-preview-actions button{border:none;border-radius:9px;padding:8px 12px;font-size:12px;font-weight:800;cursor:pointer;}
+.translate-preview-cancel{background:#e5e7eb;color:#334155;}
+.translate-preview-apply{background:#2563eb;color:#fff;}
 .time-modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.35);z-index:13000;align-items:center;justify-content:center;padding:14px;}
 .time-modal-overlay.show{display:flex;}
 .time-modal{width:min(420px,96vw);background:#f8f8fc;border-radius:14px;overflow:hidden;box-shadow:0 16px 38px rgba(15,23,42,.3);}
@@ -224,9 +232,18 @@ button:disabled{opacity:.62 !important;cursor:not-allowed !important;}
   <button type="button" class="mark-hl" data-mark="hl">형광펜</button>
   <button type="button" class="mark-em" data-mark="em">강조</button>
   <button type="button" class="mark-star" data-mark="star">별표</button>
-  <button type="button" class="mark-spell" data-ai-action="spell">맞춤법</button>
-  <button type="button" class="mark-tone" data-ai-action="tone">톤변환</button>
+  <button type="button" class="mark-en" data-ai-action="english">영어</button>
   <button type="button" class="mark-clear" data-mark="clear">해제</button>
+</div>
+<div class="translate-preview-overlay" id="translatePreviewModal">
+  <div class="translate-preview">
+    <h3>영어 변환 미리보기</h3>
+    <textarea id="translatePreviewText"></textarea>
+    <div class="translate-preview-actions">
+      <button type="button" class="translate-preview-cancel" onclick="closeTranslatePreviewModal()">취소</button>
+      <button type="button" class="translate-preview-apply" onclick="applyTranslatePreview()">적용</button>
+    </div>
+  </div>
 </div>
 <div class="time-modal-overlay" id="timePickerModal">
   <div class="time-modal" role="dialog" aria-modal="true" aria-label="시간 선택">
@@ -1135,9 +1152,7 @@ function replaceSelectedTextRange_(range, next){
 async function askGeminiRewrite_(mode, text){
   const key = String(getKey('geminiKey') || '').trim();
   if(!key) throw new Error('Gemini API Key가 없습니다.');
-  const prompt = mode === 'spell'
-    ? `다음 한국어 문장을 의미를 바꾸지 말고 맞춤법/띄어쓰기만 교정해 주세요. 설명 없이 결과 문장만 출력하세요.\n\n${text}`
-    : `다음 한국어 문장을 학부모 안내용으로 부드럽고 공손한 톤으로 다듬어 주세요. 의미는 유지하고 설명 없이 결과 문장만 출력하세요.\n\n${text}`;
+  const prompt = `다음 한국어 문장을 자연스러운 영어로 번역해 주세요. 설명 없이 번역문만 출력하세요.\n\n${text}`;
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(key)}`;
   const res = await fetch(url, {
     method:'POST',
@@ -1150,18 +1165,39 @@ async function askGeminiRewrite_(mode, text){
   if(!out) throw new Error('AI 결과가 비어 있습니다.');
   return out;
 }
-async function runAiSelectionAction_(mode){
+let __translatePreviewRange = null;
+function closeTranslatePreviewModal(){
+  const m = qs('translatePreviewModal');
+  if(m) m.classList.remove('show');
+}
+function openTranslatePreviewModal(text){
+  const m = qs('translatePreviewModal');
+  const t = qs('translatePreviewText');
+  if(!m || !t) return;
+  t.value = String(text || '');
+  m.classList.add('show');
+  t.focus();
+}
+function applyTranslatePreview(){
+  const t = qs('translatePreviewText');
+  if(!t || !__translatePreviewRange) return closeTranslatePreviewModal();
+  replaceSelectedTextRange_(__translatePreviewRange, t.value || '');
+  __translatePreviewRange = null;
+  closeTranslatePreviewModal();
+  hideMarkPopover();
+  showToast('✅ 영어 변환 적용 완료');
+}
+async function runEnglishTranslateSelection_(){
   const range = getSelectedTextRange_();
   if(!range){ showToast('드래그로 문장을 선택해 주세요.'); return; }
-  const label = mode === 'spell' ? '맞춤법 교정' : '톤 변환';
-  showToast(`⏳ ${label} 처리 중...`);
+  showToast('⏳ 영어 변환 중...');
   try{
-    const rewritten = await askGeminiRewrite_(mode, range.selected);
-    replaceSelectedTextRange_(range, rewritten);
-    hideMarkPopover();
-    showToast(`✅ ${label} 완료`);
+    const translated = await askGeminiRewrite_('english', range.selected);
+    __translatePreviewRange = range;
+    openTranslatePreviewModal(translated);
+    showToast('✅ 미리보기 확인 후 적용하세요.');
   }catch(err){
-    alert(`${label} 오류: ` + (err.message || err));
+    alert('영어 변환 오류: ' + (err.message || err));
   }
 }
 document.addEventListener('focusin', e=>rememberMarkSelection(e.target));
@@ -1173,7 +1209,7 @@ document.addEventListener('click', e=>{
   const aiBtn = e.target && e.target.closest ? e.target.closest('[data-ai-action]') : null;
   if(aiBtn){
     e.preventDefault();
-    runAiSelectionAction_(String(aiBtn.dataset.aiAction || ''));
+    if(String(aiBtn.dataset.aiAction || '') === 'english') runEnglishTranslateSelection_();
     return;
   }
   if(!btn){
@@ -2288,7 +2324,7 @@ function buildAbsentSnapshot(){
   document.querySelectorAll('#videoList div.video-card').forEach(r=>{const img=r.querySelector('img');if(!img)return;const u=img.getAttribute('data-url'),s=img.src,c=r.querySelector('.video-input')?.value || '';vidH+=`<div style="margin-bottom:15px;"><a href="${u}" target="_blank" style="display:block;position:relative;"><img src="${s}" style="width:100%;border-radius:12px;"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,0,0,.8);color:#fff;width:40px;height:40px;border-radius:50%;text-align:center;line-height:40px;font-size:16px;">▶</div></a>${c?`<div style="text-align:center;margin-top:5px;font-weight:600;">${esc(c)}</div>`:''}</div>`;});
   document.querySelectorAll('#resourceList > div').forEach(r=>{const sn=r.querySelector('.v-name')?.value,l=r.querySelector('.v-link')?.value;if(sn&&l) resH+=`<div style="display:flex;justify-content:space-between;align-items:center;background:#f1f5f9;padding:12px;border-radius:10px;margin-bottom:8px;"><span style="font-weight:700;">${esc(sn)}</span><a href="${l}" target="_blank" style="background:#16417C;color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-size:12px;">연결</a></div>`;});
   const sr=(t,i,c)=>c?`<div class="card"><div style="font-weight:800;color:#16417C;margin-bottom:12px;">${i} ${t}</div>${c}</div>`:'';
-  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${esc(n)} 일정공지</title><style>:root{color-scheme:light;}*{box-sizing:border-box;margin:0;padding:0;}html,body{background:#f4f5fb !important;color:#0f172a !important;color-scheme:light;}body{font-family:sans-serif;background:#f4f5fb !important;color:#0f172a !important;}.wrap{max-width:480px;margin:0 auto;padding:30px 16px;}.card{background:#fff;border-radius:20px;padding:28px;margin-bottom:16px;box-shadow:0 4px 15px rgba(0,0,0,.05);}.badge{background:${reasonType==='free'?'#dbeafe':'#fee2e2'};color:${reasonType==='free'?'#166534':'#b91c1c'};padding:4px 14px;border-radius:20px;font-size:12px;font-weight:800;display:inline-block;margin-bottom:16px;}h1{font-size:20px;margin-bottom:6px;}.info-row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid #f1f5f9;font-size:14px;}.info-label{color:#64748b;font-weight:600;flex:0 0 auto;}.info-val{font-weight:700;min-width:0;text-align:right;overflow-wrap:anywhere;word-break:keep-all;}.notice-box{background:#fffbeb;padding:14px;border-radius:12px;border:1px solid #fde68a;white-space:pre-wrap;margin-top:4px;overflow-wrap:anywhere;word-break:keep-all;}.rpt-mark-hl{background:linear-gradient(transparent 48%,#fef08a 48%);font-weight:800;padding:0 2px;border-radius:3px;}.rpt-mark-em{background:#dbeafe;color:#1e40af;font-weight:900;padding:1px 5px;border-radius:6px;}.rpt-mark-star{color:#c2410c;font-weight:900;}@media(max-width:420px){.wrap{padding:22px 12px;}.card{padding:22px 18px;}.info-row{display:block;}.info-val{display:block;text-align:left;margin-top:4px;}}</style></head><body><div class="wrap"><div class="card"><div class="badge">${badgeText}</div><h1>${titleText}</h1><div style="color:#64748b;font-size:13px;margin-bottom:20px;">${d}</div><div class="info-row"><span class="info-label">${dateLabel}</span><span class="info-val">${d}</span></div>${r&&reasonType!=='free'?`<div class="info-row"><span class="info-label">${rLab}</span><span class="info-val">${renderMarkedText(r)}</span></div>`:''}<div class="info-row"><span class="info-label">보강/보충 일정</span><span class="info-val">${mStr}</span></div></div>${nt?`<div class="card"><div style="font-weight:800;color:#16417C;margin-bottom:12px;">📢 추가 전달 사항 및 공지</div><div class="notice-box">${renderMarkedText(nt)}</div></div>`:''}${sr('동영상 강의','🎬',vidH)}${sr('추가 자료','🔗',resH)}<div style="text-align:center;color:#94a3b8;font-size:11px;margin-top:30px;">© G-Field Gifted Education</div></div></body></html>`;
+  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${esc(n)} 일정공지</title><style>:root{color-scheme:light;}*{box-sizing:border-box;margin:0;padding:0;}html,body{background:#f4f5fb !important;color:#0f172a !important;color-scheme:light;}body{font-family:sans-serif;background:#f4f5fb !important;color:#0f172a !important;}.wrap{max-width:480px;margin:0 auto;padding:30px 16px;}.card{background:#fff;border-radius:20px;padding:28px;margin-bottom:16px;box-shadow:0 4px 15px rgba(0,0,0,.05);}.badge{background:${reasonType==='free'?'#dbeafe':'#fee2e2'};color:${reasonType==='free'?'#166534':'#b91c1c'};padding:4px 14px;border-radius:20px;font-size:12px;font-weight:800;display:inline-block;margin-bottom:16px;}h1{font-size:20px;margin-bottom:6px;}.info-row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid #f1f5f9;font-size:14px;}.info-label{color:#64748b;font-weight:600;flex:0 0 auto;}.info-val{font-weight:700;min-width:0;text-align:right;overflow-wrap:anywhere;word-break:keep-all;}.notice-box{background:#fffbeb;padding:14px;border-radius:12px;border:1px solid #fde68a;white-space:pre-wrap;margin-top:4px;overflow-wrap:anywhere;word-break:keep-all;}.rpt-mark-hl{background:linear-gradient(transparent 48%,#fef08a 48%);font-weight:800;padding:0 2px;border-radius:3px;}.rpt-mark-em{background:#fee2e2;color:#991b1b;font-weight:900;padding:2px 6px;border-radius:6px;border:1px solid #ef4444;}.rpt-mark-star{background:#fee2e2;color:#991b1b;font-weight:900;padding:2px 6px;border-radius:6px;border:1px solid #ef4444;}@media(max-width:420px){.wrap{padding:22px 12px;}.card{padding:22px 18px;}.info-row{display:block;}.info-val{display:block;text-align:left;margin-top:4px;}}</style></head><body><div class="wrap"><div class="card"><div class="badge">${badgeText}</div><h1>${titleText}</h1><div style="color:#64748b;font-size:13px;margin-bottom:20px;">${d}</div><div class="info-row"><span class="info-label">${dateLabel}</span><span class="info-val">${d}</span></div>${r&&reasonType!=='free'?`<div class="info-row"><span class="info-label">${rLab}</span><span class="info-val">${renderMarkedText(r)}</span></div>`:''}<div class="info-row"><span class="info-label">보강/보충 일정</span><span class="info-val">${mStr}</span></div></div>${nt?`<div class="card"><div style="font-weight:800;color:#16417C;margin-bottom:12px;">📢 추가 전달 사항 및 공지</div><div class="notice-box">${renderMarkedText(nt)}</div></div>`:''}${sr('동영상 강의','🎬',vidH)}${sr('추가 자료','🔗',resH)}<div style="text-align:center;color:#94a3b8;font-size:11px;margin-top:30px;">© G-Field Gifted Education</div></div></body></html>`;
 }
 
 function buildSnapshot(){
@@ -2315,7 +2351,7 @@ function buildSnapshot(){
   const classPH=classPhotos.length?`${pRen(classPhotos)}${photoGuide}`:'';
   const sr=(t,i,c)=>c?`<div class="rpt-sec" style="background:#fff;border-radius:20px;padding:24px 20px;margin-bottom:16px;box-shadow:0 4px 15px rgba(0,0,0,.03);"><div class="rpt-sec-title" style="font-size:16px;font-weight:800;color:#16417C;margin-bottom:16px;border-bottom:2px solid #16417C;display:inline-block;padding-bottom:4px;">${i} ${t}</div>${c}</div>`:'';
   
-  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><title>지필드 리포트 - ${esc(n)}</title><style>:root{color-scheme:light;}*{box-sizing:border-box;margin:0;padding:0;}html,body{background:#f4f5fb !important;color:#0f172a !important;color-scheme:light;}body{font-family:sans-serif;background:#f4f5fb !important;color:#0f172a !important;}.web-wrap{max-width:900px;margin:0 auto;padding:30px 24px;}.web-header{background:linear-gradient(135deg,#16417C,#2a5b9e);border-radius:20px;padding:28px 32px;color:#fff;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;}.hd-l h1{font-size:22px;font-weight:800;margin-bottom:4px;}.hd-l p{font-size:13px;opacity:.8;}.hd-r{text-align:right;}.s-name{font-size:28px;font-weight:800;}.date{font-size:13px;opacity:.8;margin-top:4px;}.badge{display:inline-block;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.4);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;margin-top:8px;}.rpt-mark-hl{background:linear-gradient(transparent 48%,#fef08a 48%);font-weight:800;padding:0 2px;border-radius:3px;}.rpt-mark-em{background:#dbeafe;color:#1e40af;font-weight:900;padding:1px 5px;border-radius:6px;}.rpt-mark-star{color:#c2410c;font-weight:900;}.homework-check-row{border-bottom:1px solid #eee;padding:12px 0;text-align:left;}.homework-check-head{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;}.homework-check-course{font-weight:800;color:#16417C;font-size:14px;line-height:1.45;min-width:0;overflow-wrap:anywhere;word-break:keep-all;}.homework-check-status{flex:0 0 auto;}.homework-check-comment{margin-top:8px;font-size:13px;white-space:pre-wrap;line-height:1.65;text-align:left;color:#1f2937;overflow-wrap:anywhere;word-break:keep-all;}${photoStyle}@media print{html,body{background:#fff !important;} .web-wrap{max-width:none;padding:0;} .photo-carousel{display:grid !important;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;overflow:visible !important;padding:0 !important;perspective:none !important;} .photo-card-view,.photo-card-view.active,.photo-card-view.prev,.photo-card-view.next{transform:none !important;opacity:1 !important;box-shadow:none !important;break-inside:avoid;page-break-inside:avoid;} .photo-card-view img{aspect-ratio:3/4;object-fit:contain;background:#fff;} .photo-viewer,.photo-viewer-close,.photo-viewer-caption{display:none !important;} .today-hw-item button{display:none !important;} }@media(max-width:640px){.web-wrap{padding:18px 12px;}.web-header{padding:20px 16px;display:block;}.hd-r{text-align:left;margin-top:10px;}.s-name{font-size:24px;}.homework-check-head{display:block;}.homework-check-status{margin-top:6px;}.homework-check-comment{margin-left:0;font-size:14px;}}</style></head><body><div class="web-wrap"><div class="web-header"><div class="hd-l"><h1>지필드 영재교육 학습 리포트</h1><p>G-Field Gifted Education</p><div class="badge">${classType}</div></div><div class="hd-r"><div class="s-name">${esc(n)} 학생</div><div class="date">${d}${crs?' · '+esc(crs):''}</div></div></div>${nt?`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:16px;padding:16px;margin-bottom:16px;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#451a03;">📢 ${renderMarkedText(nt)}</div>`:''}${sr('과제 확인','✅',hwR+hwPH)}${sr('학습 요약','📖',subH)}${sr('수업 사진','📸',classPH)}${sr('동영상 강의','🎬',vidH?`<div style=\"display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;align-items:start;\">${vidH}</div>`:'')}${sr('추가 자료','🔗',resH)}${sr('오늘의 과제','✏️',tHwH)}<div style="margin:10px 0 6px;font-size:11px;color:#64748b;line-height:1.45;text-align:center;">※ PDF 인쇄 시 사진은 4분할(2x2)로 자동 배치됩니다.</div><div style="text-align:center;margin:36px 0;font-size:11px;color:#94a3b8;">© G-Field Gifted Education</div>${hideD}</div>${photoViewerHtml}${photoViewerScript}</body></html>`;
+  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><title>지필드 리포트 - ${esc(n)}</title><style>:root{color-scheme:light;}*{box-sizing:border-box;margin:0;padding:0;}html,body{background:#f4f5fb !important;color:#0f172a !important;color-scheme:light;}body{font-family:sans-serif;background:#f4f5fb !important;color:#0f172a !important;}.web-wrap{max-width:900px;margin:0 auto;padding:30px 24px;}.web-header{background:linear-gradient(135deg,#16417C,#2a5b9e);border-radius:20px;padding:28px 32px;color:#fff;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;}.hd-l h1{font-size:22px;font-weight:800;margin-bottom:4px;}.hd-l p{font-size:13px;opacity:.8;}.hd-r{text-align:right;}.s-name{font-size:28px;font-weight:800;}.date{font-size:13px;opacity:.8;margin-top:4px;}.badge{display:inline-block;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.4);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;margin-top:8px;}.rpt-mark-hl{background:linear-gradient(transparent 48%,#fef08a 48%);font-weight:800;padding:0 2px;border-radius:3px;}.rpt-mark-em{background:#fee2e2;color:#991b1b;font-weight:900;padding:2px 6px;border-radius:6px;border:1px solid #ef4444;}.rpt-mark-star{background:#fee2e2;color:#991b1b;font-weight:900;padding:2px 6px;border-radius:6px;border:1px solid #ef4444;}.homework-check-row{border-bottom:1px solid #eee;padding:12px 0;text-align:left;}.homework-check-head{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;}.homework-check-course{font-weight:800;color:#16417C;font-size:14px;line-height:1.45;min-width:0;overflow-wrap:anywhere;word-break:keep-all;}.homework-check-status{flex:0 0 auto;}.homework-check-comment{margin-top:8px;font-size:13px;white-space:pre-wrap;line-height:1.65;text-align:left;color:#1f2937;overflow-wrap:anywhere;word-break:keep-all;}${photoStyle}@media print{html,body{background:#fff !important;} .web-wrap{max-width:none;padding:0;} .photo-carousel{display:grid !important;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;overflow:visible !important;padding:0 !important;perspective:none !important;} .photo-card-view,.photo-card-view.active,.photo-card-view.prev,.photo-card-view.next{transform:none !important;opacity:1 !important;box-shadow:none !important;break-inside:avoid;page-break-inside:avoid;} .photo-card-view img{aspect-ratio:3/4;object-fit:contain;background:#fff;} .photo-viewer,.photo-viewer-close,.photo-viewer-caption{display:none !important;} .today-hw-item button{display:none !important;} }@media(max-width:640px){.web-wrap{padding:18px 12px;}.web-header{padding:20px 16px;display:block;}.hd-r{text-align:left;margin-top:10px;}.s-name{font-size:24px;}.homework-check-head{display:block;}.homework-check-status{margin-top:6px;}.homework-check-comment{margin-left:0;font-size:14px;}}</style></head><body><div class="web-wrap"><div class="web-header"><div class="hd-l"><h1>지필드 영재교육 학습 리포트</h1><p>G-Field Gifted Education</p><div class="badge">${classType}</div></div><div class="hd-r"><div class="s-name">${esc(n)} 학생</div><div class="date">${d}${crs?' · '+esc(crs):''}</div></div></div>${nt?`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:16px;padding:16px;margin-bottom:16px;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#451a03;">📢 ${renderMarkedText(nt)}</div>`:''}${sr('과제 확인','✅',hwR+hwPH)}${sr('학습 요약','📖',subH)}${sr('수업 사진','📸',classPH)}${sr('동영상 강의','🎬',vidH?`<div style=\"display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;align-items:start;\">${vidH}</div>`:'')}${sr('추가 자료','🔗',resH)}${sr('오늘의 과제','✏️',tHwH)}<div style="margin:10px 0 6px;font-size:11px;color:#64748b;line-height:1.45;text-align:center;">※ PDF 인쇄 시 사진은 4분할(2x2)로 자동 배치됩니다.</div><div style="text-align:center;margin:36px 0;font-size:11px;color:#94a3b8;">© G-Field Gifted Education</div>${hideD}</div>${photoViewerHtml}${photoViewerScript}</body></html>`;
 }
 
 function getSimpleMoneyText(text){
