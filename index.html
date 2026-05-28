@@ -147,6 +147,8 @@ textarea{overflow:hidden;}
 .mark-popover .mark-em{background:#dbeafe;color:#1d4ed8;}
 .mark-popover .mark-star{background:#fff7ed;color:#c2410c;}
 .mark-popover .mark-clear{background:#e5e7eb;color:#374151;}
+.mark-popover .mark-spell{background:#dcfce7;color:#166534;}
+.mark-popover .mark-tone{background:#ede9fe;color:#5b21b6;}
 .time-modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.35);z-index:13000;align-items:center;justify-content:center;padding:14px;}
 .time-modal-overlay.show{display:flex;}
 .time-modal{width:min(420px,96vw);background:#f8f8fc;border-radius:14px;overflow:hidden;box-shadow:0 16px 38px rgba(15,23,42,.3);}
@@ -222,6 +224,8 @@ button:disabled{opacity:.62 !important;cursor:not-allowed !important;}
   <button type="button" class="mark-hl" data-mark="hl">형광펜</button>
   <button type="button" class="mark-em" data-mark="em">강조</button>
   <button type="button" class="mark-star" data-mark="star">별표</button>
+  <button type="button" class="mark-spell" data-ai-action="spell">맞춤법</button>
+  <button type="button" class="mark-tone" data-ai-action="tone">톤변환</button>
   <button type="button" class="mark-clear" data-mark="clear">해제</button>
 </div>
 <div class="time-modal-overlay" id="timePickerModal">
@@ -1103,12 +1107,75 @@ function formatSelectedText(kind){
   el.dispatchEvent(new Event('input', { bubbles:true }));
   hideMarkPopover();
 }
+function getSelectedTextRange_(){
+  let el = getActiveEditableTextField();
+  let start = el && typeof el.selectionStart === 'number' ? el.selectionStart : null;
+  let end = el && typeof el.selectionEnd === 'number' ? el.selectionEnd : null;
+  if((start === end || start === null) && lastMarkSelection && document.contains(lastMarkSelection.el)){
+    el = lastMarkSelection.el;
+    start = lastMarkSelection.start;
+    end = lastMarkSelection.end;
+  }
+  if(!el || typeof el.selectionStart !== 'number' || start === end) return null;
+  return { el, start, end, selected: el.value.slice(start, end) };
+}
+function replaceSelectedTextRange_(range, next){
+  const el = range.el;
+  const before = el.value.slice(0, range.start);
+  const after = el.value.slice(range.end);
+  el.value = before + next + after;
+  el.focus();
+  el.selectionStart = range.start;
+  el.selectionEnd = range.start + String(next || '').length;
+  rememberMarkSelection(el);
+  if(typeof autoGrow === 'function') autoGrow(el);
+  if(typeof updateMsgBox === 'function') updateMsgBox();
+  el.dispatchEvent(new Event('input', { bubbles:true }));
+}
+async function askGeminiRewrite_(mode, text){
+  const key = String(getKey('geminiKey') || '').trim();
+  if(!key) throw new Error('Gemini API Key가 없습니다.');
+  const prompt = mode === 'spell'
+    ? `다음 한국어 문장을 의미를 바꾸지 말고 맞춤법/띄어쓰기만 교정해 주세요. 설명 없이 결과 문장만 출력하세요.\n\n${text}`
+    : `다음 한국어 문장을 학부모 안내용으로 부드럽고 공손한 톤으로 다듬어 주세요. 의미는 유지하고 설명 없이 결과 문장만 출력하세요.\n\n${text}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(key)}`;
+  const res = await fetch(url, {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify({ contents:[{ role:'user', parts:[{ text: prompt }] }] })
+  });
+  if(!res.ok) throw new Error(`Gemini 오류(${res.status})`);
+  const data = await res.json();
+  const out = data?.candidates?.[0]?.content?.parts?.map(p=>p?.text||'').join('\n').trim() || '';
+  if(!out) throw new Error('AI 결과가 비어 있습니다.');
+  return out;
+}
+async function runAiSelectionAction_(mode){
+  const range = getSelectedTextRange_();
+  if(!range){ showToast('드래그로 문장을 선택해 주세요.'); return; }
+  const label = mode === 'spell' ? '맞춤법 교정' : '톤 변환';
+  showToast(`⏳ ${label} 처리 중...`);
+  try{
+    const rewritten = await askGeminiRewrite_(mode, range.selected);
+    replaceSelectedTextRange_(range, rewritten);
+    hideMarkPopover();
+    showToast(`✅ ${label} 완료`);
+  }catch(err){
+    alert(`${label} 오류: ` + (err.message || err));
+  }
+}
 document.addEventListener('focusin', e=>rememberMarkSelection(e.target));
 document.addEventListener('keyup', e=>updateMarkPopover(e.target));
 document.addEventListener('mouseup', e=>updateMarkPopover(e.target));
 document.addEventListener('select', e=>updateMarkPopover(e.target));
 document.addEventListener('click', e=>{
   const btn = e.target && e.target.closest ? e.target.closest('[data-mark]') : null;
+  const aiBtn = e.target && e.target.closest ? e.target.closest('[data-ai-action]') : null;
+  if(aiBtn){
+    e.preventDefault();
+    runAiSelectionAction_(String(aiBtn.dataset.aiAction || ''));
+    return;
+  }
   if(!btn){
     if(!e.target.closest || !e.target.closest('#markPopover')) hideMarkPopover();
     return;
