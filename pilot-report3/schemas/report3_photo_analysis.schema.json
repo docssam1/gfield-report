@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Report3 Photo Analysis Preview",
+  "type": "object",
+  "required": ["student_session", "photo_items", "report_candidates", "safety"],
+  "properties": {
+    "student_session": {
+      "type": "object",
+      "required": ["student_name", "date", "course", "session_type", "needs_review"],
+      "properties": {
+        "student_name": { "type": "string" },
+        "date": { "type": "string" },
+        "course": { "type": "string" },
+        "session_type": { "type": "string", "enum": ["class", "homework", "test", "counseling", "unknown"] },
+        "needs_review": { "type": "boolean" }
+      }
+    },
+    "photo_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["photo_id", "concept_tags", "mistake_candidates", "teaching_points", "confidence", "verification_required"],
+        "properties": {
+          "photo_id": { "type": "string" },
+          "textbook_candidate": { "type": "string" },
+          "page_candidate": { "type": "string" },
+          "problem_numbers": { "type": "array", "items": { "type": "string" } },
+          "concept_tags": { "type": "array", "items": { "type": "string" } },
+          "problem_type": { "type": "string" },
+          "student_work_summary": { "type": "string" },
+          "red_annotation_meaning": { "type": "string" },
+          "blue_annotation_meaning": { "type": "string" },
+          "mistake_candidates": { "type": "array", "items": { "type": "string" } },
+          "teaching_points": { "type": "array", "items": { "type": "string" } },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+          "verification_required": { "type": "boolean" }
+        }
+      }
+    },
+    "report_candidates": {
+      "type": "object",
+      "properties": {
+        "strengths": { "type": "array", "items": { "type": "string" } },
+        "improvement_points": { "type": "array", "items": { "type": "string" } },
+        "parent_guidance": { "type": "array", "items": { "type": "string" } },
+        "teacher_summary": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "required": ["public_allowed", "needs_review", "notes"],
+      "properties": {
+        "public_allowed": { "type": "boolean" },
+        "needs_review": { "type": "boolean" },
+        "notes": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}
