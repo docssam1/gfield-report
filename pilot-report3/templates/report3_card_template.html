@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Report3 Photo Analysis Pilot</title>
+  <style>
+    :root { --primary:#16417C; --bg:#f4f5fb; --card:#fff; --text:#0f172a; --muted:#64748b; --warn:#b91c1c; --blue:#2563eb; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); font-family:system-ui,-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif; color:var(--text); }
+    .wrap { max-width:900px; margin:0 auto; padding:28px 18px; }
+    .header { background:linear-gradient(135deg,#16417C,#2a5b9e); color:#fff; border-radius:22px; padding:26px; margin-bottom:18px; }
+    .header h1 { margin:0 0 6px; font-size:24px; }
+    .header p { margin:0; opacity:.85; }
+    .section { background:var(--card); border-radius:18px; padding:22px; margin:14px 0; box-shadow:0 4px 15px rgba(0,0,0,.035); }
+    .title { font-weight:800; color:var(--primary); border-bottom:2px solid var(--primary); display:inline-block; padding-bottom:4px; margin-bottom:14px; }
+    .item { border:1px solid #e5e7eb; border-radius:14px; padding:16px; margin:12px 0; }
+    .meta { font-size:13px; color:var(--muted); margin-bottom:8px; }
+    .label { font-weight:800; margin-top:10px; }
+    .red { color:var(--warn); }
+    .blue { color:var(--blue); }
+    .note { background:#fffbeb; border:1px solid #fde68a; border-radius:12px; padding:12px; font-size:14px; }
+    ul { margin:8px 0 0 20px; padding:0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <h1>{{student_name}} 학생 Report3 사진첨삭 파일럿</h1>
+      <p>{{date}} · {{course}} · preview only</p>
+    </div>
+
+    <div class="section">
+      <div class="title">검수 상태</div>
+      <div class="note">
+        이 HTML은 파일럿 초안입니다. Gemini 분석 JSON을 바탕으로 생성되며, 원장 검수 전에는 운영 리포트에 반영하지 않습니다.
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="title">사진별 분석</div>
+      {{photo_items}}
+    </div>
+
+    <div class="section">
+      <div class="title">리포트 문장 후보</div>
+      <div class="label">잘한 점</div>
+      {{strengths}}
+      <div class="label">보완할 점</div>
+      {{improvement_points}}
+      <div class="label">가정 지도</div>
+      {{parent_guidance}}
+      <div class="label">담당 교사 요약</div>
+      {{teacher_summary}}
+    </div>
+  </div>
+</body>
+</html>
