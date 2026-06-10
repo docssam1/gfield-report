@@ -1,0 +1,37 @@
+{
+  "student_session": {
+    "student_name": "김주한",
+    "date": "2026-06-sample",
+    "course": "정규수업 / Report3 파일럿",
+    "session_type": "class",
+    "needs_review": true
+  },
+  "photo_items": [
+    {
+      "photo_id": "sample_photo_001",
+      "textbook_candidate": "디딤돌 기본+응용 또는 서술형 트레이닝",
+      "page_candidate": "unknown",
+      "problem_numbers": [],
+      "concept_tags": ["사진첨삭", "빨간펜", "파란펜", "검수필요"],
+      "problem_type": "unknown",
+      "student_work_summary": "Gemini 사진 분석 결과를 구조화하기 위한 샘플 데이터입니다.",
+      "red_annotation_meaning": "교정/주의/핵심 지도 후보",
+      "blue_annotation_meaning": "풀이 흐름/칭찬/보조 설명 후보",
+      "mistake_candidates": [],
+      "teaching_points": [],
+      "confidence": 0.3,
+      "verification_required": true
+    }
+  ],
+  "report_candidates": {
+    "strengths": ["사진 속 풀이 과정과 첨삭을 근거로 강점 후보를 추출한다."],
+    "improvement_points": ["확신도가 낮은 분석은 리포트 본문에 자동 반영하지 않는다."],
+    "parent_guidance": ["원장 검수 후 가정 지도 문장으로 정리한다."],
+    "teacher_summary": ["Gemini 결과는 원자료이며 최종 리포트 문장은 Report3가 재가공한다."]
+  },
+  "safety": {
+    "public_allowed": false,
+    "needs_review": true,
+    "notes": ["샘플 데이터", "운영본 반영 금지"]
+  }
+}
