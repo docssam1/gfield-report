@@ -1,0 +1,25 @@
+{
+  "$schema": "Report3 Analysis Queue Item Schema V1",
+  "description": "Gemini 분석 대기열 아이템. status=waiting 이면 미처리.",
+  "type": "object",
+  "required": ["queue_id","date","student_name","entry_type","drive_folder_path","photo_count","status","needs_review","created_at","source"],
+  "properties": {
+    "queue_id": {"type": "string", "example": "kimjuhan_2026-05-06_class_notes"},
+    "date": {"type": "string", "format": "YYYY-MM-DD"},
+    "student_name": {"type": "string"},
+    "entry_type": {"type": "string", "enum": ["class_notes","homework_check","test_result","consultation","unknown"]},
+    "drive_folder_path": {"type": "string", "example": "report3_input/2026-05-06/김주한/class_notes/photos/"},
+    "photo_count": {"type": "integer", "minimum": 0},
+    "status": {"type": "string", "enum": ["waiting","analyzing","done","error","review_needed"], "default": "waiting"},
+    "needs_review": {"type": "boolean", "default": false},
+    "created_at": {"type": "string", "format": "ISO 8601 UTC"},
+    "source": {
+      "type": "object",
+      "required": ["telegram_chat_id","telegram_message_ids"],
+      "properties": {
+        "telegram_chat_id": {"type": "string"},
+        "telegram_message_ids": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}
