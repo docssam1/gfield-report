@@ -1,0 +1,26 @@
+{
+  "student_name": "김주한",
+  "date": "2026-06-11",
+  "assigned_homework_source_date": "2026-06-04",
+  "check_date": "2026-06-11T10:30:00Z",
+  "items": [
+    {
+      "title": "수학 p.45 1~10번",
+      "status": "done",
+      "note": ""
+    },
+    {
+      "title": "영어 단어 암기 20개",
+      "status": "partial",
+      "note": "틀린문제 많음"
+    },
+    {
+      "title": "과학 탐구보고서 초안",
+      "status": "not_done",
+      "note": ""
+    }
+  ],
+  "needs_review": false,
+  "public_allowed": false,
+  "_notes": "Preview only — 학부모 전송 금지, public_allowed 항상 false"
+}
