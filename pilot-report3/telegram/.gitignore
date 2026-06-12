@@ -1,0 +1,7 @@
+state/
+preview_queue/
+test_outputs/
+__pycache__/
+.env
+.env.*
+!*.env.example
