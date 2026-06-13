@@ -176,7 +176,7 @@ def _session_summary(session_state: dict, command: dict) -> str:
 # Application
 # ---------------------------------------------------------------------------
 
-def build_application():
+def build_application(use_updater: bool = True):
     if not BOT_TOKEN:
         raise RuntimeError(
             "REPORT3_TELEGRAM_BOT_TOKEN or TELEGRAM_BOT_TOKEN is missing"
@@ -364,7 +364,10 @@ def build_application():
             "예: 6/2 김주한 수업 영상 https://youtu.be/..."
         )
 
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
+    builder = ApplicationBuilder().token(BOT_TOKEN)
+    if not use_updater:
+        builder = builder.updater(None)
+    app = builder.build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("status", status))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_message))
