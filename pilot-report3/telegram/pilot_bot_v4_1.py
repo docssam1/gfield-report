@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import os
-from datetime import timezone
 
 from run_v4_drive_telegram_tests import write_result_json
 from upload_command_parser import parse_upload_command
-from upload_session_store import append_uploaded_item, get_session, set_session
+from upload_session_store import append_uploaded_item, clear_session, get_session, set_session
 
 
 BOT_TOKEN = (
@@ -46,6 +45,7 @@ def _build_preview(command: dict, chat_id: str, message_id: str) -> dict:
         "date": command["date"],
         "entry_type": command["entry_type"],
         "media_kind": command["media_kind"],
+        "link_url": command.get("link_url", ""),
         "expected_count": command["expected_count"],
         "needs_review": command["needs_review"],
         "review_reason": command["review_reason"],
@@ -58,7 +58,14 @@ def _build_preview(command: dict, chat_id: str, message_id: str) -> dict:
     }
 
 
-def _build_metadata(command: dict, chat_id: str, message_id: str, download_result: dict, upload_result: dict, session_state: dict | None) -> dict:
+def _build_metadata(
+    command: dict,
+    chat_id: str,
+    message_id: str,
+    download_result: dict,
+    upload_result: dict,
+    session_state: dict | None,
+) -> dict:
     return {
         "generated_at": download_result.get("generated_at") or "",
         "preview_only": True,
@@ -71,9 +78,10 @@ def _build_metadata(command: dict, chat_id: str, message_id: str, download_resul
             "message_id": message_id,
             "file_id": download_result.get("telegram_file_id", ""),
             "downloaded_bytes": download_result.get("downloaded_bytes", 0),
+            "video_url": command.get("link_url", ""),
         },
         "storage": {
-            "backend": "gcs" if os.environ.get("REPORT3_GCS_BUCKET") else "drive",
+            "backend": "link" if command["media_kind"] == "video_link" else ("gcs" if os.environ.get("REPORT3_GCS_BUCKET") else "drive"),
             "path": upload_result.get("path", ""),
             "uri": upload_result.get("uri", ""),
         },
@@ -91,27 +99,36 @@ def _build_metadata(command: dict, chat_id: str, message_id: str, download_resul
     }
 
 
+def _build_link_upload_result(command: dict) -> dict:
+    return {
+        "success": True,
+        "needs_review": command["needs_review"],
+        "path": "",
+        "uri": command["link_url"],
+        "error": "",
+        "entry_type": command["entry_type"],
+        "media_kind": command["media_kind"],
+        "student_name": command["student_name"],
+        "date": command["date"],
+        "link_url": command["link_url"],
+    }
+
+
 def build_application():
     if not BOT_TOKEN:
-        raise RuntimeError(
-            "REPORT3_TELEGRAM_BOT_TOKEN or TELEGRAM_BOT_TOKEN is missing"
-        )
+        raise RuntimeError("REPORT3_TELEGRAM_BOT_TOKEN or TELEGRAM_BOT_TOKEN is missing")
 
     from telegram import Update
-    from telegram.ext import (
-        ApplicationBuilder,
-        CommandHandler,
-        ContextTypes,
-        MessageHandler,
-        filters,
-    )
+    from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
     async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chat_id = str(update.effective_chat.id)
         await update.message.reply_text(
             "Report3 structured upload bot\n"
             f"chat_id={chat_id}\n"
-            "Example: 6/2 김주한 과제 사진"
+            "Examples:\n"
+            "6/2 김주한 과제 사진\n"
+            "6/2 김주한 수업 영상 https://youtu.be/..."
         )
 
     async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -133,8 +150,7 @@ def build_application():
         msg = update.message
         command = parse_upload_command(msg.text or "").to_dict()
         set_session(chat_id, command, str(msg.message_id))
-        preview = _build_preview(command, chat_id, str(msg.message_id))
-        write_result_json("upload_preview.json", preview)
+        write_result_json("upload_preview.json", _build_preview(command, chat_id, str(msg.message_id)))
 
         lines = [
             "[PREVIEW] upload command captured",
@@ -144,14 +160,36 @@ def build_application():
             f"media_kind={command['media_kind']}",
             f"expected_count={command['expected_count']}",
         ]
-        if command["needs_review"]:
+
+        if command["media_kind"] == "video_link" and command["link_url"]:
+            upload_result = _build_link_upload_result(command)
+            write_result_json("upload_result.json", upload_result)
+            metadata = _build_metadata(
+                command,
+                chat_id,
+                str(msg.message_id),
+                {
+                    "generated_at": "",
+                    "telegram_file_id": "",
+                    "downloaded_bytes": 0,
+                },
+                upload_result,
+                {"uploaded_count": 1},
+            )
+            write_result_json("metadata.json", metadata)
+            clear_session(chat_id)
+            lines.append(f"video_url={command['link_url']}")
+            lines.append("stored_as=link_only")
+        elif command["needs_review"]:
             lines.append("needs_review=true")
             if command["review_reason"]:
                 lines.append(f"reason={command['review_reason']}")
+        else:
+            lines.append("사진을 이어서 보내주세요.")
 
         await update.message.reply_text("\n".join(lines))
 
-    async def _handle_media(update: Update, media_type: str):
+    async def _handle_photo(update: Update):
         chat_id = str(update.effective_chat.id)
         if not _authorized(chat_id):
             await update.message.reply_text("Unauthorized")
@@ -166,54 +204,33 @@ def build_application():
             return
 
         command = session_state["command"]
-        expected_media = "videos" if command["media_kind"] == "videos" else "photos"
-        if media_type != expected_media:
+        if command["media_kind"] == "video_link":
             await update.message.reply_text(
-                f"현재 세션은 {command['media_kind']} 대기 중입니다."
+                "영상은 파일 업로드 대신 유튜브 링크로 보내주세요.\n"
+                "예: 6/2 김주한 수업 영상 https://youtu.be/..."
             )
             return
-
-        if media_type == "photos":
-            tg_media = msg.photo[-1]
-            tg_file = await tg_media.get_file()
-            file_name = f"{command['entry_type']}_{msg.message_id}.jpg"
-            mime_type = "image/jpeg"
-            file_id = tg_media.file_id
-            payload = bytes(await tg_file.download_as_bytearray())
-        else:
-            tg_media = msg.video
-            tg_file = await tg_media.get_file()
-            suffix = ".mp4"
-            if tg_media.file_name and "." in tg_media.file_name:
-                suffix = "." + tg_media.file_name.split(".")[-1]
-            file_name = f"{command['entry_type']}_{msg.message_id}{suffix}"
-            mime_type = tg_media.mime_type or "video/mp4"
-            file_id = tg_media.file_id
-            payload = bytes(await tg_file.download_as_bytearray())
-
-        download_result = _download_result_base(file_id, mime_type)
-
-        try:
-            download_result["success"] = True
-            download_result["needs_review"] = False
-            download_result["downloaded_bytes"] = len(payload)
-            download_result["file_path"] = tg_file.file_path or ""
-        except Exception as exc:
-            download_result["stopped"] = True
-            download_result["error"] = f"{type(exc).__name__}: {exc}"
-            write_result_json("telegram_photo_download_test_result.json", download_result)
-            await update.message.reply_text(
-                "Telegram media download failed. Test stopped."
-            )
+        if command["media_kind"] != "photos":
+            await update.message.reply_text("현재 세션은 사진 업로드 대기 상태가 아닙니다.")
             return
 
+        tg_media = msg.photo[-1]
+        tg_file = await tg_media.get_file()
+        payload = bytes(await tg_file.download_as_bytearray())
+        file_name = f"{command['entry_type']}_{msg.message_id}.jpg"
+
+        download_result = _download_result_base(tg_media.file_id, "image/jpeg")
+        download_result["success"] = True
+        download_result["needs_review"] = False
+        download_result["downloaded_bytes"] = len(payload)
+        download_result["file_path"] = tg_file.file_path or ""
         write_result_json("telegram_photo_download_test_result.json", download_result)
 
-        if os.environ.get("REPORT3_GCS_BUCKET"):
-            from gcs_uploader import upload_media
-        else:
+        if not os.environ.get("REPORT3_GCS_BUCKET"):
             await update.message.reply_text("GCS bucket is required for this mode.")
             return
+
+        from gcs_uploader import upload_media
 
         upload = upload_media(
             media_bytes=payload,
@@ -221,8 +238,8 @@ def build_application():
             date=command["date"],
             student_name=command["student_name"],
             entry_type=command["entry_type"],
-            sub_dir=command["media_kind"],
-            content_type=mime_type,
+            sub_dir="photos",
+            content_type="image/jpeg",
             dry_run=False,
         )
         upload_result = {
@@ -257,7 +274,7 @@ def build_application():
         )
         write_result_json("metadata.json", metadata)
 
-        if not upload_result.get("success"):
+        if not upload_result["success"]:
             await update.message.reply_text(
                 "Photo downloaded, but storage write failed. Test stopped.\n"
                 f"reason={upload_result.get('error', 'unknown')}"
@@ -278,10 +295,14 @@ def build_application():
         )
 
     async def photo_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await _handle_media(update, "photos")
+        await _handle_photo(update)
 
     async def video_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await _handle_media(update, "videos")
+        await update.message.reply_text(
+            "영상 파일 직접 업로드는 현재 사용하지 않습니다.\n"
+            "유튜브 링크 형식으로 보내주세요.\n"
+            "예: 6/2 김주한 수업 영상 https://youtu.be/..."
+        )
 
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))

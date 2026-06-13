@@ -69,3 +69,9 @@ def append_uploaded_item(chat_id: str, item: dict) -> dict | None:
     save_state(state)
     return session
 
+
+def clear_session(chat_id: str) -> None:
+    state = load_state()
+    if chat_id in state:
+        state.pop(chat_id, None)
+        save_state(state)

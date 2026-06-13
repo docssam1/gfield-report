@@ -9,9 +9,9 @@ TYPE_RULES = [
     (("과제", "사진"), "homework_photo", "photos"),
     (("숙제", "사진"), "homework_photo", "photos"),
     (("수업", "사진"), "class_photo", "photos"),
-    (("과제", "영상"), "homework_video", "videos"),
-    (("숙제", "영상"), "homework_video", "videos"),
-    (("수업", "영상"), "class_video", "videos"),
+    (("과제", "영상"), "homework_video", "video_link"),
+    (("숙제", "영상"), "homework_video", "video_link"),
+    (("수업", "영상"), "class_video", "video_link"),
 ]
 
 
@@ -22,6 +22,7 @@ class UploadCommand:
     date: str
     entry_type: str
     media_kind: str
+    link_url: str
     expected_count: int
     needs_review: bool
     review_reason: str
@@ -39,7 +40,10 @@ def _infer_year(month: int, day: int) -> int:
 def _parse_date(text: str) -> tuple[str, bool]:
     match = re.search(r"(\d{4})[/-](\d{1,2})[/-](\d{1,2})", text)
     if match:
-        return f"{int(match.group(1)):04d}-{int(match.group(2)):02d}-{int(match.group(3)):02d}", False
+        return (
+            f"{int(match.group(1)):04d}-{int(match.group(2)):02d}-{int(match.group(3)):02d}",
+            False,
+        )
 
     match = re.search(r"\b(\d{1,2})/(\d{1,2})\b", text)
     if not match:
@@ -67,14 +71,25 @@ def _parse_entry_type(text: str) -> tuple[str, str, bool]:
     return "unknown", "unknown", True
 
 
+def _parse_link_url(text: str) -> str:
+    match = re.search(r"(https?://\S+)", text)
+    return match.group(1) if match else ""
+
+
 def _parse_student_name(text: str) -> tuple[str, bool]:
     cleaned = re.sub(r"\d{4}[/-]\d{1,2}[/-]\d{1,2}", " ", text)
     cleaned = re.sub(r"\b\d{1,2}/\d{1,2}\b", " ", cleaned)
     cleaned = re.sub(r"\d+\s*장", " ", cleaned)
+    cleaned = re.sub(r"https?://\S+", " ", cleaned)
     for keywords, _, _ in TYPE_RULES:
         for keyword in keywords:
             cleaned = cleaned.replace(keyword, " ")
-    cleaned = cleaned.replace("보내줘", " ").replace("저장", " ").replace("업로드", " ")
+    cleaned = (
+        cleaned.replace("보내줘", " ")
+        .replace("저장", " ")
+        .replace("업로드", " ")
+        .replace("링크", " ")
+    )
     names = re.findall(r"[가-힣]{2,4}", cleaned)
     if not names:
         return "", True
@@ -86,6 +101,7 @@ def parse_upload_command(text: str) -> UploadCommand:
     parsed_date, date_unknown = _parse_date(normalized)
     entry_type, media_kind, type_unknown = _parse_entry_type(normalized)
     student_name, name_unknown = _parse_student_name(normalized)
+    link_url = _parse_link_url(normalized)
     expected_count = _parse_expected_count(normalized)
 
     reasons: list[str] = []
@@ -95,6 +111,8 @@ def parse_upload_command(text: str) -> UploadCommand:
         reasons.append("student_missing")
     if type_unknown:
         reasons.append("entry_type_unknown")
+    if media_kind == "video_link" and not link_url:
+        reasons.append("video_link_missing")
 
     return UploadCommand(
         raw_text=normalized,
@@ -102,8 +120,8 @@ def parse_upload_command(text: str) -> UploadCommand:
         date=parsed_date,
         entry_type=entry_type,
         media_kind=media_kind,
+        link_url=link_url,
         expected_count=expected_count,
         needs_review=bool(reasons),
         review_reason=";".join(reasons),
     )
-
