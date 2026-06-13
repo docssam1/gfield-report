@@ -1,5 +1,9 @@
 V4-1 Real Drive Write Test + Telegram Photo Download Test
 
+Update:
+- if `REPORT3_GCS_BUCKET` is set, V4-1 now uses GCS first
+- Drive remains as fallback only
+
 Scope:
 - verify REPORT3_DRIVE_ROOT_ID presence
 - verify service account credential path presence

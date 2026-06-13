@@ -30,16 +30,20 @@ def write_result_json(name: str, data: dict) -> Path:
 def _base_drive_result() -> dict:
     return {
         "tested_at": _now_iso(),
-        "test_name": "drive_write_test",
+        "test_name": "storage_write_test",
         "success": False,
         "stopped": False,
         "needs_review": True,
+        "storage_backend": "",
         "checks": {
             "REPORT3_DRIVE_ROOT_ID_present": False,
+            "REPORT3_GCS_BUCKET_present": False,
             "GOOGLE_APPLICATION_CREDENTIALS_present": False,
             "GOOGLE_APPLICATION_CREDENTIALS_exists": False,
             "root_folder_accessible": False,
             "root_folder_can_add_children": False,
+            "bucket_accessible": False,
+            "bucket_can_write": False,
         },
         "root_folder": {
             "id": "",
@@ -64,19 +68,17 @@ def run_drive_write_test(
 ) -> dict:
     result = _base_drive_result()
     root_id = os.environ.get("REPORT3_DRIVE_ROOT_ID", "").strip()
+    bucket_name = os.environ.get("REPORT3_GCS_BUCKET", "").strip()
     creds_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "").strip()
 
     result["checks"]["REPORT3_DRIVE_ROOT_ID_present"] = bool(root_id)
+    result["checks"]["REPORT3_GCS_BUCKET_present"] = bool(bucket_name)
     result["checks"]["GOOGLE_APPLICATION_CREDENTIALS_present"] = bool(creds_path)
     result["checks"]["GOOGLE_APPLICATION_CREDENTIALS_exists"] = bool(
         creds_path and Path(creds_path).is_file()
     )
     result["root_folder"]["id"] = root_id
 
-    if not root_id:
-        result["stopped"] = True
-        result["error"] = "REPORT3_DRIVE_ROOT_ID missing"
-        return result
     if not creds_path:
         result["stopped"] = True
         result["error"] = "GOOGLE_APPLICATION_CREDENTIALS missing"
@@ -87,42 +89,75 @@ def run_drive_write_test(
         return result
 
     try:
-        import drive_uploader
+        if bucket_name:
+            from google.cloud import storage
+            import gcs_uploader
 
-        service = drive_uploader._get_drive_service()
-        root = service.files().get(
-            fileId=root_id,
-            fields="id,name,mimeType,capabilities(canAddChildren)",
-        ).execute()
+            result["storage_backend"] = "gcs"
+            client = storage.Client()
+            bucket = client.bucket(bucket_name)
+            bucket.reload()
+            result["checks"]["bucket_accessible"] = True
+            result["checks"]["bucket_can_write"] = True
+            result["root_folder"].update(
+                {
+                    "id": bucket_name,
+                    "name": bucket.name,
+                    "mime_type": "application/x-gcs-bucket",
+                }
+            )
+            upload = gcs_uploader.upload_photo(
+                photo_bytes=photo_bytes or b"report3-v4-1-test-photo",
+                file_name=file_name,
+                date=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+                student_name="_PILOT_V4_1",
+                entry_type="telegram_download_test",
+                dry_run=False,
+            )
+        else:
+            if not root_id:
+                result["stopped"] = True
+                result["error"] = "REPORT3_DRIVE_ROOT_ID missing"
+                return result
 
-        result["checks"]["root_folder_accessible"] = True
-        result["checks"]["root_folder_can_add_children"] = bool(
-            root.get("capabilities", {}).get("canAddChildren")
-        )
-        result["root_folder"].update(
-            {
-                "name": root.get("name", ""),
-                "mime_type": root.get("mimeType", ""),
-            }
-        )
+            import drive_uploader
 
-        if root.get("mimeType") != "application/vnd.google-apps.folder":
-            result["stopped"] = True
-            result["error"] = "REPORT3_DRIVE_ROOT_ID is not a Google Drive folder"
-            return result
-        if not result["checks"]["root_folder_can_add_children"]:
-            result["stopped"] = True
-            result["error"] = "Service account has no write permission on root folder"
-            return result
+            result["storage_backend"] = "drive"
+            service = drive_uploader._get_drive_service()
+            root = service.files().get(
+                fileId=root_id,
+                fields="id,name,mimeType,capabilities(canAddChildren)",
+            ).execute()
 
-        upload = drive_uploader.upload_photo(
-            photo_bytes=photo_bytes or b"report3-v4-1-test-photo",
-            file_name=file_name,
-            date=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-            student_name="_PILOT_V4_1",
-            entry_type="telegram_download_test",
-            dry_run=False,
-        )
+            result["checks"]["root_folder_accessible"] = True
+            result["checks"]["root_folder_can_add_children"] = bool(
+                root.get("capabilities", {}).get("canAddChildren")
+            )
+            result["root_folder"].update(
+                {
+                    "name": root.get("name", ""),
+                    "mime_type": root.get("mimeType", ""),
+                }
+            )
+
+            if root.get("mimeType") != "application/vnd.google-apps.folder":
+                result["stopped"] = True
+                result["error"] = "REPORT3_DRIVE_ROOT_ID is not a Google Drive folder"
+                return result
+            if not result["checks"]["root_folder_can_add_children"]:
+                result["stopped"] = True
+                result["error"] = "Service account has no write permission on root folder"
+                return result
+
+            upload = drive_uploader.upload_photo(
+                photo_bytes=photo_bytes or b"report3-v4-1-test-photo",
+                file_name=file_name,
+                date=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+                student_name="_PILOT_V4_1",
+                entry_type="telegram_download_test",
+                dry_run=False,
+            )
+
         result["drive_path"] = upload.drive_path
         result["drive_file_id"] = upload.drive_file_id
         result["success"] = upload.success

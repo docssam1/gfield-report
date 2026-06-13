@@ -65,9 +65,12 @@ def build_application():
         )
 
     async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        backend = "gcs" if os.environ.get("REPORT3_GCS_BUCKET") else "drive"
         await update.message.reply_text(
             "V4-1 ready\n"
+            f"storage_backend={backend}\n"
             f"drive_root={'set' if os.environ.get('REPORT3_DRIVE_ROOT_ID') else 'missing'}\n"
+            f"gcs_bucket={'set' if os.environ.get('REPORT3_GCS_BUCKET') else 'missing'}\n"
             f"credentials={'set' if os.environ.get('GOOGLE_APPLICATION_CREDENTIALS') else 'missing'}"
         )
 
@@ -118,7 +121,7 @@ def build_application():
 
         if not drive_result.get("success"):
             await update.message.reply_text(
-                "Photo downloaded, but Drive write failed. Test stopped.\n"
+                "Photo downloaded, but storage write failed. Test stopped.\n"
                 f"reason={drive_result.get('error', 'unknown')}"
             )
             return
@@ -126,7 +129,7 @@ def build_application():
         await update.message.reply_text(
             "V4-1 test passed.\n"
             f"downloaded_bytes={download_result['downloaded_bytes']}\n"
-            f"drive_file_id={drive_result['drive_file_id']}\n"
+            f"stored_as={drive_result['drive_file_id']}\n"
             "No DB, Calendar, Gemini, report, or parent-message action was run."
         )
 
