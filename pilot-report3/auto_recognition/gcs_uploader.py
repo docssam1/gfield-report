@@ -31,11 +31,37 @@ def upload_photo(
     entry_type: str,
     dry_run: bool = True,
 ) -> UploadResult:
+    return upload_media(
+        media_bytes=photo_bytes,
+        file_name=file_name,
+        date=date,
+        student_name=student_name,
+        entry_type=entry_type,
+        sub_dir="photos",
+        content_type="image/jpeg",
+        dry_run=dry_run,
+    )
+
+
+def upload_media(
+    media_bytes: bytes,
+    file_name: str,
+    date: str,
+    student_name: str,
+    entry_type: str,
+    sub_dir: str,
+    content_type: str,
+    dry_run: bool = True,
+) -> UploadResult:
     object_path = build_drive_path(date, student_name, entry_type)
     if not object_path.valid:
         return UploadResult(success=False, drive_path="", error=object_path.reason)
 
-    full_object_name = f"{object_path.full_path}{file_name}"
+    base_path = build_drive_path(date, student_name, entry_type, sub_dir=sub_dir)
+    if not base_path.valid:
+        return UploadResult(success=False, drive_path="", error=base_path.reason)
+
+    full_object_name = f"{base_path.full_path}{file_name}"
 
     if dry_run:
         return UploadResult(
@@ -55,7 +81,7 @@ def upload_photo(
         client = _get_storage_client()
         bucket = client.bucket(GCS_BUCKET_NAME)
         blob = bucket.blob(full_object_name)
-        blob.upload_from_string(photo_bytes, content_type="image/jpeg")
+        blob.upload_from_string(media_bytes, content_type=content_type)
         return UploadResult(
             success=True,
             drive_path=full_object_name,
