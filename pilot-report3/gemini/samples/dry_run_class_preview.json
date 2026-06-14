@@ -1,0 +1,29 @@
+{
+  "student_name": "김주한",
+  "source_date": "2026-06-02",
+  "entry_type": "class_photo",
+  "media_count": 1,
+  "media_paths": [
+    "gs://gfield-report3-pilot-0995737435/report3_input/2026-06-02/김주한/class_photo/photos/class_photo_36.jpg"
+  ],
+  "analysis_kind": "class_photo_analysis",
+  "raw_response": "{\"keywords\": [\"이차방정식\", \"근의공식\", \"판별식\"], \"board_summary\": \"[DRY RUN] 이차방정식 풀이 수업 판서 내용입니다.\", \"topic\": \"이차방정식\", \"difficulty\": \"중\", \"needs_teacher_review\": false, \"summary\": \"[DRY RUN] 수업 내용 더미 데이터\"}",
+  "parsed": {
+    "keywords": ["이차방정식", "근의공식", "판별식"],
+    "board_summary": "[DRY RUN] 이차방정식 풀이 수업 판서 내용입니다.",
+    "topic": "이차방정식",
+    "difficulty": "중",
+    "needs_teacher_review": false,
+    "summary": "[DRY RUN] 수업 내용 더미 데이터"
+  },
+  "needs_review": false,
+  "review_reason": "dry_run",
+  "analyzed_at": "2026-06-11T00:00:00Z",
+  "model": "gemini-1.5-flash",
+  "dry_run": true,
+  "safety": {
+    "db_updated": false,
+    "parent_message_sent": false,
+    "final_report_generated": false
+  }
+}

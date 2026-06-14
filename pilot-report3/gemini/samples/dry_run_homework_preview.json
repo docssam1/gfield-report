@@ -1,0 +1,36 @@
+{
+  "student_name": "김주한",
+  "source_date": "2026-06-02",
+  "entry_type": "homework_photo",
+  "media_count": 1,
+  "media_paths": [
+    "gs://gfield-report3-pilot-0995737435/report3_input/2026-06-02/김주한/homework_photo/photos/homework_photo_35.jpg"
+  ],
+  "analysis_kind": "homework_photo_analysis",
+  "raw_response": "{\"problems\": [{\"number\": \"1\", \"student_answer\": \"x = 3\", \"correct\": null, \"error_type\": \"판독불가\", \"correction_candidate\": \"풀이 과정 확인 필요\", \"comment_candidate\": \"계산 과정을 더 자세히 써보세요\"}], \"overall_completion\": \"부분완료\", \"needs_teacher_review\": true, \"summary\": \"[DRY RUN] 과제 분석 더미 데이터\"}",
+  "parsed": {
+    "problems": [
+      {
+        "number": "1",
+        "student_answer": "x = 3",
+        "correct": null,
+        "error_type": "판독불가",
+        "correction_candidate": "풀이 과정 확인 필요",
+        "comment_candidate": "계산 과정을 더 자세히 써보세요"
+      }
+    ],
+    "overall_completion": "부분완료",
+    "needs_teacher_review": true,
+    "summary": "[DRY RUN] 과제 분석 더미 데이터"
+  },
+  "needs_review": true,
+  "review_reason": "needs_teacher_review",
+  "analyzed_at": "2026-06-11T00:00:00Z",
+  "model": "gemini-1.5-flash",
+  "dry_run": true,
+  "safety": {
+    "db_updated": false,
+    "parent_message_sent": false,
+    "final_report_generated": false
+  }
+}
