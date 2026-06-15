@@ -1,6 +1,10 @@
-"""V5 Gemini Vision 분석기.
+"""V5 Gemini Vision 분석기 — Vertex AI 방식.
 Preview only. dry_run=True 시 실제 API 호출 없음.
-API 키 없으면 자동 dry_run fallback.
+GEMINI_API_KEY 없으면 자동 dry_run fallback.
+
+인증: IAM 서비스 계정 (GOOGLE_APPLICATION_CREDENTIALS)
+모델: gemini-2.5-flash
+리전: us-central1
 """
 from __future__ import annotations
 
@@ -13,7 +17,8 @@ from typing import Optional
 from analysis_prompts import get_prompt
 from gcs_media_loader import load_media_list
 
-MODEL = "gemini-1.5-flash"
+MODEL    = "gemini-2.5-flash"
+LOCATION = "us-central1"
 
 DRY_RUN_PARSED = {
     "homework_photo_analysis": {
@@ -67,6 +72,26 @@ class AnalysisResult:
         return asdict(self)
 
 
+def _vertex_analyze(
+    payloads: list[bytes],
+    prompt: str,
+    project: str,
+) -> str:
+    """Vertex AI Gemini Vision 호출 → raw JSON 문자열 반환."""
+    import vertexai
+    from vertexai.generative_models import GenerativeModel, Part
+
+    vertexai.init(project=project, location=LOCATION)
+    model = GenerativeModel(MODEL)
+
+    parts = [prompt]
+    for data in payloads:
+        parts.append(Part.from_data(data=data, mime_type="image/jpeg"))
+
+    response = model.generate_content(parts)
+    return response.text.strip()
+
+
 def analyze_session(
     metadata: dict,
     dry_run: Optional[bool] = None,
@@ -76,7 +101,7 @@ def analyze_session(
 
     Args:
         metadata: V4 출력 metadata.json dict
-        dry_run: None이면 GEMINI_API_KEY 유무로 자동 결정
+        dry_run: None이면 GOOGLE_CLOUD_PROJECT 유무로 자동 결정
 
     Returns:
         AnalysisResult
@@ -98,15 +123,16 @@ def analyze_session(
 
     prompt, analysis_kind = get_prompt(entry_type)
 
-    # dry_run 자동 결정
-    api_key = os.environ.get("GEMINI_API_KEY", "").strip()
+    # dry_run 자동 결정 — GOOGLE_CLOUD_PROJECT 없으면 dry_run
+    project = os.environ.get("GOOGLE_CLOUD_PROJECT", "").strip()
     if dry_run is None:
-        dry_run = not bool(api_key)
+        dry_run = not bool(project)
 
     # dry_run 처리
     if dry_run:
-        parsed = DRY_RUN_PARSED.get(analysis_kind,
-                                     DRY_RUN_PARSED["class_photo_analysis"]).copy()
+        parsed = DRY_RUN_PARSED.get(
+            analysis_kind, DRY_RUN_PARSED["class_photo_analysis"]
+        ).copy()
         return AnalysisResult(
             student_name=student_name,
             source_date=source_date,
@@ -135,21 +161,13 @@ def analyze_session(
             analyzed_at=now_iso, model=MODEL, dry_run=False,
         )
 
-    # Gemini API 호출
+    # Vertex AI 호출
     try:
-        import google.generativeai as genai
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel(MODEL)
-
-        parts = [prompt]
-        for data in payloads:
-            parts.append({"mime_type": "image/jpeg", "data": data})
-
-        response = model.generate_content(parts)
-        raw = response.text.strip()
+        raw   = _vertex_analyze(payloads, prompt, project)
         clean = raw.replace("```json", "").replace("```", "").strip()
         parsed = json.loads(clean)
-        needs_review = bool(parsed.get("needs_teacher_review", False) or failed)
+
+        needs_review  = bool(parsed.get("needs_teacher_review", False) or failed)
         review_reason = "; ".join(
             (["needs_teacher_review"] if parsed.get("needs_teacher_review") else []) +
             ([f"load_failed: {', '.join(failed)}"] if failed else [])
@@ -168,6 +186,6 @@ def analyze_session(
             entry_type=entry_type, media_count=len(payloads),
             media_paths=media_paths, analysis_kind=analysis_kind,
             raw_response="", parsed={},
-            needs_review=True, review_reason=f"Gemini 오류: {e}",
+            needs_review=True, review_reason=f"Vertex AI 오류: {e}",
             analyzed_at=now_iso, model=MODEL, dry_run=False,
         )
